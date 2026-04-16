@@ -37,13 +37,15 @@ that shows:
 
 ## Current status
 
-Tasks #1–#5 of the build plan are complete. The backend parses both BOM
+Tasks #1–#6 of the build plan are complete. The backend parses both BOM
 CSVs and merges them with hand-authored per-MPN metadata; the React shell
 renders the BOM view (build-qty multiplier, optional-line toggle, cost
-footer) and the Discrepancy view (severity-colored cards, localStorage-
-persisted Resolved toggle, red header banner for unresolved build-critical
-items). Two top-level views (Board 3D, Assembly) still render placeholder
-text.
+footer, **Digi-Key CSV export button**) and the Discrepancy view
+(severity-colored cards, localStorage-persisted Resolved toggle, red
+header banner for unresolved build-critical items). **The sourcing loop
+is closed** — open app → resolve build-critical items → Export CSV →
+upload to Digi-Key. Two top-level views (Board 3D, Assembly) still
+render placeholder text.
 
 **What works today:**
 
@@ -57,14 +59,20 @@ text.
 - Per-unit cost totals **$43.27**, matching the April 2025 BOM figure.
 - The only `missingLineItems` entry is `c1-main:OSO-BOOK-C2-01` — exactly
   the known discrepancy (`c2-module-cost-missing`).
+- **Export Digi-Key CSV** writes `open-book-digikey-bom.csv` with 14
+  sourceable lines at default toggles (9 skipped: all 7 C2-driver internals
+  priced as a single PCBA, plus the GDEW042T2 panel and the
+  OSO-BOOK-C2-01 module itself). Honors `qtyMultiplier` and
+  `includeOptional`; dispatches through Tauri save-dialog on desktop and
+  a Blob download on web — same CSV output on both paths.
 
 **What's mocked:**
 
 - All 3D viewport code (task #9).
 - The dual-target web build pipeline (task #7) — code is shaped for it
-  (see `src/lib/dataset-source.ts`) but no `public/board-dataset.json`
-  is baked yet.
-- The Digi-Key CSV export button (task #6).
+  (see `src/lib/dataset-source.ts` and `src/lib/exporter.ts`) but no
+  `public/board-dataset.json` is baked yet, so the web target can't
+  actually start up.
 
 See `Roadmap` below and the authoritative plan at
 `~/.claude/plans/melodic-tinkering-newt.md`.
@@ -139,12 +147,14 @@ open-book-builder/
 │   ├── vite-env.d.ts                 # window.__TAURI__ globals
 │   ├── lib/
 │   │   ├── types.ts                       # Mirrors src-tauri/src/types.rs
-│   │   ├── dataset-source.ts              # Tauri-vs-web boundary
+│   │   ├── dataset-source.ts              # Tauri-vs-web boundary (isTauri())
 │   │   ├── dataset-context.tsx            # React context + useDataset() hook
 │   │   ├── use-persisted-state.ts         # Generic localStorage-backed useState
-│   │   └── use-discrepancy-resolution.ts  # Resolved-state wrapper, drives the banner
+│   │   ├── use-discrepancy-resolution.ts  # Resolved-state wrapper, drives the banner
+│   │   ├── digikey-csv.ts                 # Pure Digi-Key BOM CSV builder + summary
+│   │   └── exporter.ts                    # saveTextFile(): Tauri save-dialog vs web Blob
 │   └── components/
-│       ├── BomView.tsx                    # Built. Two-pane: filterable table + detail panel.
+│       ├── BomView.tsx                    # Built. Two-pane table + detail panel + CSV export.
 │       ├── DiscrepancyView.tsx            # Built. Severity-grouped cards, Resolved toggle.
 │       └── DiscrepancyBanner.tsx          # Built. Red header bar; hidden when 0 unresolved.
 │
@@ -259,7 +269,7 @@ The 13-task build plan lives at
 - [x] **#3** Define TS + Rust types and dataset loader
 - [x] **#4** Build BOM view
 - [x] **#5** Build Discrepancy view — red banner for unresolved build-critical, localStorage Resolved toggle
-- [ ] **#6** Implement Digi-Key CSV export — save-as dialog (Tauri) / Blob download (web) + build-qty multiplier
+- [x] **#6** Implement Digi-Key CSV export — save-as dialog (Tauri) / Blob download (web) + build-qty multiplier
 - [ ] **#7** Set up dual-target build — `scripts/bake-dataset.ts`, ship static web build
 - [ ] **#8** Parse KiCad PCB and schematic — pick parser crate or hand-roll
 - [ ] **#9** Build 3D BoardViewport — Three.js, extruded board, raycaster picking

@@ -1,6 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDataset } from '../lib/dataset-context';
 import type { BomLine, BoardId } from '../lib/types';
+import { buildDigiKeyCsv, summarizeExport } from '../lib/digikey-csv';
+import { saveTextFile } from '../lib/exporter';
+
+const EXPORT_FILENAME = 'open-book-digikey-bom.csv';
+const TOAST_MS = 3000;
 
 type BoardFilter = 'all' | BoardId;
 
@@ -57,6 +62,7 @@ export function BomView() {
           includeOptional={includeOptional}
           setIncludeOptional={setIncludeOptional}
           rowCount={rows.length}
+          bom={dataset.bom}
         />
         <BomTable
           rows={rows}
@@ -87,12 +93,13 @@ export function BomView() {
 
 function Toolbar({
   filter, setFilter, qtyMultiplier, setQtyMultiplier,
-  includeOptional, setIncludeOptional, rowCount,
+  includeOptional, setIncludeOptional, rowCount, bom,
 }: {
   filter: BoardFilter; setFilter: (f: BoardFilter) => void;
   qtyMultiplier: number; setQtyMultiplier: (n: number) => void;
   includeOptional: boolean; setIncludeOptional: (b: boolean) => void;
   rowCount: number;
+  bom: BomLine[];
 }) {
   return (
     <div style={{
@@ -141,9 +148,110 @@ function Toolbar({
         Include optional lines
       </label>
 
-      <span style={{ marginLeft: 'auto', fontSize: '11px', color: '#64748b' }}>
-        {rowCount} rows
+      <ExportSlot
+        bom={bom}
+        qtyMultiplier={qtyMultiplier}
+        includeOptional={includeOptional}
+        rowCount={rowCount}
+      />
+    </div>
+  );
+}
+
+function ExportSlot({
+  bom, qtyMultiplier, includeOptional, rowCount,
+}: {
+  bom: BomLine[];
+  qtyMultiplier: number;
+  includeOptional: boolean;
+  rowCount: number;
+}) {
+  const [toast, setToast] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const timeoutRef = useRef<number | null>(null);
+
+  // Cancel any pending toast-clear on unmount.
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current !== null) {
+        window.clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  const { includedCount, skippedCount } = useMemo(
+    () => summarizeExport(bom, includeOptional),
+    [bom, includeOptional],
+  );
+
+  const disabled = busy || includedCount === 0;
+
+  const handleExport = useCallback(async () => {
+    setBusy(true);
+    try {
+      const result = buildDigiKeyCsv(bom, { qtyMultiplier, includeOptional });
+      const outcome = await saveTextFile(EXPORT_FILENAME, result.csv);
+      if (outcome === 'saved') {
+        const noun = result.includedCount === 1 ? 'line' : 'lines';
+        setToast(`Saved ${result.includedCount} ${noun} to ${EXPORT_FILENAME}`);
+        if (timeoutRef.current !== null) {
+          window.clearTimeout(timeoutRef.current);
+        }
+        timeoutRef.current = window.setTimeout(() => setToast(null), TOAST_MS);
+      }
+    } catch (err) {
+      console.error('Digi-Key CSV export failed:', err);
+      setToast(`Export failed: ${err instanceof Error ? err.message : String(err)}`);
+      if (timeoutRef.current !== null) {
+        window.clearTimeout(timeoutRef.current);
+      }
+      timeoutRef.current = window.setTimeout(() => setToast(null), TOAST_MS);
+    } finally {
+      setBusy(false);
+    }
+  }, [bom, qtyMultiplier, includeOptional]);
+
+  const isError = toast?.startsWith('Export failed');
+
+  return (
+    <div style={{
+      marginLeft: 'auto', display: 'flex', gap: '10px',
+      alignItems: 'center', flexWrap: 'wrap',
+    }}>
+      <span style={{ fontSize: '11px', color: '#64748b' }}>
+        {rowCount} rows shown
       </span>
+      <span style={{ fontSize: '11px', color: '#64748b' }}>
+        · {includedCount} included · {skippedCount} skipped (no Digi-Key PN)
+      </span>
+      {toast && (
+        <span style={{
+          fontSize: '11px',
+          color: isError ? '#fca5a5' : '#86efac',
+        }}>
+          {toast}
+        </span>
+      )}
+      <button
+        onClick={handleExport}
+        disabled={disabled}
+        title={
+          includedCount === 0
+            ? 'No exportable lines'
+            : `Export ${includedCount} lines to ${EXPORT_FILENAME}`
+        }
+        style={{
+          padding: '5px 12px', fontSize: '11px',
+          background: disabled ? '#1e293b' : '#1d4ed8',
+          color: disabled ? '#64748b' : '#f1f5f9',
+          border: '1px solid ' + (disabled ? '#334155' : '#2563eb'),
+          borderRadius: '4px',
+          cursor: disabled ? 'not-allowed' : 'pointer',
+          fontWeight: 500,
+        }}
+      >
+        {busy ? 'Exporting…' : 'Export Digi-Key CSV'}
+      </button>
     </div>
   );
 }
