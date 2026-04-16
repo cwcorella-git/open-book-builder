@@ -76,6 +76,11 @@ pub struct BomLine {
     pub function: String,
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub datasheet_url: Option<String>,
+    // Rendering hint that piggybacks on the per-MPN metadata merge (same as
+    // `function` / `datasheet_url`). `kicad_pcb::classify_footprint` reads it
+    // via ref-match and copies it onto `Component.hero_mesh_id`.
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub hero_mesh_id: Option<String>,
     pub board: BoardId,
 }
 

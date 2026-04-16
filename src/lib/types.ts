@@ -27,6 +27,7 @@ export interface BomLine {
   footprint?: string;
   function: string;
   datasheetUrl?: string;
+  heroMeshId?: string;
   board: BoardId;
 }
 

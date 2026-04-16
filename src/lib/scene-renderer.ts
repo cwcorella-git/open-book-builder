@@ -25,7 +25,8 @@
 
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import type { BoardData, EdgeSegment, Hole, Side } from './types';
+import { buildHeroMesh } from './hero-meshes';
+import type { BoardData, Component, EdgeSegment, Hole, Side } from './types';
 
 export type SideFilter = 'both' | 'top' | 'bottom';
 
@@ -99,6 +100,9 @@ export function initScene(
 
   const ownedGeometries = new Set<THREE.BufferGeometry>();
   const ownedMaterials = new Set<THREE.Material>();
+  // CanvasTextures carry GPU texture handles; hero-mesh labels are the only
+  // source today but the set is always initialized so dispose() stays simple.
+  const ownedTextures = new Set<THREE.Texture>();
 
   // --- Board mesh ----------------------------------------------------------
 
@@ -122,58 +126,66 @@ export function initScene(
   }
 
   // --- Component meshes ----------------------------------------------------
+  //
+  // Two paths: components with `heroMeshId` go through `buildHeroMesh` to get
+  // a procedural Group (Pi Pico / C2 module / battery holder / microSD).
+  // Everything else gets the extruded-bbox Box.
+  //
+  // Both paths return an entry tracking:
+  //   - `root`: the Object3D added to the scene (Group or Mesh); side filter
+  //     toggles its `.visible`.
+  //   - `primaryMaterial`: the MeshStandardMaterial that receives the
+  //     emissive selection tint. For boxes that's the mesh's own material;
+  //     for hero meshes it's the body material from the builder.
+  //
+  // The root carries `userData.ref` so the raycaster can identify hits via
+  // a `.parent`-walk (recursive intersection on Groups returns deep children).
+  interface ComponentEntry {
+    ref: string;
+    side: Side;
+    root: THREE.Object3D;
+    primaryMaterial: THREE.MeshStandardMaterial;
+  }
+  const componentEntries: ComponentEntry[] = [];
 
-  const componentMeshes: THREE.Mesh[] = [];
   for (const c of boardData.components) {
-    // Floor the footprint extents so a degenerate (single-pad) bbox is still
-    // visible at board scale; most real footprints clear this floor easily.
-    const w = Math.max(c.footprintBbox.width, 0.5);
-    const h = Math.max(c.footprintBbox.height, 0.5);
-    const h3d = Math.max(c.footprintBbox.height3d, 0.3);
-    const color = c.side === 'top' ? TOP_COLOR : BOTTOM_COLOR;
-
-    const geom = new THREE.BoxGeometry(w, h3d, h);
-    // Each component gets its own material so toggling emissive highlight
-    // on the selected one doesn't bleed onto siblings that share a class.
-    const mat = new THREE.MeshStandardMaterial({ color, flatShading: true });
-    const mesh = new THREE.Mesh(geom, mat);
-    mesh.position.set(
-      c.x - widthMm / 2,
-      c.side === 'top' ? BOARD_THICKNESS_MM + h3d / 2 : -h3d / 2,
-      c.y - heightMm / 2,
-    );
-    mesh.rotation.y = -degToRad(c.rotation);
-    mesh.userData = { ref: c.ref, side: c.side };
-    scene.add(mesh);
-    componentMeshes.push(mesh);
-    ownedGeometries.add(geom);
-    ownedMaterials.add(mat);
+    const entry = c.heroMeshId
+      ? buildHeroEntry(c, widthMm, heightMm)
+      : buildBoxEntry(c, widthMm, heightMm);
+    if (!entry) continue;
+    scene.add(entry.root);
+    componentEntries.push({
+      ref: c.ref,
+      side: c.side,
+      root: entry.root,
+      primaryMaterial: entry.primaryMaterial,
+    });
+    for (const g of entry.geometries) ownedGeometries.add(g);
+    for (const m of entry.materials) ownedMaterials.add(m);
+    for (const t of entry.textures) ownedTextures.add(t);
   }
 
   // --- Selection + side filter ---------------------------------------------
 
-  let currentlySelected: THREE.Mesh | null = null;
+  let currentlySelected: ComponentEntry | null = null;
 
   const applySideFilter = (filter: SideFilter) => {
-    for (const m of componentMeshes) {
-      if (filter === 'both') m.visible = true;
-      else m.visible = (m.userData as { side: Side }).side === filter;
+    for (const e of componentEntries) {
+      e.root.visible = filter === 'both' ? true : e.side === filter;
     }
   };
 
   const applySelection = (ref: string | null) => {
     if (currentlySelected) {
-      const mat = currentlySelected.material as THREE.MeshStandardMaterial;
-      mat.emissive.setHex(0x000000);
+      currentlySelected.primaryMaterial.emissive.setHex(0x000000);
       currentlySelected = null;
     }
     if (ref) {
-      const mesh = componentMeshes.find((m) => m.userData.ref === ref);
-      if (mesh) {
-        const mat = mesh.material as THREE.MeshStandardMaterial;
-        mat.emissive.setHex(HIGHLIGHT_EMISSIVE);
-        mat.emissiveIntensity = 0.5;
-        currentlySelected = mesh;
+      const entry = componentEntries.find((e) => e.ref === ref);
+      if (entry) {
+        entry.primaryMaterial.emissive.setHex(HIGHLIGHT_EMISSIVE);
+        entry.primaryMaterial.emissiveIntensity = 0.5;
+        currentlySelected = entry;
       }
     }
   };
@@ -207,8 +219,12 @@ export function initScene(
     pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
     pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
     raycaster.setFromCamera(pointer, camera);
-    const hits = raycaster.intersectObjects(componentMeshes, false);
-    const ref = hits.length > 0 ? (hits[0].object.userData.ref as string) : null;
+    // Recursive=true so hero-mesh child meshes (castellations, USB housing,
+    // label planes) all count as hits. Walk up to the root whose userData.ref
+    // was set by buildBoxEntry / buildHeroEntry.
+    const roots = componentEntries.map((e) => e.root);
+    const hits = raycaster.intersectObjects(roots, true);
+    const ref = hits.length > 0 ? findRootRef(hits[0].object) : null;
     state.onSelect?.(ref);
   };
 
@@ -253,12 +269,118 @@ export function initScene(
       renderer.domElement.removeEventListener('pointerup', onPointerUp);
       for (const g of ownedGeometries) g.dispose();
       for (const m of ownedMaterials) m.dispose();
+      for (const t of ownedTextures) t.dispose();
       controls.dispose();
       renderer.dispose();
     },
   };
 
   return state;
+}
+
+// ---------------------------------------------------------------------------
+// Component mesh builders
+//
+// Both variants return the same `BuildResult` shape so the main loop can
+// uniformly track disposal. `primaryMaterial` is whichever MeshStandardMaterial
+// receives the emissive highlight on selection.
+
+interface BuildResult {
+  root: THREE.Object3D;
+  primaryMaterial: THREE.MeshStandardMaterial;
+  geometries: THREE.BufferGeometry[];
+  materials: THREE.Material[];
+  textures: THREE.Texture[];
+}
+
+function buildBoxEntry(
+  c: Component,
+  widthMm: number,
+  heightMm: number,
+): BuildResult {
+  // Floor the footprint extents so a degenerate (single-pad) bbox is still
+  // visible at board scale; most real footprints clear this floor easily.
+  const w = Math.max(c.footprintBbox.width, 0.5);
+  const h = Math.max(c.footprintBbox.height, 0.5);
+  const h3d = Math.max(c.footprintBbox.height3d, 0.3);
+  const color = c.side === 'top' ? TOP_COLOR : BOTTOM_COLOR;
+
+  const geom = new THREE.BoxGeometry(w, h3d, h);
+  // Cloned per-component so the selection emissive doesn't bleed to siblings.
+  const mat = new THREE.MeshStandardMaterial({ color, flatShading: true });
+  const mesh = new THREE.Mesh(geom, mat);
+  // Box is symmetric, so the center-of-box placement used in task #9 still
+  // works — no inner/outer Group wrapping needed.
+  mesh.position.set(
+    c.x - widthMm / 2,
+    c.side === 'top' ? BOARD_THICKNESS_MM + h3d / 2 : -h3d / 2,
+    c.y - heightMm / 2,
+  );
+  mesh.rotation.y = -degToRad(c.rotation);
+  mesh.userData = { ref: c.ref, side: c.side };
+
+  return {
+    root: mesh,
+    primaryMaterial: mat,
+    geometries: [geom],
+    materials: [mat],
+    textures: [],
+  };
+}
+
+function buildHeroEntry(
+  c: Component,
+  widthMm: number,
+  heightMm: number,
+): BuildResult | null {
+  if (!c.heroMeshId) return null;
+  const hero = buildHeroMesh(c.heroMeshId, c);
+  if (!hero) return null;
+
+  // Nest so transforms compose in the right frame:
+  //   world → outer (position + KiCad Y-rotation)
+  //           → inner (optional X-flip for bottom-side mounting)
+  //             → hero (local: +Y outward, origin at PCB face)
+  // Hero meshes are authored with the PCB-touching face at y=0 and the
+  // outward face (USB / label / AAA cells / SD slot) pointing +Y. For
+  // bottom-side components the inner X-flip puts the outward face at -Y.
+  const inner = new THREE.Group();
+  inner.add(hero.object);
+  if (c.side === 'bottom') inner.rotation.x = Math.PI;
+
+  const outer = new THREE.Group();
+  outer.add(inner);
+  outer.position.set(
+    c.x - widthMm / 2,
+    c.side === 'top' ? BOARD_THICKNESS_MM : 0,
+    c.y - heightMm / 2,
+  );
+  outer.rotation.y = -degToRad(c.rotation);
+  outer.userData = { ref: c.ref, side: c.side };
+
+  return {
+    root: outer,
+    primaryMaterial: hero.primaryMesh.material as THREE.MeshStandardMaterial,
+    geometries: hero.ownedGeometries,
+    materials: hero.ownedMaterials,
+    textures: hero.ownedTextures,
+  };
+}
+
+/**
+ * Walk up from a raycaster hit until we find an object with `userData.ref`
+ * set — that's the component root. Returns the ref string, or null if the
+ * hit escaped into the scene root (shouldn't happen given we only ray
+ * component roots, but stay defensive).
+ */
+function findRootRef(obj: THREE.Object3D): string | null {
+  let cur: THREE.Object3D | null = obj;
+  while (cur) {
+    const ref = (cur.userData as { ref?: string }).ref;
+    if (ref) return ref;
+    cur = cur.parent;
+  }
+  return null;
 }
 
 // ---------------------------------------------------------------------------

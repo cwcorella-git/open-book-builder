@@ -37,16 +37,18 @@ that shows:
 
 ## Current status
 
-Tasks #1–#9 of the build plan are complete. The backend parses both BOM
+Tasks #1–#10 of the build plan are complete. The backend parses both BOM
 CSVs + the C1 `.kicad_pcb` and merges everything with hand-authored per-MPN
 metadata; the React shell renders the BOM view (build-qty multiplier,
 optional-line toggle, cost footer, **Digi-Key CSV export button**), the
 Discrepancy view (severity-colored cards, localStorage-persisted Resolved
 toggle, red header banner for unresolved build-critical items), and a
 **Three.js 3D viewport of the C1 main board** with orbit controls, a
-top/bottom/both side filter, and click-to-select raycaster picking against
-the 27 extruded component meshes. **The sourcing loop is closed** — open
-app → resolve build-critical items → Export CSV → upload to Digi-Key.
+top/bottom/both side filter, click-to-select raycaster picking, and
+**four procedural hero meshes** for the visually dominant components
+(Pi Pico U1, C2 submodule U2, Keystone 1022 battery holder BT1, MEM2075
+microSD slot U3). **The sourcing loop is closed** — open app → resolve
+build-critical items → Export CSV → upload to Digi-Key.
 **The web target ships** — `npm run build:web` produces a GitHub-Pages-ready
 `dist/` under `/open-book-builder/`. The Assembly tab still renders
 placeholder text.
@@ -77,26 +79,30 @@ placeholder text.
   unaffected.
 - **Board tab** renders the C1 outline as an extruded 1 mm PCB
   (85 × 115 mm rounded rectangle from Edge.Cuts, four mounting holes
-  punched through) with 27 component meshes extruded from their
-  footprint bboxes. Part-class heights come from
-  `footprint_heights.rs` (0.6 mm for 0805/1206 passives, 4.5 mm for
-  JST PH connectors, 12 mm for the AAA battery holder, etc.) so parts
-  don't all look like flat squares. Orbit-drag, scroll-zoom, and
-  click-to-select all work; the highlighted mesh gets a white emissive
-  tint and the right-hand detail panel shows position, footprint,
-  3D bbox, pad count, and the matching BOM line (MPN, function, unit
-  cost, Digi-Key PN, datasheet link). The top/bottom/both side filter
-  hides component meshes without touching the board. The C2 board
-  shows an explicit "lands in task #11" empty state.
+  punched through) with 27 component meshes — 4 procedural hero meshes
+  (U1 Pi Pico with castellations + USB-C housing + silkscreen label,
+  U2 C2 submodule as a green castellated board with IC rectangles,
+  BT1 Keystone 1022 as a plastic base with two AAA cylinders + gold
+  contact bumps, U3 MEM2075 as a polished-steel microSD housing with
+  visible slot) plus 23 extruded-bbox boxes for the passives and other
+  parts. Part-class heights come from `footprint_heights.rs` (0.6 mm
+  for 0805/1206 passives, 4.5 mm for JST PH connectors, 12 mm for the
+  AAA battery holder, etc.) so parts don't all look like flat squares.
+  Orbit-drag, scroll-zoom, and click-to-select all work; the highlighted
+  mesh gets a white emissive tint and the right-hand detail panel shows
+  position, footprint, 3D bbox, pad count, and the matching BOM line
+  (MPN, function, unit cost, Digi-Key PN, datasheet link). The
+  top/bottom/both side filter hides component meshes without touching
+  the board. The C2 board shows an explicit "lands in task #11" empty
+  state.
 
 **What's mocked:**
 
-- Hero meshes (task #10) — the Pi Pico, GDEW042T2 panel, Keystone 1022,
-  MEM2075 microSD, and C2 submodule all render as plain extruded boxes
-  until task #10 swaps in 5 hand-authored GLTFs.
 - Silkscreen textures on the board faces (task #13 polish) — faces are
   a solid slate color right now.
-- C2 castellated e-paper driver geometry (task #11, EAGLE parser).
+- C2 castellated e-paper driver geometry (task #11, EAGLE parser). The
+  GDEW042T2 display panel's hero mesh lives with that work since it
+  physically belongs to the C2 submodule face.
 
 See `Roadmap` below and the authoritative plan at
 `~/.claude/plans/melodic-tinkering-newt.md`.
@@ -182,6 +188,7 @@ open-book-builder/
 │   │   ├── use-discrepancy-resolution.ts  # Resolved-state wrapper, drives the banner
 │   │   ├── digikey-csv.ts                 # Pure Digi-Key BOM CSV builder + summary
 │   │   ├── exporter.ts                    # saveTextFile(): Tauri save-dialog vs web Blob
+│   │   ├── hero-meshes.ts                 # Procedural Three.js builders (Pico, C2 module, Keystone 1022, MEM2075)
 │   │   └── scene-renderer.ts              # Three.js scene — board extrude + per-component meshes
 │   └── components/
 │       ├── BoardView.tsx                  # Built. Two-pane layout: viewport + detail panel.
@@ -200,8 +207,7 @@ open-book-builder/
     │   ├── assembly.json             # 12 ordered build steps
     │   ├── bom-c1-main.csv           # copied from the-open-book/OSO-BOOK-C1/1-click-bom.csv
     │   ├── bom-c2-driver.csv         # copied from the-open-book/OSO-BOOK-C2-02 (PCBWay)
-    │   ├── OSO-BOOK-C1.kicad_pcb     # copied from the-open-book/OSO-BOOK-C1 (1.3 MB, KiCad 6)
-    │   └── hero-meshes/              # (reserved for 5 GLTFs, task #10)
+    │   └── OSO-BOOK-C1.kicad_pcb     # copied from the-open-book/OSO-BOOK-C1 (1.3 MB, KiCad 6)
     └── src/
         ├── main.rs                   # Dispatches --export-json vs Tauri run
         ├── lib.rs                    # load_board_dataset cmd + export_json_to_path
@@ -317,7 +323,7 @@ The 13-task build plan lives at
 - [x] **#7** Set up dual-target build — `scripts/bake-dataset.ts`, `npm run build:web` emits dist/ under `/open-book-builder/`
 - [x] **#8** Parse KiCad PCB and 2D preview — `lexpr` walker → 27 components + 4 holes + 40 edge segments; `BoardView.tsx` SVG
 - [x] **#9** Build 3D BoardViewport — Three.js extruded board (holes punched through), per-component extruded boxes with part-class heights, OrbitControls, raycaster click-select
-- [ ] **#10** Add hero meshes — 5 GLTFs (pi-pico, gdew042t2, keystone-1022, c2-module, mem2075)
+- [x] **#10** Add hero meshes — 4 procedural Three.js builders (pi-pico, c2-module, keystone-1022, mem2075); gdew042t2 deferred to #11 where it physically belongs
 - [ ] **#11** Parse EAGLE C2 driver module — `quick-xml` + serde structs
 - [ ] **#12** Build Assembly view — checklist + mini viewport with step-based highlighting
 - [ ] **#13** Polish — net coloring, keyboard shortcuts, About screen

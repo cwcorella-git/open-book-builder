@@ -24,7 +24,7 @@ use crate::types::{
     FootprintBbox, Hole, Pad, Side,
 };
 use lexpr::Value;
-use std::collections::HashSet;
+use std::collections::HashMap;
 use thiserror::Error;
 
 const PCB_SEXPR: &str = include_str!("../data/OSO-BOOK-C1.kicad_pcb");
@@ -54,10 +54,14 @@ pub fn load_c1_board(c1_bom: &[BomLine]) -> Result<BoardData, KiCadError> {
         )));
     }
 
-    let bom_refs: HashSet<&str> = c1_bom
+    // Ref → BomLine index so classify_footprint can pull per-MPN rendering
+    // hints (currently just `hero_mesh_id`; nets / pads-to-fn lookups land
+    // in task #13). Any ref that matches a BOM line is a keepable component;
+    // anything else is artwork / placeholder and gets dropped.
+    let bom_by_ref: HashMap<&str, &BomLine> = c1_bom
         .iter()
         .filter(|l| l.board == BoardId::C1Main)
-        .flat_map(|line| line.refs.iter().map(String::as_str))
+        .flat_map(|line| line.refs.iter().map(move |r| (r.as_str(), line)))
         .collect();
 
     let mut components = Vec::<Component>::new();
@@ -67,7 +71,7 @@ pub fn load_c1_board(c1_bom: &[BomLine]) -> Result<BoardData, KiCadError> {
     for child in positional(&root) {
         match head_symbol(child) {
             Some("footprint") => {
-                classify_footprint(child, &bom_refs, &mut components, &mut holes);
+                classify_footprint(child, &bom_by_ref, &mut components, &mut holes);
             }
             Some("gr_line") => {
                 if let Some(seg) = parse_edge_line(child) {
@@ -183,7 +187,7 @@ fn string_of(v: &Value) -> Option<&str> {
 
 fn classify_footprint<'a>(
     fp: &'a Value,
-    bom_refs: &HashSet<&str>,
+    bom_by_ref: &HashMap<&str, &BomLine>,
     components: &mut Vec<Component>,
     holes: &mut Vec<Hole>,
 ) {
@@ -212,9 +216,9 @@ fn classify_footprint<'a>(
     }
 
     // Artwork placeholders (`REF**`, `G***`) won't match a BOM ref — drop them.
-    if !bom_refs.contains(ref_name.as_str()) {
+    let Some(bom_line) = bom_by_ref.get(ref_name.as_str()) else {
         return;
-    }
+    };
 
     let pads: Vec<Pad> = find_all_tagged(fp, "pad")
         .into_iter()
@@ -232,7 +236,7 @@ fn classify_footprint<'a>(
         footprint: fp_name.to_string(),
         footprint_bbox,
         pads,
-        hero_mesh_id: None,
+        hero_mesh_id: bom_line.hero_mesh_id.clone(),
         board: BoardId::C1Main,
     });
 }

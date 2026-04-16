@@ -28,7 +28,6 @@ struct ComponentFunction {
     #[serde(default)]
     unit_cost_usd: Option<f64>,
     #[serde(default)]
-    #[allow(dead_code)] // hero_mesh_id is merged into Component, not BomLine
     hero_mesh_id: Option<String>,
     #[serde(default)]
     #[allow(dead_code)]
@@ -120,6 +119,7 @@ fn apply_lookup(line: &mut BomLine, lookup: &HashMap<String, ComponentFunction>)
         line.function = cf.function.clone();
         line.datasheet_url = cf.datasheet_url.clone();
         line.unit_cost_usd = cf.unit_cost_usd;
+        line.hero_mesh_id = cf.hero_mesh_id.clone();
     } else {
         // Fall back to the CSV description so the column is never empty.
         line.function = line.description.clone();
@@ -149,6 +149,7 @@ fn parse_c1(lookup: &HashMap<String, ComponentFunction>) -> Result<Vec<BomLine>,
             footprint: None,
             function: String::new(),
             datasheet_url: None,
+            hero_mesh_id: None,
             board: BoardId::C1Main,
         };
         apply_lookup(&mut line, lookup);
@@ -180,6 +181,7 @@ fn parse_c2(lookup: &HashMap<String, ComponentFunction>) -> Result<Vec<BomLine>,
             footprint: normalize_optional(row.footprint),
             function: String::new(),
             datasheet_url: None,
+            hero_mesh_id: None,
             board: BoardId::C2Driver,
         };
         apply_lookup(&mut line, lookup);
