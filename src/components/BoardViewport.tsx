@@ -16,6 +16,14 @@ interface BoardViewportProps {
   sideFilter: SideFilter;
   selectedRef: string | null;
   onSelect: (ref: string | null) => void;
+  /**
+   * Optional set of component refs to multi-highlight (Assembly view).
+   * Non-null + non-empty dims everything else; null / empty reverts to the
+   * normal board rendering. Identity doesn't need to be stable — the
+   * scene-renderer dedupes + sorts into a key internally and no-ops when
+   * unchanged.
+   */
+  highlightedRefs?: ReadonlyArray<string> | null;
 }
 
 export function BoardViewport({
@@ -23,18 +31,26 @@ export function BoardViewport({
   sideFilter,
   selectedRef,
   onSelect,
+  highlightedRefs,
 }: BoardViewportProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<SceneState | null>(null);
 
   // Full re-init when the underlying board topology changes. Pull in the
-  // current sideFilter/selectedRef as *initial* values so the scene renders
-  // them on first paint; subsequent changes route through the other effects.
+  // current sideFilter/selectedRef/highlightedRefs as *initial* values so the
+  // scene renders them on first paint; subsequent changes route through the
+  // other effects.
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    const state = initScene(container, boardData, sideFilter, selectedRef);
+    const state = initScene(
+      container,
+      boardData,
+      sideFilter,
+      selectedRef,
+      highlightedRefs ?? null,
+    );
     state.onSelect = onSelect;
     sceneRef.current = state;
 
@@ -47,7 +63,7 @@ export function BoardViewport({
       if (canvas) container.removeChild(canvas);
     };
     // boardData is the only structural dep. sideFilter / selectedRef /
-    // onSelect are wired through live-update effects below.
+    // onSelect / highlightedRefs wire through live-update effects below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [boardData]);
 
@@ -63,6 +79,10 @@ export function BoardViewport({
   useEffect(() => {
     sceneRef.current?.setSelectedRef(selectedRef);
   }, [selectedRef]);
+
+  useEffect(() => {
+    sceneRef.current?.setHighlightedRefs(highlightedRefs ?? null);
+  }, [highlightedRefs]);
 
   return (
     <div

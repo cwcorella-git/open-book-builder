@@ -3,6 +3,7 @@ import { DatasetProvider, useDatasetStatus } from './lib/dataset-context';
 import { useDiscrepancyResolution } from './lib/use-discrepancy-resolution';
 import { BoardView } from './components/BoardView';
 import { BomView } from './components/BomView';
+import { AssemblyView } from './components/AssemblyView';
 import { DiscrepancyView } from './components/DiscrepancyView';
 import { DiscrepancyBanner } from './components/DiscrepancyBanner';
 
@@ -80,7 +81,7 @@ function TabContent({ tab }: { tab: Tab }) {
   switch (tab) {
     case 'board': return <BoardView />;
     case 'bom': return <BomView />;
-    case 'assembly': return <Placeholder text="Assembly checklist lands in task #12." />;
+    case 'assembly': return <AssemblyView />;
     case 'discrepancies': return <DiscrepancyView />;
   }
 }

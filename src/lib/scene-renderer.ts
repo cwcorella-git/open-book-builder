@@ -34,6 +34,15 @@ export interface SceneState {
   dispose(): void;
   setSideFilter(filter: SideFilter): void;
   setSelectedRef(ref: string | null): void;
+  /**
+   * Drive the Assembly-view multi-highlight. Passing a non-empty ref list
+   * dims every other component to `DIM_OPACITY` and emissive-tints the
+   * listed refs at `HIGHLIGHT_INTENSITY_MULTI`. `null` or `[]` reverts
+   * everything. See also `applySelection` — the two paths share the
+   * primaryMaterial.emissive channel, but in practice each SceneState only
+   * drives one (Board tab → click selection; Assembly tab → step refs).
+   */
+  setHighlightedRefs(refs: ReadonlyArray<string> | null): void;
   onSelect: ((ref: string | null) => void) | null;
 }
 
@@ -42,6 +51,11 @@ const BOARD_COLOR = 0x1e293b;
 const TOP_COLOR = 0xf59e0b;
 const BOTTOM_COLOR = 0x38bdf8;
 const HIGHLIGHT_EMISSIVE = 0xf8fafc;
+// Dimmer than the click-selection 0.5 so when an Assembly step is being
+// viewed, the multi-highlight reads as "grouped" rather than "picked".
+const HIGHLIGHT_INTENSITY_MULTI = 0.35;
+const HIGHLIGHT_INTENSITY_SELECTION = 0.5;
+const DIM_OPACITY = 0.25;
 const BACKGROUND_COLOR = 0x0b1220;
 
 const ARC_SEGMENTS = 16;
@@ -52,6 +66,7 @@ export function initScene(
   boardData: BoardData,
   initialSideFilter: SideFilter,
   initialSelectedRef: string | null,
+  initialHighlightedRefs: ReadonlyArray<string> | null = null,
 ): SceneState {
   // Defensive pre-clear: React StrictMode double-mounts us in dev, and any
   // prior init that threw may have left an orphaned canvas behind.
@@ -145,6 +160,11 @@ export function initScene(
     side: Side;
     root: THREE.Object3D;
     primaryMaterial: THREE.MeshStandardMaterial;
+    // Every MeshStandardMaterial on this component's mesh tree. For boxes
+    // that's just [primaryMaterial]; for hero meshes it's body + castellations
+    // + USB + any other extruded parts. MeshBasicMaterial labels are excluded
+    // on purpose — they ride alpha textures that dimming via opacity mangles.
+    allMaterials: THREE.MeshStandardMaterial[];
   }
   const componentEntries: ComponentEntry[] = [];
 
@@ -154,11 +174,15 @@ export function initScene(
       : buildBoxEntry(c, widthMm, heightMm);
     if (!entry) continue;
     scene.add(entry.root);
+    const standardMats = entry.materials.filter(
+      (m): m is THREE.MeshStandardMaterial => m instanceof THREE.MeshStandardMaterial,
+    );
     componentEntries.push({
       ref: c.ref,
       side: c.side,
       root: entry.root,
       primaryMaterial: entry.primaryMaterial,
+      allMaterials: standardMats,
     });
     for (const g of entry.geometries) ownedGeometries.add(g);
     for (const m of entry.materials) ownedMaterials.add(m);
@@ -168,6 +192,14 @@ export function initScene(
   // --- Selection + side filter ---------------------------------------------
 
   let currentlySelected: ComponentEntry | null = null;
+
+  // Multi-highlight state (Assembly view). `highlightedRefKey` is a stable
+  // sorted "|"-joined string so repeated calls with equivalent arrays
+  // short-circuit. `originalOpacities` lazily captures each material's
+  // authored opacity on first dim so revert restores the real value rather
+  // than hard-coding 1.0.
+  let highlightedRefKey: string | null = null;
+  const originalOpacities = new WeakMap<THREE.MeshStandardMaterial, number>();
 
   const applySideFilter = (filter: SideFilter) => {
     for (const e of componentEntries) {
@@ -184,14 +216,76 @@ export function initScene(
       const entry = componentEntries.find((e) => e.ref === ref);
       if (entry) {
         entry.primaryMaterial.emissive.setHex(HIGHLIGHT_EMISSIVE);
-        entry.primaryMaterial.emissiveIntensity = 0.5;
+        entry.primaryMaterial.emissiveIntensity = HIGHLIGHT_INTENSITY_SELECTION;
         currentlySelected = entry;
+      }
+    }
+  };
+
+  const applyHighlightedRefs = (refs: ReadonlyArray<string> | null) => {
+    // Normalize: null/empty → "clear"; otherwise dedupe + sort to a stable
+    // key so callers that pass a new array identity each render don't re-run
+    // the GPU work.
+    const cleared = refs == null || refs.length === 0;
+    const key = cleared ? null : [...new Set(refs)].sort().join('|');
+    if (key === highlightedRefKey) return;
+    highlightedRefKey = key;
+
+    if (cleared) {
+      // Revert every captured material to its authored opacity + clear
+      // emissive (except whatever `applySelection` is currently holding).
+      for (const entry of componentEntries) {
+        for (const m of entry.allMaterials) {
+          const original = originalOpacities.get(m);
+          if (original !== undefined) {
+            m.opacity = original;
+            m.transparent = original < 1;
+          }
+        }
+        if (entry !== currentlySelected) {
+          entry.primaryMaterial.emissive.setHex(0x000000);
+        }
+      }
+      return;
+    }
+
+    const refSet = new Set(refs);
+    for (const entry of componentEntries) {
+      // Capture original opacity once per material.
+      for (const m of entry.allMaterials) {
+        if (!originalOpacities.has(m)) originalOpacities.set(m, m.opacity);
+      }
+
+      if (refSet.has(entry.ref)) {
+        // In-group: restore full opacity + emissive tint at multi-intensity.
+        for (const m of entry.allMaterials) {
+          const original = originalOpacities.get(m) ?? 1;
+          m.opacity = original;
+          m.transparent = original < 1;
+        }
+        // Selection (intensity 0.5) wins over multi-highlight (0.35) when
+        // both apply to the same ref — don't step on it.
+        if (entry !== currentlySelected) {
+          entry.primaryMaterial.emissive.setHex(HIGHLIGHT_EMISSIVE);
+          entry.primaryMaterial.emissiveIntensity = HIGHLIGHT_INTENSITY_MULTI;
+        }
+      } else {
+        // Out-of-group: dim to DIM_OPACITY. Clear emissive except on the
+        // currently selected entry.
+        for (const m of entry.allMaterials) {
+          m.opacity = DIM_OPACITY;
+          m.transparent = true;
+        }
+        if (entry !== currentlySelected) {
+          entry.primaryMaterial.emissive.setHex(0x000000);
+        }
       }
     }
   };
 
   applySideFilter(initialSideFilter);
   applySelection(initialSelectedRef);
+  applyHighlightedRefs(initialHighlightedRefs);
 
   // --- Click-to-select -----------------------------------------------------
   //
@@ -262,6 +356,7 @@ export function initScene(
     onSelect: null,
     setSideFilter: applySideFilter,
     setSelectedRef: applySelection,
+    setHighlightedRefs: applyHighlightedRefs,
     dispose: () => {
       cancelAnimationFrame(animFrameId);
       resizeObserver.disconnect();

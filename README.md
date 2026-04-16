@@ -52,15 +52,16 @@ microSD slot U3, **and the GDEW042T2 e-paper panel on C2**). **The
 sourcing loop is closed** — open app → resolve build-critical items →
 Export CSV → upload to Digi-Key. **The web target is live** at
 [cwcorella-git.github.io/open-book-builder](https://cwcorella-git.github.io/open-book-builder/),
-auto-deployed on push via `.github/workflows/deploy.yml`. The Assembly
-tab still renders placeholder text.
+auto-deployed on push via `.github/workflows/deploy.yml`. The **Assembly
+tab** now renders the 12 ordered build steps with a linked mini 3D
+viewport that highlights each step's components while dimming the rest.
 
 **What works today:**
 
 - `cargo build` + `./open-book-builder --export-json <path>` produces a
   complete, well-typed `BoardDataset` JSON.
-- `npm run tauri dev` opens the desktop window. **BOM** tab and
-  **Discrepancies** tab are fully functional.
+- `npm run tauri dev` opens the desktop window. **BOM**,
+  **Discrepancies**, and **Assembly** tabs are fully functional.
 - On first boot, the red banner surfaces the two PCBWay build-critical
   issues (thickness and leaded HASL). Flipping their Resolved toggles
   persists across reloads via `localStorage['obb.resolvedDiscrepancies']`.
@@ -96,6 +97,20 @@ tab still renders placeholder text.
   (MPN, function, unit cost, Digi-Key PN, datasheet link). The
   top/bottom/both side filter hides component meshes without touching
   the board.
+- **Assembly tab** renders the 12 authored build steps (ordered 10-120,
+  spanning `modules` → `smd-passives` → `smd-ics` → `smd-mechanical` →
+  `tht` → `mechanical` → `flash-firmware`) as a scrolling checklist with
+  phase-colored pills and ~time-remaining. Clicking a step expands it
+  inline (description, component-ref chips, tools, notes) and drives a
+  380 × 320 px mini 3D viewport in the right sidebar: the step's
+  `componentRefs` get an emissive multi-highlight tint while every other
+  component dims to 25% opacity, so "the 7 passives in this step" reads
+  visually without counting. 3 steps without PCB components
+  (`order-pcbs`, `attach-display`, `assemble-enclosure`) render the
+  viewport undimmed. Checkboxes persist across reloads via
+  `localStorage['obb.assemblyStepProgress']`; the active step
+  auto-advances to the first uncompleted one on mount. "Hide completed"
+  toggle filters the list without losing the underlying state.
 - **C2 driver tab** renders the EAGLE-parsed 17.27 × 23.88 mm castellated
   submodule (4 Layer-20 outline wires + 3 mounting holes) with 17
   BOM-mirror-flagged components on the bottom face (9 × 0805 caps,
@@ -207,6 +222,7 @@ open-book-builder/
 │   │   ├── dataset-context.tsx            # React context + useDataset() hook
 │   │   ├── use-persisted-state.ts         # Generic localStorage-backed useState
 │   │   ├── use-discrepancy-resolution.ts  # Resolved-state wrapper, drives the banner
+│   │   ├── use-assembly-progress.ts        # Assembly checkbox state + progress aggregates
 │   │   ├── digikey-csv.ts                 # Pure Digi-Key BOM CSV builder + summary
 │   │   ├── exporter.ts                    # saveTextFile(): Tauri save-dialog vs web Blob
 │   │   ├── hero-meshes.ts                 # Procedural Three.js builders (Pico, C2 module, Keystone 1022, MEM2075, GDEW042T2)
@@ -215,6 +231,7 @@ open-book-builder/
 │       ├── BoardView.tsx                  # Built. Two-pane layout: viewport + detail panel.
 │       ├── BoardViewport.tsx              # Built. React wrapper around scene-renderer.
 │       ├── BomView.tsx                    # Built. Two-pane table + detail panel + CSV export.
+│       ├── AssemblyView.tsx               # Built. Step checklist + mini viewport with multi-highlight.
 │       ├── DiscrepancyView.tsx            # Built. Severity-grouped cards, Resolved toggle.
 │       └── DiscrepancyBanner.tsx          # Built. Red header bar; hidden when 0 unresolved.
 │
@@ -369,7 +386,7 @@ The 13-task build plan lives at
 - [x] **#9** Build 3D BoardViewport — Three.js extruded board (holes punched through), per-component extruded boxes with part-class heights, OrbitControls, raycaster click-select
 - [x] **#10** Add hero meshes — 4 procedural Three.js builders (pi-pico, c2-module, keystone-1022, mem2075); gdew042t2 deferred to #11 where it physically belongs
 - [x] **#11** Parse EAGLE C2 driver module — `quick-xml` manual Reader event loop → 17 components (all MR*-mirrored → bottom), 3 holes, 4 outline wires, 21 nets + synthesized `Display` component with `gdew042t2` procedural hero mesh (bezel + white screen + FFC stub + corner label)
-- [ ] **#12** Build Assembly view — checklist + mini viewport with step-based highlighting
+- [x] **#12** Build Assembly view — checklist + mini viewport with step-based highlighting
 - [ ] **#13** Polish — net coloring, keyboard shortcuts, About screen
 
 Steps 1–7 give a shipable tool (BOM + discrepancies + sourcing + web share)
