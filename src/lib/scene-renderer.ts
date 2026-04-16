@@ -1,0 +1,455 @@
+// Three.js scene for the Board tab. `initScene()` builds a renderer + scene
+// from a `BoardData` and returns a `SceneState` the React wrapper can drive
+// imperatively (side filter, selection highlight) without re-initializing
+// the WebGL context. Dispose idiom mirrors
+// /home/user/Projects/dodec-mapper/src/lib/scene-renderer.ts:337-344 and
+// tracks every BufferGeometry/Material we create for teardown.
+//
+// Coordinate conventions (also documented in the task #9 plan section):
+// - Board sits in the X–Z plane; +Y is up (out of the top copper face).
+// - Board thickness is BOARD_THICKNESS mm; top face at y = BOARD_THICKNESS.
+// - KiCad origin is top-left with Y growing down. We map:
+//     three_x = x_kicad - widthMm/2
+//     three_z = y_kicad - heightMm/2
+//   so the board is centered on the origin and a smaller KiCad Y (top edge
+//   of the board as drawn in KiCad) lands at a more-negative Z, which is
+//   screen-up with `camera.up = (0, 0, -1)` and the overhead camera.
+// - Component rotation: KiCad's positive rotation is CCW viewed from above
+//   the top face (+Y here). CCW around +Y in Three.js takes +X → -Z, which
+//   matches KiCad's +X → +Y_kicad = +Z_three, so we negate:
+//     mesh.rotation.y = -degToRad(c.rotation)
+// - The board outline's THREE.Shape is built in its own XY plane with Y
+//   flipped (`shape_y = heightMm/2 - y_kicad`) so that after rotating the
+//   extrude geometry by -π/2 around X the shape-Y axis lines up with -Z and
+//   everything ends up oriented the same as the direct-placement components.
+
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import type { BoardData, EdgeSegment, Hole, Side } from './types';
+
+export type SideFilter = 'both' | 'top' | 'bottom';
+
+export interface SceneState {
+  dispose(): void;
+  setSideFilter(filter: SideFilter): void;
+  setSelectedRef(ref: string | null): void;
+  onSelect: ((ref: string | null) => void) | null;
+}
+
+const BOARD_THICKNESS_MM = 1.0;
+const BOARD_COLOR = 0x1e293b;
+const TOP_COLOR = 0xf59e0b;
+const BOTTOM_COLOR = 0x38bdf8;
+const HIGHLIGHT_EMISSIVE = 0xf8fafc;
+const BACKGROUND_COLOR = 0x0b1220;
+
+const ARC_SEGMENTS = 16;
+const CLICK_DRAG_THRESHOLD_PX = 4;
+
+export function initScene(
+  container: HTMLElement,
+  boardData: BoardData,
+  initialSideFilter: SideFilter,
+  initialSelectedRef: string | null,
+): SceneState {
+  // Defensive pre-clear: React StrictMode double-mounts us in dev, and any
+  // prior init that threw may have left an orphaned canvas behind.
+  while (container.firstChild) container.removeChild(container.firstChild);
+
+  const { widthMm, heightMm, edgeSegments, holes } = boardData.outline;
+
+  // --- Renderer + camera + controls ----------------------------------------
+
+  const cw = Math.max(container.clientWidth, 1);
+  const ch = Math.max(container.clientHeight, 1);
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(BACKGROUND_COLOR);
+
+  const camera = new THREE.PerspectiveCamera(45, cw / ch, 0.1, 1000);
+  camera.position.set(0, 150, 0);
+  camera.up.set(0, 0, -1);
+  camera.lookAt(0, 0, 0);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(window.devicePixelRatio);
+  // `false` keeps the flex-sized canvas style intact — Three.js otherwise
+  // overwrites width/height styles on the DOM element.
+  renderer.setSize(cw, ch, false);
+  container.appendChild(renderer.domElement);
+
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.1;
+  controls.minDistance = 20;
+  controls.maxDistance = 400;
+  controls.target.set(0, 0, 0);
+
+  // --- Lighting ------------------------------------------------------------
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+  const directional = new THREE.DirectionalLight(0xffffff, 0.8);
+  directional.position.set(50, 200, 50);
+  scene.add(directional);
+
+  // --- Ownership tracking --------------------------------------------------
+  //
+  // Shared palette + lights are page-lifetime; anything we `new` per board
+  // (geometries, cloned materials) must dispose with the state.
+
+  const ownedGeometries = new Set<THREE.BufferGeometry>();
+  const ownedMaterials = new Set<THREE.Material>();
+
+  // --- Board mesh ----------------------------------------------------------
+
+  const boardShape = buildBoardShape(edgeSegments, holes, widthMm, heightMm);
+  if (boardShape) {
+    const boardGeom = new THREE.ExtrudeGeometry(boardShape, {
+      depth: BOARD_THICKNESS_MM,
+      bevelEnabled: false,
+    });
+    // Rotate so the extrude axis (+Z in shape space) points +Y in world,
+    // and shape-Y lines up with -Z so KiCad top-of-board sits at screen-up.
+    boardGeom.rotateX(-Math.PI / 2);
+    const boardMat = new THREE.MeshStandardMaterial({
+      color: BOARD_COLOR,
+      flatShading: true,
+    });
+    const boardMesh = new THREE.Mesh(boardGeom, boardMat);
+    scene.add(boardMesh);
+    ownedGeometries.add(boardGeom);
+    ownedMaterials.add(boardMat);
+  }
+
+  // --- Component meshes ----------------------------------------------------
+
+  const componentMeshes: THREE.Mesh[] = [];
+  for (const c of boardData.components) {
+    // Floor the footprint extents so a degenerate (single-pad) bbox is still
+    // visible at board scale; most real footprints clear this floor easily.
+    const w = Math.max(c.footprintBbox.width, 0.5);
+    const h = Math.max(c.footprintBbox.height, 0.5);
+    const h3d = Math.max(c.footprintBbox.height3d, 0.3);
+    const color = c.side === 'top' ? TOP_COLOR : BOTTOM_COLOR;
+
+    const geom = new THREE.BoxGeometry(w, h3d, h);
+    // Each component gets its own material so toggling emissive highlight
+    // on the selected one doesn't bleed onto siblings that share a class.
+    const mat = new THREE.MeshStandardMaterial({ color, flatShading: true });
+    const mesh = new THREE.Mesh(geom, mat);
+    mesh.position.set(
+      c.x - widthMm / 2,
+      c.side === 'top' ? BOARD_THICKNESS_MM + h3d / 2 : -h3d / 2,
+      c.y - heightMm / 2,
+    );
+    mesh.rotation.y = -degToRad(c.rotation);
+    mesh.userData = { ref: c.ref, side: c.side };
+    scene.add(mesh);
+    componentMeshes.push(mesh);
+    ownedGeometries.add(geom);
+    ownedMaterials.add(mat);
+  }
+
+  // --- Selection + side filter ---------------------------------------------
+
+  let currentlySelected: THREE.Mesh | null = null;
+
+  const applySideFilter = (filter: SideFilter) => {
+    for (const m of componentMeshes) {
+      if (filter === 'both') m.visible = true;
+      else m.visible = (m.userData as { side: Side }).side === filter;
+    }
+  };
+
+  const applySelection = (ref: string | null) => {
+    if (currentlySelected) {
+      const mat = currentlySelected.material as THREE.MeshStandardMaterial;
+      mat.emissive.setHex(0x000000);
+      currentlySelected = null;
+    }
+    if (ref) {
+      const mesh = componentMeshes.find((m) => m.userData.ref === ref);
+      if (mesh) {
+        const mat = mesh.material as THREE.MeshStandardMaterial;
+        mat.emissive.setHex(HIGHLIGHT_EMISSIVE);
+        mat.emissiveIntensity = 0.5;
+        currentlySelected = mesh;
+      }
+    }
+  };
+
+  applySideFilter(initialSideFilter);
+  applySelection(initialSelectedRef);
+
+  // --- Click-to-select -----------------------------------------------------
+  //
+  // OrbitControls consumes drag events but still lets `click` fire at the
+  // end of a rotation. Track pointerdown/up and only treat as a pick if the
+  // pointer barely moved — otherwise camera rotation would keep clearing
+  // the selection.
+
+  const raycaster = new THREE.Raycaster();
+  const pointer = new THREE.Vector2();
+  let pointerDownAt: { x: number; y: number } | null = null;
+
+  const onPointerDown = (e: PointerEvent) => {
+    pointerDownAt = { x: e.clientX, y: e.clientY };
+  };
+
+  const onPointerUp = (e: PointerEvent) => {
+    const down = pointerDownAt;
+    pointerDownAt = null;
+    if (!down) return;
+    if (Math.hypot(e.clientX - down.x, e.clientY - down.y) > CLICK_DRAG_THRESHOLD_PX) {
+      return;
+    }
+    const rect = renderer.domElement.getBoundingClientRect();
+    pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(pointer, camera);
+    const hits = raycaster.intersectObjects(componentMeshes, false);
+    const ref = hits.length > 0 ? (hits[0].object.userData.ref as string) : null;
+    state.onSelect?.(ref);
+  };
+
+  renderer.domElement.addEventListener('pointerdown', onPointerDown);
+  renderer.domElement.addEventListener('pointerup', onPointerUp);
+
+  // --- Resize --------------------------------------------------------------
+  //
+  // ResizeObserver on the container, not window. The detail panel reflows
+  // when selection changes, which triggers a flex resize that `resize` on
+  // `window` would miss.
+
+  const resizeObserver = new ResizeObserver(() => {
+    const w = Math.max(container.clientWidth, 1);
+    const h = Math.max(container.clientHeight, 1);
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  });
+  resizeObserver.observe(container);
+
+  // --- Animation loop ------------------------------------------------------
+
+  let animFrameId = 0;
+  const animate = () => {
+    animFrameId = requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+  };
+  animate();
+
+  // --- State + dispose -----------------------------------------------------
+
+  const state: SceneState = {
+    onSelect: null,
+    setSideFilter: applySideFilter,
+    setSelectedRef: applySelection,
+    dispose: () => {
+      cancelAnimationFrame(animFrameId);
+      resizeObserver.disconnect();
+      renderer.domElement.removeEventListener('pointerdown', onPointerDown);
+      renderer.domElement.removeEventListener('pointerup', onPointerUp);
+      for (const g of ownedGeometries) g.dispose();
+      for (const m of ownedMaterials) m.dispose();
+      controls.dispose();
+      renderer.dispose();
+    },
+  };
+
+  return state;
+}
+
+// ---------------------------------------------------------------------------
+// Board outline → THREE.Shape
+//
+// Edge.Cuts arrive as a bag of line + arc segments in arbitrary order.
+// Tessellate arcs to 16-segment polylines (chord error ≈ 0.03 mm at the
+// typical 3 mm corner radius — imperceptible), greedy-chain them into rings,
+// pick the longest ring as the outer boundary, and add mounting holes as
+// inner paths with opposite winding.
+
+function buildBoardShape(
+  segments: EdgeSegment[],
+  holes: Hole[],
+  widthMm: number,
+  heightMm: number,
+): THREE.Shape | null {
+  if (segments.length === 0) return null;
+
+  const polylines: [number, number][][] = segments.map((seg) => {
+    if (seg.kind === 'arc' && seg.points.length === 3) {
+      return tessellateArc(
+        seg.points[0] as [number, number],
+        seg.points[1] as [number, number],
+        seg.points[2] as [number, number],
+        ARC_SEGMENTS,
+      );
+    }
+    return seg.points.map(([x, y]) => [x, y]) as [number, number][];
+  });
+
+  const rings = chainPolylines(polylines);
+  if (rings.length === 0) return null;
+
+  // Longest ring wins as the outer boundary. In practice KiCad edges form
+  // exactly one ring for the C1; anything else is a bug we want to see.
+  rings.sort((a, b) => b.length - a.length);
+  const outerKicad = rings[0];
+
+  // Transform into shape coordinates — flip Y so KiCad's Y-down matches our
+  // rendered orientation after the later -π/2 rotation around X.
+  const outer: [number, number][] = outerKicad.map(([x, y]) => [
+    x - widthMm / 2,
+    heightMm / 2 - y,
+  ]);
+
+  // THREE.Shape expects a CCW outer ring (in its own 2D frame). Flip if the
+  // greedy chain walked the other way.
+  if (signedArea(outer) < 0) outer.reverse();
+
+  const shape = new THREE.Shape();
+  shape.moveTo(outer[0][0], outer[0][1]);
+  for (let i = 1; i < outer.length; i++) {
+    shape.lineTo(outer[i][0], outer[i][1]);
+  }
+
+  for (const hole of holes) {
+    const cx = hole.x - widthMm / 2;
+    const cy = heightMm / 2 - hole.y;
+    const r = hole.diameter / 2;
+    const path = new THREE.Path();
+    // `clockwise = true` gives us an inner hole with opposite winding to
+    // the CCW outer ring — ExtrudeGeometry punches through cleanly.
+    path.absarc(cx, cy, r, 0, Math.PI * 2, true);
+    shape.holes.push(path);
+  }
+
+  return shape;
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+
+function degToRad(deg: number): number {
+  return (deg * Math.PI) / 180;
+}
+
+/**
+ * Tessellate a KiCad three-point arc (start, mid, end) into a polyline of
+ * `segments + 1` points along the circumcircle, preserving the side of the
+ * arc the `mid` point marks. Falls back to a straight line if the three
+ * points are collinear.
+ */
+function tessellateArc(
+  start: [number, number],
+  mid: [number, number],
+  end: [number, number],
+  segments: number,
+): [number, number][] {
+  const [ax, ay] = start;
+  const [bx, by] = mid;
+  const [cx, cy] = end;
+
+  const d = 2 * (ax * (by - cy) + bx * (cy - ay) + cx * (ay - by));
+  if (Math.abs(d) < 1e-9) {
+    return [start, end];
+  }
+  const a2 = ax * ax + ay * ay;
+  const b2 = bx * bx + by * by;
+  const c2 = cx * cx + cy * cy;
+  const ox = (a2 * (by - cy) + b2 * (cy - ay) + c2 * (ay - by)) / d;
+  const oy = (a2 * (cx - bx) + b2 * (ax - cx) + c2 * (bx - ax)) / d;
+  const r = Math.hypot(ax - ox, ay - oy);
+
+  const startAng = Math.atan2(ay - oy, ax - ox);
+  const midAng = Math.atan2(by - oy, bx - ox);
+  const endAng = Math.atan2(cy - oy, cx - ox);
+
+  // Normalize angles relative to startAng in the [0, 2π) range walking CCW.
+  const norm = (a: number): number => {
+    let x = a - startAng;
+    while (x < 0) x += Math.PI * 2;
+    while (x >= Math.PI * 2) x -= Math.PI * 2;
+    return x;
+  };
+  const midRel = norm(midAng);
+  const endRel = norm(endAng);
+  // If mid comes before end walking CCW from start, we're sweeping CCW.
+  // Otherwise we need the negative sweep (CW short arc).
+  const sweep = midRel < endRel ? endRel : endRel - Math.PI * 2;
+
+  const points: [number, number][] = [];
+  for (let i = 0; i <= segments; i++) {
+    const t = i / segments;
+    const a = startAng + sweep * t;
+    points.push([ox + r * Math.cos(a), oy + r * Math.sin(a)]);
+  }
+  return points;
+}
+
+/**
+ * Greedy-chain a set of polylines into rings by matching endpoints.
+ * Same algorithm as the old SVG outline builder; fresh implementation in
+ * point-array form. Stragglers that don't close are returned as-is — the
+ * caller picks the largest ring.
+ */
+function chainPolylines(polylines: [number, number][][]): [number, number][][] {
+  const eps = 1e-3;
+  const pointsEqual = (a: [number, number], b: [number, number]) =>
+    Math.abs(a[0] - b[0]) < eps && Math.abs(a[1] - b[1]) < eps;
+
+  const remaining = polylines.map((p) => p.slice() as [number, number][]);
+  const consumed = new Array(remaining.length).fill(false);
+  const rings: [number, number][][] = [];
+
+  for (;;) {
+    const startIdx = consumed.findIndex((c) => !c);
+    if (startIdx === -1) break;
+    consumed[startIdx] = true;
+    const chain: [number, number][] = remaining[startIdx].slice();
+
+    let extended = true;
+    while (extended) {
+      extended = false;
+      for (let i = 0; i < remaining.length; i++) {
+        if (consumed[i]) continue;
+        const seg = remaining[i];
+        const head = chain[chain.length - 1];
+        const tail = chain[0];
+        if (pointsEqual(head, seg[0])) {
+          for (let j = 1; j < seg.length; j++) chain.push(seg[j]);
+          consumed[i] = true;
+          extended = true;
+        } else if (pointsEqual(head, seg[seg.length - 1])) {
+          for (let j = seg.length - 2; j >= 0; j--) chain.push(seg[j]);
+          consumed[i] = true;
+          extended = true;
+        } else if (pointsEqual(tail, seg[seg.length - 1])) {
+          for (let j = seg.length - 2; j >= 0; j--) chain.unshift(seg[j]);
+          consumed[i] = true;
+          extended = true;
+        } else if (pointsEqual(tail, seg[0])) {
+          for (let j = 1; j < seg.length; j++) chain.unshift(seg[j]);
+          consumed[i] = true;
+          extended = true;
+        }
+      }
+    }
+
+    rings.push(chain);
+  }
+  return rings;
+}
+
+/** Standard shoelace formula. Positive = CCW in standard math orientation. */
+function signedArea(points: [number, number][]): number {
+  let sum = 0;
+  for (let i = 0; i < points.length; i++) {
+    const [x1, y1] = points[i];
+    const [x2, y2] = points[(i + 1) % points.length];
+    sum += x1 * y2 - x2 * y1;
+  }
+  return sum / 2;
+}

@@ -220,7 +220,7 @@ fn classify_footprint<'a>(
         .into_iter()
         .filter_map(parse_pad)
         .collect();
-    let footprint_bbox = bbox_from_pads(&pads);
+    let footprint_bbox = bbox_from_pads(&pads, fp_name);
 
     components.push(Component {
         ref_: ref_name.clone(),
@@ -315,13 +315,14 @@ fn map_pad_shape(s: &str) -> String {
 }
 
 /// Axis-aligned bbox over pad footprints (ignoring per-pad rotation — good
-/// enough for a 2D overview and as a stepping-stone to task #9's extrusion).
-fn bbox_from_pads(pads: &[Pad]) -> FootprintBbox {
+/// enough for a 2D overview and the task #9 3D extrusion).
+fn bbox_from_pads(pads: &[Pad], fp_name: &str) -> FootprintBbox {
+    let height3d = crate::footprint_heights::height3d_for(fp_name);
     if pads.is_empty() {
         return FootprintBbox {
             width: 1.0,
             height: 1.0,
-            height3d: 1.0,
+            height3d,
         };
     }
     let (mut minx, mut miny) = (f32::INFINITY, f32::INFINITY);
@@ -337,9 +338,7 @@ fn bbox_from_pads(pads: &[Pad]) -> FootprintBbox {
     FootprintBbox {
         width: (maxx - minx).max(0.5),
         height: (maxy - miny).max(0.5),
-        // Task #9 owns the footprint → extrusion-height lookup table. Stub
-        // at 1 mm for now so 3D doesn't render everything flat-zero.
-        height3d: 1.0,
+        height3d,
     }
 }
 

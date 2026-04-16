@@ -37,16 +37,17 @@ that shows:
 
 ## Current status
 
-Tasks #1–#8 of the build plan are complete. The backend parses both BOM
+Tasks #1–#9 of the build plan are complete. The backend parses both BOM
 CSVs + the C1 `.kicad_pcb` and merges everything with hand-authored per-MPN
 metadata; the React shell renders the BOM view (build-qty multiplier,
 optional-line toggle, cost footer, **Digi-Key CSV export button**), the
 Discrepancy view (severity-colored cards, localStorage-persisted Resolved
 toggle, red header banner for unresolved build-critical items), and a
-**2D SVG preview of the C1 main board** with click-to-select and a
-top/bottom/both side filter. **The sourcing loop is closed** — open app →
-resolve build-critical items → Export CSV → upload to Digi-Key. **The web
-target ships** — `npm run build:web` produces a GitHub-Pages-ready
+**Three.js 3D viewport of the C1 main board** with orbit controls, a
+top/bottom/both side filter, and click-to-select raycaster picking against
+the 27 extruded component meshes. **The sourcing loop is closed** — open
+app → resolve build-critical items → Export CSV → upload to Digi-Key.
+**The web target ships** — `npm run build:web` produces a GitHub-Pages-ready
 `dist/` under `/open-book-builder/`. The Assembly tab still renders
 placeholder text.
 
@@ -74,17 +75,27 @@ placeholder text.
   `http://localhost:4173/open-book-builder/` for smoke-testing. Plain
   `npm run build` stays root-relative so Tauri's desktop bundle is
   unaffected.
-- **Board tab** renders the C1 outline as an SVG polygon
-  (85 × 115 mm rounded rectangle from Edge.Cuts) with 4 mounting-hole
-  circles and 27 components colored by side. Clicking a component
-  populates the right-hand detail panel with position, footprint,
-  pad count, and the matching BOM line (MPN, function, unit cost,
-  Digi-Key PN, datasheet link). The C2 board shows an explicit
-  "lands in task #11" empty state.
+- **Board tab** renders the C1 outline as an extruded 1 mm PCB
+  (85 × 115 mm rounded rectangle from Edge.Cuts, four mounting holes
+  punched through) with 27 component meshes extruded from their
+  footprint bboxes. Part-class heights come from
+  `footprint_heights.rs` (0.6 mm for 0805/1206 passives, 4.5 mm for
+  JST PH connectors, 12 mm for the AAA battery holder, etc.) so parts
+  don't all look like flat squares. Orbit-drag, scroll-zoom, and
+  click-to-select all work; the highlighted mesh gets a white emissive
+  tint and the right-hand detail panel shows position, footprint,
+  3D bbox, pad count, and the matching BOM line (MPN, function, unit
+  cost, Digi-Key PN, datasheet link). The top/bottom/both side filter
+  hides component meshes without touching the board. The C2 board
+  shows an explicit "lands in task #11" empty state.
 
 **What's mocked:**
 
-- All 3D viewport code (task #9) — Board tab uses a flat SVG preview.
+- Hero meshes (task #10) — the Pi Pico, GDEW042T2 panel, Keystone 1022,
+  MEM2075 microSD, and C2 submodule all render as plain extruded boxes
+  until task #10 swaps in 5 hand-authored GLTFs.
+- Silkscreen textures on the board faces (task #13 polish) — faces are
+  a solid slate color right now.
 - C2 castellated e-paper driver geometry (task #11, EAGLE parser).
 
 See `Roadmap` below and the authoritative plan at
@@ -140,7 +151,7 @@ Mirrors `~/Projects/dodec-mapper/` with additions:
 | --- | --- |
 | Desktop shell | Tauri v2 |
 | Frontend | React 19.1 + TypeScript 5.8 + Vite 7 |
-| 3D (pending) | Three.js 0.183 + OrbitControls |
+| 3D | Three.js 0.183 + OrbitControls |
 | KiCad parsing | `lexpr` 0.2 (generic S-expr walker — `kicad-parse-gen` is stale since 2018, `kiutils` isn't on crates.io) |
 | EAGLE parsing (pending) | `quick-xml` + serde structs |
 | BOM parsing | Rust `csv` crate |
@@ -170,9 +181,11 @@ open-book-builder/
 │   │   ├── use-persisted-state.ts         # Generic localStorage-backed useState
 │   │   ├── use-discrepancy-resolution.ts  # Resolved-state wrapper, drives the banner
 │   │   ├── digikey-csv.ts                 # Pure Digi-Key BOM CSV builder + summary
-│   │   └── exporter.ts                    # saveTextFile(): Tauri save-dialog vs web Blob
+│   │   ├── exporter.ts                    # saveTextFile(): Tauri save-dialog vs web Blob
+│   │   └── scene-renderer.ts              # Three.js scene — board extrude + per-component meshes
 │   └── components/
-│       ├── BoardView.tsx                  # Built. SVG board preview, side filter, click-select.
+│       ├── BoardView.tsx                  # Built. Two-pane layout: viewport + detail panel.
+│       ├── BoardViewport.tsx              # Built. React wrapper around scene-renderer.
 │       ├── BomView.tsx                    # Built. Two-pane table + detail panel + CSV export.
 │       ├── DiscrepancyView.tsx            # Built. Severity-grouped cards, Resolved toggle.
 │       └── DiscrepancyBanner.tsx          # Built. Red header bar; hidden when 0 unresolved.
@@ -195,6 +208,7 @@ open-book-builder/
         ├── types.rs                  # Serde mirrors with kebab-case enums
         ├── dataset.rs                # Glues static JSONs + BOM CSVs + KiCad into BoardDataset
         ├── kicad_pcb.rs              # lexpr walker → components, mounting holes, Edge.Cuts
+        ├── footprint_heights.rs      # Part-class → 3D extrusion height lookup
         └── bom.rs                    # Two CSV parsers → Vec<BomLine>, cost summarizer
 ```
 
@@ -302,7 +316,7 @@ The 13-task build plan lives at
 - [x] **#6** Implement Digi-Key CSV export — save-as dialog (Tauri) / Blob download (web) + build-qty multiplier
 - [x] **#7** Set up dual-target build — `scripts/bake-dataset.ts`, `npm run build:web` emits dist/ under `/open-book-builder/`
 - [x] **#8** Parse KiCad PCB and 2D preview — `lexpr` walker → 27 components + 4 holes + 40 edge segments; `BoardView.tsx` SVG
-- [ ] **#9** Build 3D BoardViewport — Three.js, extruded board, raycaster picking
+- [x] **#9** Build 3D BoardViewport — Three.js extruded board (holes punched through), per-component extruded boxes with part-class heights, OrbitControls, raycaster click-select
 - [ ] **#10** Add hero meshes — 5 GLTFs (pi-pico, gdew042t2, keystone-1022, c2-module, mem2075)
 - [ ] **#11** Parse EAGLE C2 driver module — `quick-xml` + serde structs
 - [ ] **#12** Build Assembly view — checklist + mini viewport with step-based highlighting
