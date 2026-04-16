@@ -10,8 +10,13 @@
 //! - Footprints whose reference doesn't match any C1 BOM ref are dropped
 //!   (logo artwork, G*** placeholders).
 //! - `(gr_line ...)` and `(gr_arc ...)` on layer `Edge.Cuts` become
-//!   `EdgeSegment`s; everything else on those node types (silkscreen, fab
-//!   layers) is ignored.
+//!   `EdgeSegment`s; board-level `gr_line`/`gr_arc`/`gr_circle` on `F.SilkS`
+//!   or `B.SilkS` become `SilkscreenLayer` primitives. Fab/courtyard layers
+//!   stay ignored.
+//! - Per-footprint `fp_line` / `fp_arc` / `fp_circle` children on `F.SilkS`
+//!   or `B.SilkS` are transformed (mirror for bottom-side footprints, rotate
+//!   by footprint rotation, translate by origin) into board coordinates and
+//!   pushed to the corresponding layer. Text (`fp_text`) is not rendered.
 //! - Board `width_mm` / `height_mm` are the max X/Y extents of all Edge.Cuts
 //!   points. The KiCad origin is (0, 0) at the top-left, so this matches the
 //!   canvas convention — no flip needed.
@@ -21,7 +26,8 @@
 
 use crate::types::{
     BoardData, BoardId, BoardOutline, BomLine, Component, EdgeSegment,
-    FootprintBbox, Hole, Pad, Side,
+    FootprintBbox, Hole, Pad, Side, SilkscreenArc, SilkscreenCircle,
+    SilkscreenLayer, SilkscreenLine,
 };
 use lexpr::Value;
 use std::collections::HashMap;
@@ -67,20 +73,38 @@ pub fn load_c1_board(c1_bom: &[BomLine]) -> Result<BoardData, KiCadError> {
     let mut components = Vec::<Component>::new();
     let mut holes = Vec::<Hole>::new();
     let mut edge_segments = Vec::<EdgeSegment>::new();
+    let mut silkscreen_top = SilkscreenLayer::default();
+    let mut silkscreen_bottom = SilkscreenLayer::default();
 
     for child in positional(&root) {
         match head_symbol(child) {
             Some("footprint") => {
-                classify_footprint(child, &bom_by_ref, &mut components, &mut holes);
+                classify_footprint(
+                    child,
+                    &bom_by_ref,
+                    &mut components,
+                    &mut holes,
+                    &mut silkscreen_top,
+                    &mut silkscreen_bottom,
+                );
             }
             Some("gr_line") => {
                 if let Some(seg) = parse_edge_line(child) {
                     edge_segments.push(seg);
+                } else if let Some((layer, line)) = parse_board_silk_line(child) {
+                    push_silk_line(layer, line, &mut silkscreen_top, &mut silkscreen_bottom);
                 }
             }
             Some("gr_arc") => {
                 if let Some(seg) = parse_edge_arc(child) {
                     edge_segments.push(seg);
+                } else if let Some((layer, arc)) = parse_board_silk_arc(child) {
+                    push_silk_arc(layer, arc, &mut silkscreen_top, &mut silkscreen_bottom);
+                }
+            }
+            Some("gr_circle") => {
+                if let Some((layer, circle)) = parse_board_silk_circle(child) {
+                    push_silk_circle(layer, circle, &mut silkscreen_top, &mut silkscreen_bottom);
                 }
             }
             _ => {}
@@ -96,8 +120,8 @@ pub fn load_c1_board(c1_bom: &[BomLine]) -> Result<BoardData, KiCadError> {
             height_mm,
             holes,
             edge_segments,
-            silkscreen_svg: None,
-            silkscreen_svg_bottom: None,
+            silkscreen_top,
+            silkscreen_bottom,
         },
         nets: Vec::new(),
     })
@@ -190,6 +214,8 @@ fn classify_footprint<'a>(
     bom_by_ref: &HashMap<&str, &BomLine>,
     components: &mut Vec<Component>,
     holes: &mut Vec<Hole>,
+    silkscreen_top: &mut SilkscreenLayer,
+    silkscreen_bottom: &mut SilkscreenLayer,
 ) {
     let args = positional(fp);
     let Some(fp_name) = args.first().and_then(|v| string_of(v)) else {
@@ -219,6 +245,20 @@ fn classify_footprint<'a>(
     let Some(bom_line) = bom_by_ref.get(ref_name.as_str()) else {
         return;
     };
+
+    // Footprint-level silkscreen graphics. Transformed to board coordinates
+    // and routed to the correct face (F.SilkS follows the footprint body;
+    // B.SilkS goes to the opposite face).
+    let mirror = side == Side::Bottom;
+    extract_footprint_silk(
+        fp,
+        (x, y),
+        rotation,
+        mirror,
+        side,
+        silkscreen_top,
+        silkscreen_bottom,
+    );
 
     let pads: Vec<Pad> = find_all_tagged(fp, "pad")
         .into_iter()
@@ -401,4 +441,271 @@ fn outline_extents(segments: &[EdgeSegment]) -> (f32, f32) {
         }
     }
     (maxx, maxy)
+}
+
+// ---------------------------------------------------------------------------
+// Silkscreen extraction (task #13a)
+//
+// Two sources:
+// 1. Board-level graphics (`gr_line` / `gr_arc` / `gr_circle`) on `F.SilkS`
+//    or `B.SilkS`. Coordinates are already in board space.
+// 2. Per-footprint graphics (`fp_line` / `fp_arc` / `fp_circle`) inside a
+//    `(footprint ...)` block. Coordinates are footprint-local and must be
+//    mirrored (for bottom-side footprints) + rotated + translated.
+//
+// The destination face is a composition of the footprint's side with the
+// silk layer (F.SilkS = same side as the footprint body; B.SilkS = the
+// opposite face). See plan "Task #13a detail".
+
+/// Which side of the board a silk primitive should be drawn on.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum SilkFace {
+    Top,
+    Bottom,
+}
+
+fn layer_to_silk_face(layer: &str) -> Option<SilkFace> {
+    match layer {
+        "F.SilkS" => Some(SilkFace::Top),
+        "B.SilkS" => Some(SilkFace::Bottom),
+        _ => None,
+    }
+}
+
+fn push_silk_line(
+    face: SilkFace,
+    line: SilkscreenLine,
+    top: &mut SilkscreenLayer,
+    bottom: &mut SilkscreenLayer,
+) {
+    match face {
+        SilkFace::Top => top.lines.push(line),
+        SilkFace::Bottom => bottom.lines.push(line),
+    }
+}
+
+fn push_silk_arc(
+    face: SilkFace,
+    arc: SilkscreenArc,
+    top: &mut SilkscreenLayer,
+    bottom: &mut SilkscreenLayer,
+) {
+    match face {
+        SilkFace::Top => top.arcs.push(arc),
+        SilkFace::Bottom => bottom.arcs.push(arc),
+    }
+}
+
+fn push_silk_circle(
+    face: SilkFace,
+    circle: SilkscreenCircle,
+    top: &mut SilkscreenLayer,
+    bottom: &mut SilkscreenLayer,
+) {
+    match face {
+        SilkFace::Top => top.circles.push(circle),
+        SilkFace::Bottom => bottom.circles.push(circle),
+    }
+}
+
+// --- Board-level silkscreen (already in board coordinates)
+
+fn parse_board_silk_line(v: &Value) -> Option<(SilkFace, SilkscreenLine)> {
+    let layer = find_tagged(v, "layer")
+        .and_then(|l| positional(l).first().and_then(|a| string_of(a)).map(String::from))?;
+    let face = layer_to_silk_face(&layer)?;
+    let start = point_of(v, "start")?;
+    let end = point_of(v, "end")?;
+    Some((face, SilkscreenLine { start, end }))
+}
+
+fn parse_board_silk_arc(v: &Value) -> Option<(SilkFace, SilkscreenArc)> {
+    let layer = find_tagged(v, "layer")
+        .and_then(|l| positional(l).first().and_then(|a| string_of(a)).map(String::from))?;
+    let face = layer_to_silk_face(&layer)?;
+    let start = point_of(v, "start")?;
+    let mid = point_of(v, "mid")?;
+    let end = point_of(v, "end")?;
+    Some((face, SilkscreenArc { start, mid, end }))
+}
+
+fn parse_board_silk_circle(v: &Value) -> Option<(SilkFace, SilkscreenCircle)> {
+    let layer = find_tagged(v, "layer")
+        .and_then(|l| positional(l).first().and_then(|a| string_of(a)).map(String::from))?;
+    let face = layer_to_silk_face(&layer)?;
+    let center = point_of(v, "center")?;
+    // KiCad encodes a circle as `(gr_circle (center cx cy) (end ex ey) ...)`
+    // where `end` is a point on the circumference. Radius is |end - center|.
+    let end = point_of(v, "end")?;
+    let dx = end.0 - center.0;
+    let dy = end.1 - center.1;
+    let radius = (dx * dx + dy * dy).sqrt();
+    Some((face, SilkscreenCircle { center, radius }))
+}
+
+// --- Footprint-level silkscreen (needs transform)
+
+/// Rotate a footprint-local point around the footprint origin by `rot_deg`
+/// (CCW in standard math orientation), after optionally mirroring along X,
+/// then translate to board coordinates.
+fn transform_silk_point(
+    p: (f32, f32),
+    origin: (f32, f32),
+    rot_deg: f32,
+    mirror: bool,
+) -> (f32, f32) {
+    let (mut x, y) = p;
+    if mirror {
+        x = -x;
+    }
+    let theta = rot_deg.to_radians();
+    let (s, c) = (theta.sin(), theta.cos());
+    let rx = x * c - y * s;
+    let ry = x * s + y * c;
+    (origin.0 + rx, origin.1 + ry)
+}
+
+fn extract_footprint_silk(
+    fp: &Value,
+    origin: (f32, f32),
+    rotation: f32,
+    mirror: bool,
+    fp_side: Side,
+    silkscreen_top: &mut SilkscreenLayer,
+    silkscreen_bottom: &mut SilkscreenLayer,
+) {
+    // Pick a compositor: F.SilkS targets the footprint's face; B.SilkS the
+    // opposite face. Bottom-side footprints flip the meaning of F/B locally.
+    let compose = |layer_face: SilkFace| -> SilkFace {
+        match (layer_face, fp_side) {
+            (SilkFace::Top, Side::Top) | (SilkFace::Bottom, Side::Bottom) => SilkFace::Top,
+            _ => SilkFace::Bottom,
+        }
+    };
+
+    for child in list_children(fp) {
+        let Some(tag) = head_symbol(child) else { continue };
+        let Some(layer) = find_tagged(child, "layer")
+            .and_then(|l| positional(l).first().and_then(|a| string_of(a)).map(String::from))
+        else {
+            continue;
+        };
+        let Some(layer_face) = layer_to_silk_face(&layer) else {
+            continue;
+        };
+        let dest = compose(layer_face);
+
+        match tag {
+            "fp_line" => {
+                if let (Some(start), Some(end)) = (point_of(child, "start"), point_of(child, "end"))
+                {
+                    let line = SilkscreenLine {
+                        start: transform_silk_point(start, origin, rotation, mirror),
+                        end: transform_silk_point(end, origin, rotation, mirror),
+                    };
+                    push_silk_line(dest, line, silkscreen_top, silkscreen_bottom);
+                }
+            }
+            "fp_arc" => {
+                if let (Some(start), Some(mid), Some(end)) = (
+                    point_of(child, "start"),
+                    point_of(child, "mid"),
+                    point_of(child, "end"),
+                ) {
+                    let arc = SilkscreenArc {
+                        start: transform_silk_point(start, origin, rotation, mirror),
+                        mid: transform_silk_point(mid, origin, rotation, mirror),
+                        end: transform_silk_point(end, origin, rotation, mirror),
+                    };
+                    push_silk_arc(dest, arc, silkscreen_top, silkscreen_bottom);
+                }
+            }
+            "fp_circle" => {
+                if let (Some(center), Some(edge)) =
+                    (point_of(child, "center"), point_of(child, "end"))
+                {
+                    let dx = edge.0 - center.0;
+                    let dy = edge.1 - center.1;
+                    let radius = (dx * dx + dy * dy).sqrt();
+                    let circle = SilkscreenCircle {
+                        center: transform_silk_point(center, origin, rotation, mirror),
+                        radius,
+                    };
+                    push_silk_circle(dest, circle, silkscreen_top, silkscreen_bottom);
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Tests
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn transform_silk_point_identity() {
+        let p = transform_silk_point((1.0, 2.0), (10.0, 20.0), 0.0, false);
+        assert!((p.0 - 11.0).abs() < 1e-4);
+        assert!((p.1 - 22.0).abs() < 1e-4);
+    }
+
+    #[test]
+    fn transform_silk_point_mirror_only() {
+        let p = transform_silk_point((3.0, 4.0), (0.0, 0.0), 0.0, true);
+        assert!((p.0 + 3.0).abs() < 1e-4);
+        assert!((p.1 - 4.0).abs() < 1e-4);
+    }
+
+    #[test]
+    fn transform_silk_point_rotation_90() {
+        // (1, 0) rotated 90° CCW → (0, 1), translated by (5, 5) → (5, 6).
+        let p = transform_silk_point((1.0, 0.0), (5.0, 5.0), 90.0, false);
+        assert!((p.0 - 5.0).abs() < 1e-4);
+        assert!((p.1 - 6.0).abs() < 1e-4);
+    }
+
+    #[test]
+    fn load_c1_produces_silkscreen_when_bom_matches() {
+        // The C1 .kicad_pcb is ~1.3 MB and the S-expression walker recurses
+        // deeply while parsing. Test threads default to a 2 MB stack which
+        // overflows on debug builds; run the load on a dedicated thread with
+        // an 8 MB stack to sidestep.
+        let handle = std::thread::Builder::new()
+            .stack_size(8 * 1024 * 1024)
+            .spawn(|| {
+                // Populate a BOM entry for R1 so classify_footprint keeps at
+                // least one component, which lets its fp_line silk flow
+                // through to the top-face accumulator.
+                let bom = vec![BomLine {
+                    refs: vec!["R1".into()],
+                    qty: 1,
+                    description: "test".into(),
+                    manufacturer: None,
+                    mpn: "TEST-R1".into(),
+                    digikey_pn: None,
+                    mouser_pn: None,
+                    optional: false,
+                    unit_cost_usd: None,
+                    live_price: None,
+                    footprint: None,
+                    function: "test".into(),
+                    datasheet_url: None,
+                    hero_mesh_id: None,
+                    board: BoardId::C1Main,
+                }];
+                load_c1_board(&bom).unwrap()
+            })
+            .expect("spawn");
+        let board = handle.join().expect("join");
+        // Every 0805 passive carries an outline rectangle (4 lines) on
+        // F.SilkS. With R1 in the BOM we expect at least a handful of lines.
+        assert!(
+            !board.outline.silkscreen_top.lines.is_empty(),
+            "R1 silk should populate silkscreen_top.lines"
+        );
+    }
 }

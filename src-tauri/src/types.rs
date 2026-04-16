@@ -155,6 +155,39 @@ pub struct EdgeSegment {
     pub points: Vec<(f32, f32)>,
 }
 
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SilkscreenLine {
+    pub start: (f32, f32),
+    pub end: (f32, f32),
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SilkscreenArc {
+    pub start: (f32, f32),
+    pub mid: (f32, f32),
+    pub end: (f32, f32),
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SilkscreenCircle {
+    pub center: (f32, f32),
+    pub radius: f32,
+}
+
+// Board-space silkscreen primitives keyed by face. Task #13a emits lines, arcs,
+// and circles from both parsers; text glyphs, polygonal fills, and fab-layer
+// data are deliberately out of scope. See plan "Task #13a detail".
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SilkscreenLayer {
+    pub lines: Vec<SilkscreenLine>,
+    pub arcs: Vec<SilkscreenArc>,
+    pub circles: Vec<SilkscreenCircle>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BoardOutline {
@@ -162,10 +195,10 @@ pub struct BoardOutline {
     pub height_mm: f32,
     pub holes: Vec<Hole>,
     pub edge_segments: Vec<EdgeSegment>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub silkscreen_svg: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub silkscreen_svg_bottom: Option<String>,
+    #[serde(default)]
+    pub silkscreen_top: SilkscreenLayer,
+    #[serde(default)]
+    pub silkscreen_bottom: SilkscreenLayer,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

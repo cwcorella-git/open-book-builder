@@ -26,7 +26,14 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { buildHeroMesh } from './hero-meshes';
-import type { BoardData, Component, EdgeSegment, Hole, Side } from './types';
+import type {
+  BoardData,
+  Component,
+  EdgeSegment,
+  Hole,
+  Side,
+  SilkscreenLayer,
+} from './types';
 
 export type SideFilter = 'both' | 'top' | 'bottom';
 
@@ -60,6 +67,14 @@ const BACKGROUND_COLOR = 0x0b1220;
 
 const ARC_SEGMENTS = 16;
 const CLICK_DRAG_THRESHOLD_PX = 4;
+
+// Silkscreen overlay constants. 8 px/mm yields ~680×920 px for C1 (~2.4 MB
+// VRAM uncompressed per face) and ~138×191 px for C2 — fine for both targets.
+// 0.12 mm stroke matches typical fab white-silk line-width.
+const SILK_PX_PER_MM = 8;
+const SILK_COLOR = '#e2e8f0';
+const SILK_LINE_MM = 0.12;
+const SILK_Y_OFFSET_MM = 0.01;
 
 export function initScene(
   container: HTMLElement,
@@ -138,6 +153,32 @@ export function initScene(
     scene.add(boardMesh);
     ownedGeometries.add(boardGeom);
     ownedMaterials.add(boardMat);
+  }
+
+  // --- Silkscreen overlays -------------------------------------------------
+  //
+  // Task #13a: two thin PlaneGeometry overlays floated 0.01 mm above each
+  // face, textured with rasterized vector silk. `depthWrite: false` keeps
+  // hero-mesh castellations visible where silk would otherwise occlude them.
+  // Empty layers skip — no wasted GPU texture handle.
+
+  for (const face of ['top', 'bottom'] as const) {
+    const layer =
+      face === 'top'
+        ? boardData.outline.silkscreenTop
+        : boardData.outline.silkscreenBottom;
+    const overlay = buildSilkscreenOverlay(
+      layer,
+      widthMm,
+      heightMm,
+      face,
+      BOARD_THICKNESS_MM,
+    );
+    if (!overlay) continue;
+    scene.add(overlay.mesh);
+    ownedGeometries.add(overlay.geometry);
+    ownedMaterials.add(overlay.material);
+    ownedTextures.add(overlay.texture);
   }
 
   // --- Component meshes ----------------------------------------------------
@@ -544,6 +585,137 @@ function buildBoardShape(
   }
 
   return shape;
+}
+
+// ---------------------------------------------------------------------------
+// Silkscreen rasterization
+//
+// Both parsers emit line/arc/circle primitives in board-local mm coordinates
+// (KiCad-style: origin top-left, Y grows down). We rasterize them onto a
+// `widthMm*PX × heightMm*PX` canvas at SILK_PX_PER_MM, wrap in a CanvasTexture,
+// and overlay via a transparent PlaneGeometry just above/below the board face.
+//
+// Y mapping differs per face because of the PlaneGeometry + X-rotation combo:
+//   Top plane    (rot.x = -π/2): plane +Y → world -Z → KiCad y=0 (board top).
+//                So UV v=1 (canvas row 0) needs to show KiCad y=0.
+//                → canvas_y = kicad_y * PX_PER_MM.
+//   Bottom plane (rot.x = +π/2): plane +Y → world +Z → KiCad y=heightMm.
+//                So UV v=1 (canvas row 0) needs to show KiCad y=heightMm.
+//                → canvas_y = (heightMm - kicad_y) * PX_PER_MM.
+// Texture `flipY` stays at the default `true` throughout.
+
+interface SilkscreenOverlay {
+  mesh: THREE.Mesh;
+  geometry: THREE.PlaneGeometry;
+  material: THREE.MeshBasicMaterial;
+  texture: THREE.CanvasTexture;
+}
+
+function buildSilkscreenOverlay(
+  layer: SilkscreenLayer,
+  widthMm: number,
+  heightMm: number,
+  face: 'top' | 'bottom',
+  boardThickness: number,
+): SilkscreenOverlay | null {
+  if (
+    layer.lines.length === 0 &&
+    layer.arcs.length === 0 &&
+    layer.circles.length === 0
+  ) {
+    return null;
+  }
+
+  const texture = rasterizeSilkscreen(layer, widthMm, heightMm, face);
+  const geometry = new THREE.PlaneGeometry(widthMm, heightMm);
+  const material = new THREE.MeshBasicMaterial({
+    map: texture,
+    transparent: true,
+    // Silk is a decal on top of the board. Writing depth would cause it to
+    // occlude hero-mesh castellation nubs sitting right at the board surface.
+    depthWrite: false,
+  });
+  const mesh = new THREE.Mesh(geometry, material);
+
+  if (face === 'top') {
+    mesh.rotation.x = -Math.PI / 2;
+    mesh.position.y = boardThickness + SILK_Y_OFFSET_MM;
+  } else {
+    mesh.rotation.x = Math.PI / 2;
+    mesh.position.y = -SILK_Y_OFFSET_MM;
+  }
+
+  return { mesh, geometry, material, texture };
+}
+
+function rasterizeSilkscreen(
+  layer: SilkscreenLayer,
+  widthMm: number,
+  heightMm: number,
+  face: 'top' | 'bottom',
+): THREE.CanvasTexture {
+  const w = Math.max(1, Math.ceil(widthMm * SILK_PX_PER_MM));
+  const h = Math.max(1, Math.ceil(heightMm * SILK_PX_PER_MM));
+
+  // Safari pre-16.4 lacks OffscreenCanvas; fall back to a detached HTMLCanvas.
+  const canvas: OffscreenCanvas | HTMLCanvasElement =
+    typeof OffscreenCanvas !== 'undefined'
+      ? new OffscreenCanvas(w, h)
+      : Object.assign(document.createElement('canvas'), {
+          width: w,
+          height: h,
+        });
+  const ctx = canvas.getContext('2d') as
+    | OffscreenCanvasRenderingContext2D
+    | CanvasRenderingContext2D
+    | null;
+  if (!ctx) {
+    // Caller bails on an empty texture — extremely unlikely in practice.
+    return new THREE.CanvasTexture(canvas as HTMLCanvasElement);
+  }
+
+  ctx.strokeStyle = SILK_COLOR;
+  ctx.lineWidth = SILK_LINE_MM * SILK_PX_PER_MM;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  const toCanvas = (x: number, y: number): [number, number] => [
+    x * SILK_PX_PER_MM,
+    (face === 'top' ? y : heightMm - y) * SILK_PX_PER_MM,
+  ];
+
+  for (const line of layer.lines) {
+    const [x1, y1] = toCanvas(line.start[0], line.start[1]);
+    const [x2, y2] = toCanvas(line.end[0], line.end[1]);
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+  }
+
+  for (const arc of layer.arcs) {
+    const pts = tessellateArc(arc.start, arc.mid, arc.end, ARC_SEGMENTS);
+    if (pts.length < 2) continue;
+    ctx.beginPath();
+    const [sx, sy] = toCanvas(pts[0][0], pts[0][1]);
+    ctx.moveTo(sx, sy);
+    for (let i = 1; i < pts.length; i++) {
+      const [px, py] = toCanvas(pts[i][0], pts[i][1]);
+      ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+  }
+
+  for (const circle of layer.circles) {
+    const [cx, cy] = toCanvas(circle.center[0], circle.center[1]);
+    ctx.beginPath();
+    ctx.arc(cx, cy, circle.radius * SILK_PX_PER_MM, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  const texture = new THREE.CanvasTexture(canvas as HTMLCanvasElement);
+  texture.needsUpdate = true;
+  return texture;
 }
 
 // ---------------------------------------------------------------------------

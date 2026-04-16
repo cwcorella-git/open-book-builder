@@ -84,13 +84,38 @@ export interface EdgeSegment {
   points: [number, number][];
 }
 
+// Board-space silkscreen primitives keyed by face. Lines / arcs / circles only;
+// text glyphs and polygon fills are out of scope for task #13a. Matches the
+// Rust `SilkscreenLayer` shape (camelCase on the wire).
+export interface SilkscreenLine {
+  start: [number, number];
+  end: [number, number];
+}
+
+export interface SilkscreenArc {
+  start: [number, number];
+  mid: [number, number];
+  end: [number, number];
+}
+
+export interface SilkscreenCircle {
+  center: [number, number];
+  radius: number;
+}
+
+export interface SilkscreenLayer {
+  lines: SilkscreenLine[];
+  arcs: SilkscreenArc[];
+  circles: SilkscreenCircle[];
+}
+
 export interface BoardOutline {
   widthMm: number;
   heightMm: number;
   holes: Hole[];
   edgeSegments: EdgeSegment[];
-  silkscreenSvg?: string;
-  silkscreenSvgBottom?: string;
+  silkscreenTop: SilkscreenLayer;
+  silkscreenBottom: SilkscreenLayer;
 }
 
 export interface BoardData {

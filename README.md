@@ -123,11 +123,21 @@ viewport that highlights each step's components while dimming the rest.
   same as the C1 parser's JP1/JP2 handling. 21 nets populate from
   `<signals>` with `class="1"` → `Power`, `class="2"` → `Ground`,
   everything else → `Other` pending semantic refinement in task #13.
+- **Silkscreen overlays** render on both board faces from typed
+  lines/arcs/circles parsed out of `F.SilkS`/`B.SilkS` (KiCad) and
+  Layer 21 / 22 (EAGLE). Per-footprint silk is transformed into board
+  coordinates in Rust (mirror for bottom-side footprints, then rotate,
+  then translate); EAGLE's `<wire curve="N">` converts to a three-point
+  arc via sagitta = `(chord/2) · tan(curve/4)`. C1 carries 233 top +
+  47 bottom lines (plus 1 circle on the top face); C2's MR*-mirrored
+  elements land 42 lines on the bottom face. The scene-renderer
+  rasterizes each layer to an 8 px/mm `CanvasTexture` (`#e2e8f0`
+  strokes, 0.12 mm line width) and overlays it via a transparent
+  `PlaneGeometry` 0.01 mm above each face with `depthWrite: false` so
+  hero-mesh castellations stay visible.
 
 **What's mocked:**
 
-- Silkscreen textures on the board faces (task #13 polish) — faces are
-  a solid slate color right now.
 - Net coloring / category visuals (task #13). Nets are parsed and
   category-tagged but components aren't tinted by net membership yet.
 - Copper traces, vias, GND pour polygons on both boards. Parsed only
@@ -387,7 +397,8 @@ The 13-task build plan lives at
 - [x] **#10** Add hero meshes — 4 procedural Three.js builders (pi-pico, c2-module, keystone-1022, mem2075); gdew042t2 deferred to #11 where it physically belongs
 - [x] **#11** Parse EAGLE C2 driver module — `quick-xml` manual Reader event loop → 17 components (all MR*-mirrored → bottom), 3 holes, 4 outline wires, 21 nets + synthesized `Display` component with `gdew042t2` procedural hero mesh (bezel + white screen + FFC stub + corner label)
 - [x] **#12** Build Assembly view — checklist + mini viewport with step-based highlighting
-- [ ] **#13** Polish — net coloring, keyboard shortcuts, About screen
+- [x] **#13a** Silkscreen overlays — KiCad `F.SilkS`/`B.SilkS` + EAGLE Layer 21/22 parsed to typed line/arc/circle primitives in board coordinates; rasterized to a `CanvasTexture` per face at 8 px/mm and overlaid on thin transparent planes above each board face (lines/arcs/circles only — text deferred)
+- [ ] **#13b–f** Remaining polish — cross-tab nav, net coloring, About tab, BOM comparison, copper traces
 
 Steps 1–7 give a shipable tool (BOM + discrepancies + sourcing + web share)
 with no 3D. Steps 8–13 add the visualization half — task #8 is the

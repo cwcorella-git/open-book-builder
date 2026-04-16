@@ -20,6 +20,12 @@
 //!   rectangle but they're copper pours, not the outline.
 //! - **Mounting holes**: three `<plain>/<hole>` entries. The "missing"
 //!   fourth corner is where the JP1 castellation block sits.
+//! - **Silkscreen**: `<wire>` / `<circle>` on layer 21 (tPlace) or 22
+//!   (bPlace). Package-local primitives get transformed to board coordinates
+//!   at element instantiation time (mirror → rotate → translate). EAGLE
+//!   `<wire curve="N">` encodes a curved segment as chord + sweep in degrees
+//!   — converted to `SilkscreenArc` via chord/sagitta math. Text glyphs and
+//!   polygonal fills are deliberately out of scope for #13a (see plan).
 //!
 //! Task #11 handles placements + outline + holes + nets + a synthesized
 //! virtual `Display` component so the C2 tab shows the GDEW042T2 panel
@@ -31,7 +37,8 @@
 use crate::footprint_heights;
 use crate::types::{
     BoardData, BoardId, BoardOutline, BomLine, Component, EdgeSegment,
-    FootprintBbox, Hole, Net, NetCategory, NetPadRef, Pad, Side,
+    FootprintBbox, Hole, Net, NetCategory, NetPadRef, Pad, Side, SilkscreenArc,
+    SilkscreenCircle, SilkscreenLayer, SilkscreenLine,
 };
 use quick_xml::events::{BytesStart, Event};
 use quick_xml::Reader;
@@ -70,6 +77,12 @@ pub fn load_c2_board(bom: &[BomLine]) -> Result<BoardData, EagleError> {
     let mut holes: Vec<Hole> = Vec::new();
     let mut elements: Vec<ElementPlacement> = Vec::new();
     let mut nets: Vec<Net> = Vec::new();
+
+    // Silkscreen accumulators — board-level primitives append directly;
+    // package-level primitives live on each `PackageDef` and get transformed
+    // to board coords at element-instantiation time further down.
+    let mut silkscreen_top = SilkscreenLayer::default();
+    let mut silkscreen_bottom = SilkscreenLayer::default();
 
     // Parser state — tracks which subtree we're inside so we interpret the
     // shared element names (wire, text, etc.) in the right context.
@@ -115,30 +128,95 @@ pub fn load_c2_board(bom: &[BomLine]) -> Result<BoardData, EagleError> {
                 let name = local_name(e.name().as_ref());
                 match name.as_str() {
                     "wire" if in_plain => {
-                        // Layer-20 wires form the board outline. Layer-51
-                        // wires are silkscreen/fab and get ignored.
+                        // Layer-20 wires form the board outline. Layers 21/22
+                        // are board-level silkscreen (top/bottom). Layer-51 is
+                        // fab info; ignored at board scope.
                         let layer = attr_u32(&e, "layer")?.unwrap_or(0);
+                        let x1 = attr_f32(&e, "x1")?.unwrap_or(0.0);
+                        let y1 = attr_f32(&e, "y1")?.unwrap_or(0.0);
+                        let x2 = attr_f32(&e, "x2")?.unwrap_or(0.0);
+                        let y2 = attr_f32(&e, "y2")?.unwrap_or(0.0);
                         if layer == 20 {
-                            let x1 = attr_f32(&e, "x1")?.unwrap_or(0.0);
-                            let y1 = attr_f32(&e, "y1")?.unwrap_or(0.0);
-                            let x2 = attr_f32(&e, "x2")?.unwrap_or(0.0);
-                            let y2 = attr_f32(&e, "y2")?.unwrap_or(0.0);
                             outline_wires.push((x1, y1, x2, y2));
+                        } else if layer == 21 || layer == 22 {
+                            let curve = attr_f32(&e, "curve")?.unwrap_or(0.0);
+                            let dest = if layer == 21 {
+                                &mut silkscreen_top
+                            } else {
+                                &mut silkscreen_bottom
+                            };
+                            push_wire_as_silk((x1, y1), (x2, y2), curve, dest);
+                        }
+                    }
+                    "circle" if in_plain => {
+                        let layer = attr_u32(&e, "layer")?.unwrap_or(0);
+                        if layer == 21 || layer == 22 {
+                            let cx = attr_f32(&e, "x")?.unwrap_or(0.0);
+                            let cy = attr_f32(&e, "y")?.unwrap_or(0.0);
+                            let radius = attr_f32(&e, "radius")?.unwrap_or(0.0);
+                            if radius > 0.0 {
+                                let circle = SilkscreenCircle {
+                                    center: (cx, cy),
+                                    radius,
+                                };
+                                if layer == 21 {
+                                    silkscreen_top.circles.push(circle);
+                                } else {
+                                    silkscreen_bottom.circles.push(circle);
+                                }
+                            }
                         }
                     }
                     "wire" if !package_stack.is_empty() => {
                         // Layer-51 fab wires carry the package's mechanical
                         // footprint outline — useful as a bbox fallback for
-                        // packages that have no SMDs/pads (unlikely in this
-                        // file but cheap to support).
+                        // packages that have no SMDs/pads. Layer 21 on a
+                        // package is top-side silk; Layer 22 is bottom-side
+                        // silk — stored package-local, transformed to board
+                        // coords at element-instantiation time.
                         let layer = attr_u32(&e, "layer")?.unwrap_or(0);
-                        if layer == 51 || layer == 21 {
-                            let x1 = attr_f32(&e, "x1")?.unwrap_or(0.0);
-                            let y1 = attr_f32(&e, "y1")?.unwrap_or(0.0);
-                            let x2 = attr_f32(&e, "x2")?.unwrap_or(0.0);
-                            let y2 = attr_f32(&e, "y2")?.unwrap_or(0.0);
+                        let x1 = attr_f32(&e, "x1")?.unwrap_or(0.0);
+                        let y1 = attr_f32(&e, "y1")?.unwrap_or(0.0);
+                        let x2 = attr_f32(&e, "x2")?.unwrap_or(0.0);
+                        let y2 = attr_f32(&e, "y2")?.unwrap_or(0.0);
+                        if layer == 51 {
                             let pkg = package_stack.last_mut().unwrap();
                             pkg.fab_wires.push((x1, y1, x2, y2));
+                        } else if layer == 21 || layer == 22 {
+                            let curve = attr_f32(&e, "curve")?.unwrap_or(0.0);
+                            let pkg = package_stack.last_mut().unwrap();
+                            // Convert to local silk primitive up-front so the
+                            // element-instantiation transform stage only
+                            // handles typed lines/arcs/circles.
+                            let mut layer_silk = SilkscreenLayer::default();
+                            push_wire_as_silk((x1, y1), (x2, y2), curve, &mut layer_silk);
+                            if layer == 21 {
+                                pkg.silk_top.lines.extend(layer_silk.lines);
+                                pkg.silk_top.arcs.extend(layer_silk.arcs);
+                            } else {
+                                pkg.silk_bottom.lines.extend(layer_silk.lines);
+                                pkg.silk_bottom.arcs.extend(layer_silk.arcs);
+                            }
+                        }
+                    }
+                    "circle" if !package_stack.is_empty() => {
+                        let layer = attr_u32(&e, "layer")?.unwrap_or(0);
+                        if layer == 21 || layer == 22 {
+                            let cx = attr_f32(&e, "x")?.unwrap_or(0.0);
+                            let cy = attr_f32(&e, "y")?.unwrap_or(0.0);
+                            let radius = attr_f32(&e, "radius")?.unwrap_or(0.0);
+                            if radius > 0.0 {
+                                let circle = SilkscreenCircle {
+                                    center: (cx, cy),
+                                    radius,
+                                };
+                                let pkg = package_stack.last_mut().unwrap();
+                                if layer == 21 {
+                                    pkg.silk_top.circles.push(circle);
+                                } else {
+                                    pkg.silk_bottom.circles.push(circle);
+                                }
+                            }
                         }
                     }
                     "hole" if in_plain => {
@@ -244,8 +322,8 @@ pub fn load_c2_board(bom: &[BomLine]) -> Result<BoardData, EagleError> {
         };
         let (mirror, rotation) = decode_rot(el.rot.as_deref());
         let side = if mirror { Side::Bottom } else { Side::Top };
-        let bbox = packages
-            .get(&(el.library.clone(), el.package.clone()))
+        let pkg_opt = packages.get(&(el.library.clone(), el.package.clone()));
+        let bbox = pkg_opt
             .map(|pkg| package_bbox(pkg, &el.package))
             .unwrap_or_else(|| FootprintBbox {
                 width: 1.0,
@@ -256,11 +334,28 @@ pub fn load_c2_board(bom: &[BomLine]) -> Result<BoardData, EagleError> {
         // Build pad list by cloning the package's SMD/pad centers into
         // Pad records. Nets wire into these via `contactref` lookups, so
         // pad numbers need to match `<contactref pad="..."/>`.
-        let pads = if let Some(pkg) = packages.get(&(el.library.clone(), el.package.clone())) {
+        let pads = if let Some(pkg) = pkg_opt {
             build_pads(pkg)
         } else {
             Vec::new()
         };
+
+        // Transform each package-local silk primitive to board coordinates
+        // and route to top/bottom based on the layer XOR mirror composition:
+        //   Layer 21 (package-top silk) + non-mirrored → board top
+        //   Layer 21 + mirrored MR*     → board bottom
+        //   Layer 22 (package-bot silk) + non-mirrored → board bottom
+        //   Layer 22 + mirrored         → board top
+        if let Some(pkg) = pkg_opt {
+            emit_element_silk(
+                pkg,
+                (el.x, el.y),
+                rotation,
+                mirror,
+                &mut silkscreen_top,
+                &mut silkscreen_bottom,
+            );
+        }
 
         components.push(Component {
             ref_: el.name.clone(),
@@ -293,8 +388,8 @@ pub fn load_c2_board(bom: &[BomLine]) -> Result<BoardData, EagleError> {
             height_mm,
             holes,
             edge_segments,
-            silkscreen_svg: None,
-            silkscreen_svg_bottom: None,
+            silkscreen_top,
+            silkscreen_bottom,
         },
         nets,
     })
@@ -319,6 +414,16 @@ struct PackageDef {
     smds: Vec<SmdDef>,
     pads: Vec<PadDef>,
     fab_wires: Vec<(f32, f32, f32, f32)>,
+    /// Package-local silkscreen for Layer 21 (tPlace). Transformed to board
+    /// coordinates at element instantiation time. "Top" here is
+    /// package-relative — whether it lands on the board's top or bottom face
+    /// depends on whether the element is mirrored (see composition in the
+    /// element loop below).
+    silk_top: SilkscreenLayer,
+    /// Package-local silkscreen for Layer 22 (bPlace). Symmetric to
+    /// `silk_top` — rarely populated in practice (this board's packages keep
+    /// all silk on layer 21) but handled for completeness.
+    silk_bottom: SilkscreenLayer,
 }
 
 impl PackageDef {
@@ -328,6 +433,8 @@ impl PackageDef {
             smds: Vec::new(),
             pads: Vec::new(),
             fab_wires: Vec::new(),
+            silk_top: SilkscreenLayer::default(),
+            silk_bottom: SilkscreenLayer::default(),
         }
     }
 }
@@ -546,6 +653,154 @@ fn attr_u32(e: &BytesStart<'_>, key: &str) -> Result<Option<u32>, EagleError> {
 }
 
 // ---------------------------------------------------------------------------
+// Silkscreen helpers (task #13a)
+//
+// EAGLE encodes a curved silk segment as `<wire x1 y1 x2 y2 curve="N"/>`,
+// where N is the sweep angle in degrees. Zero / missing `curve` means a
+// plain straight line. The chord runs from `(x1,y1)` to `(x2,y2)`; the arc
+// bulges to the *left* of the chord (looking from p1 → p2) for positive
+// curve, to the right for negative curve. The SilkscreenArc primitive we
+// emit stores three points (start / mid / end) so downstream consumers can
+// tessellate uniformly with the KiCad path.
+
+fn push_wire_as_silk(
+    start: (f32, f32),
+    end: (f32, f32),
+    curve_deg: f32,
+    dest: &mut SilkscreenLayer,
+) {
+    if curve_deg.abs() < 0.01 {
+        dest.lines.push(SilkscreenLine { start, end });
+        return;
+    }
+    let Some(mid) = curve_mid(start, end, curve_deg) else {
+        // Degenerate chord (zero length) — fall back to the straight line.
+        dest.lines.push(SilkscreenLine { start, end });
+        return;
+    };
+    dest.arcs.push(SilkscreenArc { start, mid, end });
+}
+
+/// Compute the arc's midpoint from the chord + sweep angle. The sagitta
+/// (perpendicular offset from chord midpoint to arc midpoint) is
+/// `h = (L/2) * tan(curve/4)` where L is chord length and curve is in
+/// radians. The perpendicular is to the left of p1→p2 for positive sweep.
+fn curve_mid(p1: (f32, f32), p2: (f32, f32), curve_deg: f32) -> Option<(f32, f32)> {
+    let (dx, dy) = (p2.0 - p1.0, p2.1 - p1.1);
+    let chord = (dx * dx + dy * dy).sqrt();
+    if chord < 1e-6 {
+        return None;
+    }
+    let theta = curve_deg.to_radians();
+    let sagitta = (chord / 2.0) * (theta / 4.0).tan();
+    // Unit perpendicular to the chord (left-hand side in a standard
+    // right-handed CCW frame).
+    let (px, py) = (-dy / chord, dx / chord);
+    let midx = (p1.0 + p2.0) * 0.5 + px * sagitta;
+    let midy = (p1.1 + p2.1) * 0.5 + py * sagitta;
+    Some((midx, midy))
+}
+
+/// Compose (layer_is_top, mirror) → destination face. `layer_is_top` means
+/// the silk primitive was on EAGLE Layer 21 (tPlace) within the package.
+/// Mirroring happens when the element has an `MR*` rot (it's on the bottom
+/// copper face). The two-input XOR: un-mirrored Layer 21 → top silk;
+/// mirrored Layer 21 → bottom silk; un-mirrored Layer 22 → bottom silk;
+/// mirrored Layer 22 → top silk.
+fn compose_silk_face(layer_is_top: bool, mirror: bool) -> bool {
+    layer_is_top ^ mirror
+}
+
+/// Transform a package-local point by the element's placement: mirror → X
+/// flip (in package frame), rotate by `rot_deg` CCW around package origin,
+/// then translate to the element's board position.
+fn transform_silk_point(
+    p: (f32, f32),
+    origin: (f32, f32),
+    rot_deg: f32,
+    mirror: bool,
+) -> (f32, f32) {
+    let (mut x, y) = p;
+    if mirror {
+        x = -x;
+    }
+    let theta = rot_deg.to_radians();
+    let (s, c) = (theta.sin(), theta.cos());
+    let rx = x * c - y * s;
+    let ry = x * s + y * c;
+    (origin.0 + rx, origin.1 + ry)
+}
+
+/// Transform every package-local silk primitive to board coordinates and
+/// route each to the correct face accumulator based on the layer-vs-mirror
+/// composition above.
+fn emit_element_silk(
+    pkg: &PackageDef,
+    origin: (f32, f32),
+    rot_deg: f32,
+    mirror: bool,
+    silkscreen_top: &mut SilkscreenLayer,
+    silkscreen_bottom: &mut SilkscreenLayer,
+) {
+    // Layer-21 (package-top) silk.
+    emit_layer_silk(
+        &pkg.silk_top,
+        origin,
+        rot_deg,
+        mirror,
+        /* layer_is_top = */ true,
+        silkscreen_top,
+        silkscreen_bottom,
+    );
+    // Layer-22 (package-bottom) silk.
+    emit_layer_silk(
+        &pkg.silk_bottom,
+        origin,
+        rot_deg,
+        mirror,
+        /* layer_is_top = */ false,
+        silkscreen_top,
+        silkscreen_bottom,
+    );
+}
+
+fn emit_layer_silk(
+    local: &SilkscreenLayer,
+    origin: (f32, f32),
+    rot_deg: f32,
+    mirror: bool,
+    layer_is_top: bool,
+    silkscreen_top: &mut SilkscreenLayer,
+    silkscreen_bottom: &mut SilkscreenLayer,
+) {
+    let lands_on_top = compose_silk_face(layer_is_top, mirror);
+    let dest = if lands_on_top {
+        silkscreen_top
+    } else {
+        silkscreen_bottom
+    };
+    for line in &local.lines {
+        dest.lines.push(SilkscreenLine {
+            start: transform_silk_point(line.start, origin, rot_deg, mirror),
+            end: transform_silk_point(line.end, origin, rot_deg, mirror),
+        });
+    }
+    for arc in &local.arcs {
+        dest.arcs.push(SilkscreenArc {
+            start: transform_silk_point(arc.start, origin, rot_deg, mirror),
+            mid: transform_silk_point(arc.mid, origin, rot_deg, mirror),
+            end: transform_silk_point(arc.end, origin, rot_deg, mirror),
+        });
+    }
+    for circle in &local.circles {
+        dest.circles.push(SilkscreenCircle {
+            center: transform_silk_point(circle.center, origin, rot_deg, mirror),
+            radius: circle.radius,
+        });
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Tests
 
 #[cfg(test)]
@@ -668,6 +923,113 @@ mod tests {
         }
         lines[0].board = BoardId::C1Main; // Display
         lines
+    }
+
+    #[test]
+    fn silk_straight_wire_produces_line() {
+        let mut silk = SilkscreenLayer::default();
+        push_wire_as_silk((0.0, 0.0), (1.0, 0.0), 0.0, &mut silk);
+        assert_eq!(silk.lines.len(), 1);
+        assert_eq!(silk.arcs.len(), 0);
+        assert_eq!(silk.lines[0].start, (0.0, 0.0));
+        assert_eq!(silk.lines[0].end, (1.0, 0.0));
+    }
+
+    #[test]
+    fn silk_curved_wire_produces_arc() {
+        // 90° sweep on a chord along +X should bulge to the left (+Y).
+        // Sagitta = (chord/2) * tan(90°/4) = 0.5 * tan(22.5°) ≈ 0.207.
+        let mut silk = SilkscreenLayer::default();
+        push_wire_as_silk((0.0, 0.0), (1.0, 0.0), 90.0, &mut silk);
+        assert_eq!(silk.lines.len(), 0);
+        assert_eq!(silk.arcs.len(), 1);
+        let arc = &silk.arcs[0];
+        assert_eq!(arc.start, (0.0, 0.0));
+        assert_eq!(arc.end, (1.0, 0.0));
+        assert!((arc.mid.0 - 0.5).abs() < 1e-4, "mid.x = {}", arc.mid.0);
+        assert!(
+            (arc.mid.1 - 0.20710678).abs() < 1e-4,
+            "mid.y = {}",
+            arc.mid.1
+        );
+    }
+
+    #[test]
+    fn silk_zero_length_curve_falls_back_to_line() {
+        // Degenerate chord — emit a line rather than NaN-filled arc.
+        let mut silk = SilkscreenLayer::default();
+        push_wire_as_silk((2.5, 1.0), (2.5, 1.0), 45.0, &mut silk);
+        assert_eq!(silk.lines.len(), 1);
+        assert_eq!(silk.arcs.len(), 0);
+    }
+
+    #[test]
+    fn silk_face_composition_rules() {
+        // Layer 21 + not mirrored → top; Layer 21 + mirrored → bottom.
+        assert_eq!(compose_silk_face(true, false), true);
+        assert_eq!(compose_silk_face(true, true), false);
+        // Layer 22 + not mirrored → bottom; Layer 22 + mirrored → top.
+        assert_eq!(compose_silk_face(false, false), false);
+        assert_eq!(compose_silk_face(false, true), true);
+    }
+
+    #[test]
+    fn silk_transform_mirror_flips_x() {
+        let p = transform_silk_point((2.0, 3.0), (0.0, 0.0), 0.0, true);
+        assert_eq!(p, (-2.0, 3.0));
+    }
+
+    #[test]
+    fn silk_transform_rotate_90_ccw() {
+        // (1, 0) rotated 90° CCW about origin → (0, 1).
+        let p = transform_silk_point((1.0, 0.0), (0.0, 0.0), 90.0, false);
+        assert!(p.0.abs() < 1e-5, "x = {}", p.0);
+        assert!((p.1 - 1.0).abs() < 1e-5, "y = {}", p.1);
+    }
+
+    #[test]
+    fn silk_transform_translate() {
+        let p = transform_silk_point((0.5, -0.5), (10.0, 20.0), 0.0, false);
+        assert_eq!(p, (10.5, 19.5));
+    }
+
+    /// Mirroring + rotation + translation composed together — exercises the
+    /// exact path an EAGLE MR* element drives. Starting from a local point
+    /// (1, 0), mirror flips to (-1, 0), 180° rotation yields (1, 0), then
+    /// translate by element origin (5, 5) → (6, 5).
+    #[test]
+    fn silk_transform_mirror_then_rotate_180_then_translate() {
+        let p = transform_silk_point((1.0, 0.0), (5.0, 5.0), 180.0, true);
+        assert!((p.0 - 6.0).abs() < 1e-5, "x = {}", p.0);
+        assert!((p.1 - 5.0).abs() < 1e-5, "y = {}", p.1);
+    }
+
+    /// End-to-end silk sanity: C2 BOM elements all carry MR* rotations, so
+    /// every package Layer-21 silk primitive should route to the board's
+    /// bottom silk. Confirm we actually emit a meaningful number of them
+    /// (packages have dense footprint outlines on layer 21).
+    #[test]
+    fn c2_parse_produces_bottom_silkscreen() {
+        let bom = sample_bom();
+        let board = load_c2_board(&bom).expect("parse");
+        let top_total = board.outline.silkscreen_top.lines.len()
+            + board.outline.silkscreen_top.arcs.len()
+            + board.outline.silkscreen_top.circles.len();
+        let bottom_total = board.outline.silkscreen_bottom.lines.len()
+            + board.outline.silkscreen_bottom.arcs.len()
+            + board.outline.silkscreen_bottom.circles.len();
+        // Bottom face should dominate — every MR* element's package-top silk
+        // lands there. Loose lower bound: at least one line per BOM element.
+        assert!(
+            bottom_total >= 17,
+            "bottom silk total = {} (expected ≥ 17)",
+            bottom_total
+        );
+        // Board also has top-silk text/wires in <plain> that we don't emit
+        // (text is out of scope) — but package silk from non-mirrored
+        // elements is empty in C2 because every BOM element is MR*. So top
+        // can legitimately be zero or near-zero here.
+        let _ = top_total;
     }
 
     fn line(refs: &[&str], mpn: &str, hero: Option<&str>) -> BomLine {
