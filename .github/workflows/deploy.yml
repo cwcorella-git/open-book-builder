@@ -1,0 +1,106 @@
+# Deploys the web target (`npm run build:web`) to GitHub Pages at
+# https://cwcorella-git.github.io/open-book-builder/.
+#
+# The web bundle's JS asset URLs are baked under `/open-book-builder/` at
+# build time via `vite build --base=/open-book-builder/` (see package.json).
+# That means the Pages URL MUST match the repo name — if you ever fork this
+# or rename the repo, also update the `--base` in `package.json`.
+#
+# Build steps (all happen inside the `build` job on a single runner):
+#   1. apt install: Tauri v2 needs webkit2gtk/gtk/ayatana/librsvg system libs
+#      to *compile* even when we only invoke `--export-json` from the CLI.
+#      src/main.rs links against Tauri runtime regardless of which arg it
+#      dispatches on. Refactor deferred — these apt installs are the tax.
+#   2. setup-node + npm cache: React/Vite dependency install.
+#   3. setup rust + Swatinem/rust-cache: bake-dataset cargo target cache.
+#   4. npm ci + npm run build:web: runs bake-dataset (cargo → public/),
+#      tsc (typecheck), vite build (emits dist/ with /open-book-builder/
+#      base).
+#   5. upload-pages-artifact + deploy-pages: publish dist/.
+#
+# First cold run: ~4–6 min (Rust compile dominates). Warm runs with both
+# caches hot: ~60–90 s.
+
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# GitHub Pages OIDC flow needs these three scopes exactly.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one Pages deploy in flight at a time. `cancel-in-progress: false`
+# lets an already-running deploy finish instead of being killed by a
+# newer push — Pages deploys are short enough that queuing is fine.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Tauri v2 system dependencies
+        # Required even though we only run the CLI bake — the
+        # `open-book-builder` binary links against Tauri regardless.
+        # Package list matches Tauri v2's Ubuntu 24.04 prerequisites.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            build-essential \
+            curl \
+            wget \
+            file
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build artifacts
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Build web bundle
+        # Runs bake-dataset (cargo → public/board-dataset.json) then
+        # `tsc && vite build --base=/open-book-builder/` → dist/.
+        run: npm run build:web
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
