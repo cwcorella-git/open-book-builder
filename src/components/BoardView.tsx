@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useDataset } from '../lib/dataset-context';
+import { useNavigation } from '../lib/navigation-context';
 import { BoardViewport } from './BoardViewport';
 import type { BoardId, BomLine, Component } from '../lib/types';
 
@@ -17,9 +18,8 @@ const SIDE_FILTERS: { id: SideFilter; label: string }[] = [
 
 export function BoardView() {
   const dataset = useDataset();
-  const [board, setBoard] = useState<BoardId>('c1-main');
+  const { board, setBoard, selectedRef, selectComponent } = useNavigation();
   const [sideFilter, setSideFilter] = useState<SideFilter>('both');
-  const [selectedRef, setSelectedRef] = useState<string | null>(null);
 
   const boardData = dataset.boards[board];
 
@@ -29,10 +29,10 @@ export function BoardView() {
   );
 
   // Reset selection when switching boards so a stale C1 ref doesn't bleed
-  // into the (currently empty) C2 view.
+  // into the C2 view (and vice versa).
   const handleBoardChange = (next: BoardId) => {
     setBoard(next);
-    setSelectedRef(null);
+    selectComponent(null);
   };
 
   const hasGeometry =
@@ -54,7 +54,7 @@ export function BoardView() {
             boardData={boardData}
             sideFilter={sideFilter}
             selectedRef={selectedRef}
-            onSelect={setSelectedRef}
+            onSelect={selectComponent}
           />
         ) : (
           <EmptyBoard board={board} />

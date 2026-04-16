@@ -1,13 +1,11 @@
-import { useState } from 'react';
 import { DatasetProvider, useDatasetStatus } from './lib/dataset-context';
+import { NavigationProvider, useNavigation, type Tab } from './lib/navigation-context';
 import { useDiscrepancyResolution } from './lib/use-discrepancy-resolution';
 import { BoardView } from './components/BoardView';
 import { BomView } from './components/BomView';
 import { AssemblyView } from './components/AssemblyView';
 import { DiscrepancyView } from './components/DiscrepancyView';
 import { DiscrepancyBanner } from './components/DiscrepancyBanner';
-
-type Tab = 'board' | 'bom' | 'assembly' | 'discrepancies';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'board', label: 'Board' },
@@ -17,7 +15,7 @@ const TABS: { id: Tab; label: string }[] = [
 ];
 
 function Shell() {
-  const [tab, setTab] = useState<Tab>('bom');
+  const { tab, setTab } = useNavigation();
   const status = useDatasetStatus();
 
   // Hook must be called unconditionally; feed empty array when not ready.
@@ -104,7 +102,9 @@ function Placeholder({ text }: { text: string }) {
 export default function App() {
   return (
     <DatasetProvider>
-      <Shell />
+      <NavigationProvider>
+        <Shell />
+      </NavigationProvider>
     </DatasetProvider>
   );
 }

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useDataset } from '../lib/dataset-context';
+import { useNavigation } from '../lib/navigation-context';
 import type { Discrepancy, Severity } from '../lib/types';
 import { useDiscrepancyResolution } from '../lib/use-discrepancy-resolution';
 
@@ -250,8 +251,20 @@ function ChipRow({
   items: string[];
   tone: 'neutral' | 'ref';
 }) {
+  // `tone === 'ref'` chips jump to the Board tab with that ref selected. Tone
+  // `neutral` (Sources) stays as inert spans.
+  const { navigateToComponent } = useNavigation();
   const chipBg = tone === 'ref' ? '#1e40af' : '#334155';
   const chipFg = tone === 'ref' ? '#e0e7ff' : '#cbd5e1';
+  const chipStyle: React.CSSProperties = {
+    padding: '2px 8px',
+    background: chipBg,
+    color: chipFg,
+    borderRadius: '3px',
+    fontSize: '10px',
+    fontFamily: tone === 'ref' ? 'monospace' : 'inherit',
+    wordBreak: 'break-all',
+  };
   return (
     <div style={{ display: 'flex', gap: '6px', alignItems: 'baseline', flexWrap: 'wrap' }}>
       <span style={{
@@ -261,22 +274,23 @@ function ChipRow({
       }}>
         {label}
       </span>
-      {items.map((item) => (
-        <span
-          key={item}
-          style={{
-            padding: '2px 8px',
-            background: chipBg,
-            color: chipFg,
-            borderRadius: '3px',
-            fontSize: '10px',
-            fontFamily: tone === 'ref' ? 'monospace' : 'inherit',
-            wordBreak: 'break-all',
-          }}
-        >
-          {item}
-        </span>
-      ))}
+      {items.map((item) =>
+        tone === 'ref' ? (
+          <button
+            key={item}
+            type="button"
+            onClick={() => navigateToComponent(item)}
+            style={{ ...chipStyle, border: 'none', cursor: 'pointer', lineHeight: 1.2 }}
+            title={`Jump to ${item} on the Board tab`}
+          >
+            {item}
+          </button>
+        ) : (
+          <span key={item} style={chipStyle}>
+            {item}
+          </span>
+        ),
+      )}
     </div>
   );
 }

@@ -9,6 +9,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useDataset } from '../lib/dataset-context';
+import { useNavigation } from '../lib/navigation-context';
 import { useAssemblyProgress } from '../lib/use-assembly-progress';
 import { BoardViewport } from './BoardViewport';
 import type { AssemblyPhase, AssemblyStep } from '../lib/types';
@@ -353,26 +354,43 @@ function ChipRow({
   items: string[];
   monospace?: boolean;
 }) {
+  // When `monospace` is true, items are componentRefs — render them as
+  // buttons that jump to the Board tab with that ref pre-selected. Tools
+  // chips (monospace=false) stay as inert spans.
+  const { navigateToComponent } = useNavigation();
+  const chipStyle: React.CSSProperties = {
+    padding: '2px 6px',
+    fontSize: '11px',
+    background: '#0f172a',
+    border: '1px solid #334155',
+    borderRadius: '3px',
+    color: '#cbd5e1',
+    fontFamily: monospace ? 'monospace' : undefined,
+  };
   return (
     <div style={{ display: 'flex', gap: '8px', alignItems: 'baseline', flexWrap: 'wrap' }}>
       <span style={{ fontSize: '11px', color: '#64748b', flexShrink: 0 }}>{label}</span>
       <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-        {items.map((item, i) => (
-          <span
-            key={`${item}-${i}`}
-            style={{
-              padding: '2px 6px',
-              fontSize: '11px',
-              background: '#0f172a',
-              border: '1px solid #334155',
-              borderRadius: '3px',
-              color: '#cbd5e1',
-              fontFamily: monospace ? 'monospace' : undefined,
-            }}
-          >
-            {item}
-          </span>
-        ))}
+        {items.map((item, i) =>
+          monospace ? (
+            <button
+              key={`${item}-${i}`}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigateToComponent(item);
+              }}
+              style={{ ...chipStyle, cursor: 'pointer', lineHeight: 1.2 }}
+              title={`Jump to ${item} on the Board tab`}
+            >
+              {item}
+            </button>
+          ) : (
+            <span key={`${item}-${i}`} style={chipStyle}>
+              {item}
+            </span>
+          ),
+        )}
       </div>
     </div>
   );

@@ -398,7 +398,8 @@ The 13-task build plan lives at
 - [x] **#11** Parse EAGLE C2 driver module — `quick-xml` manual Reader event loop → 17 components (all MR*-mirrored → bottom), 3 holes, 4 outline wires, 21 nets + synthesized `Display` component with `gdew042t2` procedural hero mesh (bezel + white screen + FFC stub + corner label)
 - [x] **#12** Build Assembly view — checklist + mini viewport with step-based highlighting
 - [x] **#13a** Silkscreen overlays — KiCad `F.SilkS`/`B.SilkS` + EAGLE Layer 21/22 parsed to typed line/arc/circle primitives in board coordinates; rasterized to a `CanvasTexture` per face at 8 px/mm and overlaid on thin transparent planes above each board face (lines/arcs/circles only — text deferred)
-- [ ] **#13b–f** Remaining polish — cross-tab nav, net coloring, About tab, BOM comparison, copper traces
+- [x] **#13b** Cross-tab navigation — shared `NavigationContext` lifts `tab`/`board`/`selectedRef` out of local state; componentRef chips in Assembly + Discrepancy tabs become `<button>`s that resolve target board (components-first, BOM-fallback) and jump to the Board tab with the ref pre-selected
+- [ ] **#13c–f** Remaining polish — net coloring, About tab, BOM comparison, copper traces
 
 Steps 1–7 give a shipable tool (BOM + discrepancies + sourcing + web share)
 with no 3D. Steps 8–13 add the visualization half — task #8 is the
