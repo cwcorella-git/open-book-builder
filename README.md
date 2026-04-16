@@ -37,16 +37,18 @@ that shows:
 
 ## Current status
 
-Tasks #1–#7 of the build plan are complete. The backend parses both BOM
-CSVs and merges them with hand-authored per-MPN metadata; the React shell
-renders the BOM view (build-qty multiplier, optional-line toggle, cost
-footer, **Digi-Key CSV export button**) and the Discrepancy view
-(severity-colored cards, localStorage-persisted Resolved toggle, red
-header banner for unresolved build-critical items). **The sourcing loop
-is closed** — open app → resolve build-critical items → Export CSV →
-upload to Digi-Key. **The web target ships** — `npm run build:web`
-produces a GitHub-Pages-ready `dist/` under `/open-book-builder/`.
-Two top-level views (Board 3D, Assembly) still render placeholder text.
+Tasks #1–#8 of the build plan are complete. The backend parses both BOM
+CSVs + the C1 `.kicad_pcb` and merges everything with hand-authored per-MPN
+metadata; the React shell renders the BOM view (build-qty multiplier,
+optional-line toggle, cost footer, **Digi-Key CSV export button**), the
+Discrepancy view (severity-colored cards, localStorage-persisted Resolved
+toggle, red header banner for unresolved build-critical items), and a
+**2D SVG preview of the C1 main board** with click-to-select and a
+top/bottom/both side filter. **The sourcing loop is closed** — open app →
+resolve build-critical items → Export CSV → upload to Digi-Key. **The web
+target ships** — `npm run build:web` produces a GitHub-Pages-ready
+`dist/` under `/open-book-builder/`. The Assembly tab still renders
+placeholder text.
 
 **What works today:**
 
@@ -72,10 +74,18 @@ Two top-level views (Board 3D, Assembly) still render placeholder text.
   `http://localhost:4173/open-book-builder/` for smoke-testing. Plain
   `npm run build` stays root-relative so Tauri's desktop bundle is
   unaffected.
+- **Board tab** renders the C1 outline as an SVG polygon
+  (85 × 115 mm rounded rectangle from Edge.Cuts) with 4 mounting-hole
+  circles and 27 components colored by side. Clicking a component
+  populates the right-hand detail panel with position, footprint,
+  pad count, and the matching BOM line (MPN, function, unit cost,
+  Digi-Key PN, datasheet link). The C2 board shows an explicit
+  "lands in task #11" empty state.
 
 **What's mocked:**
 
-- All 3D viewport code (task #9).
+- All 3D viewport code (task #9) — Board tab uses a flat SVG preview.
+- C2 castellated e-paper driver geometry (task #11, EAGLE parser).
 
 See `Roadmap` below and the authoritative plan at
 `~/.claude/plans/melodic-tinkering-newt.md`.
@@ -114,9 +124,13 @@ time. This means:
 - No runtime filesystem reads for canonical data.
 - No "where does this app expect its data directory?" question.
 
-Parsed KiCad / EAGLE files from `the-open-book/` source tree will be merged
-in by tasks #8 and #11 (their own modules, accepting paths — deliberately
-not `include_str!`'d since they're large and project-external).
+Parsed KiCad / EAGLE files are treated the same way — the C1
+`.kicad_pcb` (1.3 MB) is copied into `src-tauri/data/` and `include_str!`'d
+by `kicad_pcb.rs`. The C2 `.brd` / `.sch` will follow suit in task #11.
+The only awkward wrinkle: KiCad sprinkles `(tstamp <uuid>)` and
+`(tedit <hex-epoch>)` atoms throughout, which lexpr's default reader
+rejects as malformed numbers. `strip_timestamps()` removes both subexprs
+before handing the text to lexpr — we never consume the values anyway.
 
 ### Tech stack
 
@@ -127,7 +141,7 @@ Mirrors `~/Projects/dodec-mapper/` with additions:
 | Desktop shell | Tauri v2 |
 | Frontend | React 19.1 + TypeScript 5.8 + Vite 7 |
 | 3D (pending) | Three.js 0.183 + OrbitControls |
-| KiCad parsing (pending) | TBD at task #8 — candidates: `kicad-parse-gen`, `lexpr`, hand-rolled S-expr |
+| KiCad parsing | `lexpr` 0.2 (generic S-expr walker — `kicad-parse-gen` is stale since 2018, `kiutils` isn't on crates.io) |
 | EAGLE parsing (pending) | `quick-xml` + serde structs |
 | BOM parsing | Rust `csv` crate |
 | Errors | `thiserror` |
@@ -158,6 +172,7 @@ open-book-builder/
 │   │   ├── digikey-csv.ts                 # Pure Digi-Key BOM CSV builder + summary
 │   │   └── exporter.ts                    # saveTextFile(): Tauri save-dialog vs web Blob
 │   └── components/
+│       ├── BoardView.tsx                  # Built. SVG board preview, side filter, click-select.
 │       ├── BomView.tsx                    # Built. Two-pane table + detail panel + CSV export.
 │       ├── DiscrepancyView.tsx            # Built. Severity-grouped cards, Resolved toggle.
 │       └── DiscrepancyBanner.tsx          # Built. Red header bar; hidden when 0 unresolved.
@@ -172,12 +187,14 @@ open-book-builder/
     │   ├── assembly.json             # 12 ordered build steps
     │   ├── bom-c1-main.csv           # copied from the-open-book/OSO-BOOK-C1/1-click-bom.csv
     │   ├── bom-c2-driver.csv         # copied from the-open-book/OSO-BOOK-C2-02 (PCBWay)
+    │   ├── OSO-BOOK-C1.kicad_pcb     # copied from the-open-book/OSO-BOOK-C1 (1.3 MB, KiCad 6)
     │   └── hero-meshes/              # (reserved for 5 GLTFs, task #10)
     └── src/
         ├── main.rs                   # Dispatches --export-json vs Tauri run
         ├── lib.rs                    # load_board_dataset cmd + export_json_to_path
         ├── types.rs                  # Serde mirrors with kebab-case enums
-        ├── dataset.rs                # Glues static JSONs + BOM CSVs into BoardDataset
+        ├── dataset.rs                # Glues static JSONs + BOM CSVs + KiCad into BoardDataset
+        ├── kicad_pcb.rs              # lexpr walker → components, mounting holes, Edge.Cuts
         └── bom.rs                    # Two CSV parsers → Vec<BomLine>, cost summarizer
 ```
 
@@ -186,8 +203,10 @@ open-book-builder/
 The canonical shape is `BoardDataset` (see `src/lib/types.ts` and
 `src-tauri/src/types.rs`). One JSON document contains:
 
-- `boards: Record<BoardId, BoardData>` — per-board 3D data (components,
-  outline, nets). Currently both boards are empty stubs.
+- `boards: Record<BoardId, BoardData>` — per-board geometry (components,
+  outline, nets). `c1-main` is now fully populated from the KiCad PCB;
+  `c2-driver` is still an empty stub pending the EAGLE parser (task #11).
+  `nets` stays empty until task #13 parses `.kicad_sch`.
 - `bom: BomLine[]` — unified list tagged with `board: 'c1-main' | 'c2-driver'`,
   merged with per-MPN metadata (function, datasheet URL, unit cost).
 - `discrepancies: Discrepancy[]` — hand-authored, severity-classed.
@@ -241,7 +260,11 @@ npm run preview:web         # serves dist/ locally at http://localhost:4173/open
 - `costSummary.perTenUnitsUsd ≈ 432.70`
 - `costSummary.missingLineItems == ["c1-main:OSO-BOOK-C2-01"]`
 - 12 discrepancies, 12 assembly steps
-- Both board entries present with empty components/outline/nets
+- `boards["c1-main"]`: 27 components, 4 mounting holes, 40 Edge.Cuts
+  segments, outline 85 × 115 mm; every component has a non-empty `bomRef`
+  (JP1 / JP2 solder-jumpers are present in KiCad but not in the BOM,
+  so the parser drops them — the ref-matching filter is the source of truth)
+- `boards["c2-driver"]`: still empty until task #11
 
 ## Canonical discrepancies
 
@@ -278,7 +301,7 @@ The 13-task build plan lives at
 - [x] **#5** Build Discrepancy view — red banner for unresolved build-critical, localStorage Resolved toggle
 - [x] **#6** Implement Digi-Key CSV export — save-as dialog (Tauri) / Blob download (web) + build-qty multiplier
 - [x] **#7** Set up dual-target build — `scripts/bake-dataset.ts`, `npm run build:web` emits dist/ under `/open-book-builder/`
-- [ ] **#8** Parse KiCad PCB and schematic — pick parser crate or hand-roll
+- [x] **#8** Parse KiCad PCB and 2D preview — `lexpr` walker → 27 components + 4 holes + 40 edge segments; `BoardView.tsx` SVG
 - [ ] **#9** Build 3D BoardViewport — Three.js, extruded board, raycaster picking
 - [ ] **#10** Add hero meshes — 5 GLTFs (pi-pico, gdew042t2, keystone-1022, c2-module, mem2075)
 - [ ] **#11** Parse EAGLE C2 driver module — `quick-xml` + serde structs
@@ -286,7 +309,8 @@ The 13-task build plan lives at
 - [ ] **#13** Polish — net coloring, keyboard shortcuts, About screen
 
 Steps 1–7 give a shipable tool (BOM + discrepancies + sourcing + web share)
-with no 3D. Steps 8–13 add the visualization half.
+with no 3D. Steps 8–13 add the visualization half — task #8 is the
+parser + a 2D SVG stepping-stone; task #9 upgrades it to Three.js.
 
 ## Canonical source files
 

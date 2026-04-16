@@ -25,7 +25,9 @@ serde_json = "1"
 csv = "1"
 thiserror = "1"
 quick-xml = { version = "0.36", features = ["serialize"] }
-# KiCad parser dep is deferred to task #8. Candidates: `kicad-parse-gen`,
-# `lexpr` (generic S-expression parser), or hand-rolled. Decision lives with
-# the task that actually consumes it so we pick based on real file output,
-# not speculation.
+# KiCad 6 `.kicad_pcb` files are canonical Lisp S-expressions. We walk the
+# tree with `lexpr` rather than a KiCad-specific crate: `kicad-parse-gen`
+# hasn't shipped since 2018 and can't parse KiCad 6 (version 20211014), and
+# `kiutils` isn't on crates.io. lexpr is ~388k downloads, 2023-maintained,
+# and gives us a generic `Value` tree we can walk in ~350 LOC.
+lexpr = "0.2"

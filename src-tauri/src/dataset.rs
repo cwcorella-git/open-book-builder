@@ -10,6 +10,7 @@
 //! path and returns parsed structs.
 
 use crate::bom;
+use crate::kicad_pcb;
 use crate::types::{
     AssemblyStep, BoardData, BoardDataset, BoardId, BoardOutline, Discrepancy,
 };
@@ -27,6 +28,8 @@ pub enum DatasetError {
     Json(#[from] serde_json::Error),
     #[error("csv: {0}")]
     Csv(#[from] csv::Error),
+    #[error("kicad: {0}")]
+    KiCad(#[from] kicad_pcb::KiCadError),
     // Used from task #3 onward once we're merging real data.
     #[allow(dead_code)]
     #[error("data: {0}")]
@@ -41,7 +44,8 @@ pub fn load() -> Result<BoardDataset, DatasetError> {
     let cost_summary = bom::summarize_cost(&bom_lines);
 
     let mut boards = BTreeMap::new();
-    boards.insert(BoardId::C1Main, empty_board());
+    boards.insert(BoardId::C1Main, kicad_pcb::load_c1_board(&bom_lines)?);
+    // C2 driver stays empty until task #11 adds the EAGLE parser.
     boards.insert(BoardId::C2Driver, empty_board());
 
     Ok(BoardDataset {

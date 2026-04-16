@@ -7,6 +7,7 @@
 
 mod bom;
 mod dataset;
+mod kicad_pcb;
 mod types;
 
 use types::BoardDataset;

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { DatasetProvider, useDatasetStatus } from './lib/dataset-context';
 import { useDiscrepancyResolution } from './lib/use-discrepancy-resolution';
+import { BoardView } from './components/BoardView';
 import { BomView } from './components/BomView';
 import { DiscrepancyView } from './components/DiscrepancyView';
 import { DiscrepancyBanner } from './components/DiscrepancyBanner';
@@ -77,7 +78,7 @@ function Shell() {
 
 function TabContent({ tab }: { tab: Tab }) {
   switch (tab) {
-    case 'board': return <Placeholder text="Board view — 3D viewport lands in task #9." />;
+    case 'board': return <BoardView />;
     case 'bom': return <BomView />;
     case 'assembly': return <Placeholder text="Assembly checklist lands in task #12." />;
     case 'discrepancies': return <DiscrepancyView />;
