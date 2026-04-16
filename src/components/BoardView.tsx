@@ -240,10 +240,11 @@ function SidePill({ side }: { side: 'top' | 'bottom' }) {
   );
 }
 
-function EmptyBoard({ board }: { board: BoardId }) {
-  const message = board === 'c2-driver'
-    ? 'C2 driver geometry lands in task #11 (EAGLE parser).'
-    : 'No board geometry available yet.';
+function EmptyBoard({ board: _board }: { board: BoardId }) {
+  // With both C1 (KiCad) and C2 (EAGLE) parsers wired up, this branch only
+  // fires if a parser misses the outline — the message stays generic rather
+  // than pinning to a specific board.
+  const message = 'No board geometry available yet.';
   return (
     <div style={{
       flex: 1,

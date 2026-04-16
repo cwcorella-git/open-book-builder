@@ -77,9 +77,40 @@ pub fn height3d_for(fp: &str) -> f32 {
     1.0
 }
 
+/// Height lookup for EAGLE bare package names (e.g. `"0805-NO"`, `"SOD-123"`,
+/// `"SOT23-3"`, `"EINK_24PIN"`, `"_0603"`). EAGLE embeds package definitions
+/// inline in the `.brd`, so footprints aren't prefixed with a library path —
+/// different keyspace from KiCad, different table.
+///
+/// Evaluated top-to-bottom, first match wins. Tuned to the 8 packages that
+/// appear in `OSO-BOOK-C2-02.brd`; unknowns fall through to 1mm.
+pub fn height3d_for_eagle(pkg: &str) -> f32 {
+    // SMD passives. `0805-NO`, `MICROBUILDER__0805`, `_0603` all land here.
+    if pkg.contains("0805") || pkg.contains("_0603") {
+        return 0.6;
+    }
+
+    // Small-outline transistor / diode packages. SOD-123 is the Schottky body,
+    // SOT23-3 is the P-MOSFET body — both ~1.1mm tall.
+    if pkg == "SOD-123" {
+        return 1.1;
+    }
+    if pkg.starts_with("SOT23") {
+        return 1.1;
+    }
+
+    // The 24-pin FFC connector for the e-paper ribbon.
+    if pkg == "EINK_24PIN" {
+        return 1.5;
+    }
+
+    // Unmatched — 1mm is a safe default.
+    1.0
+}
+
 #[cfg(test)]
 mod tests {
-    use super::height3d_for;
+    use super::{height3d_for, height3d_for_eagle};
 
     /// Every footprint string that currently appears in the C1 dataset gets
     /// an explicit expected value. If a new footprint slips in and we forget
@@ -153,5 +184,33 @@ mod tests {
         // match list doesn't silently reclassify SW1.
         let fp = "Button_Switch_SMD:SW_SPDT_CK-JS102011SAQN";
         assert_eq!(height3d_for(fp), 2.5);
+    }
+
+    /// Every EAGLE package string that appears in the C2 `.brd` gets an
+    /// expected height. Catches regressions if a new package slips in or a
+    /// rule gets reordered.
+    #[test]
+    fn c2_packages_get_expected_heights() {
+        let cases: &[(&str, f32)] = &[
+            ("0805-NO", 0.6),
+            ("MICROBUILDER__0805", 0.6),
+            ("_0603", 0.6),
+            ("SOD-123", 1.1),
+            ("SOT23-3", 1.1),
+            ("EINK_24PIN", 1.5),
+        ];
+        for (pkg, expected) in cases {
+            let got = height3d_for_eagle(pkg);
+            assert!(
+                (got - expected).abs() < 1e-4,
+                "height3d_for_eagle({pkg:?}) = {got}, expected {expected}"
+            );
+        }
+    }
+
+    #[test]
+    fn unknown_eagle_package_defaults_to_one() {
+        assert_eq!(height3d_for_eagle("BIGOVAL"), 1.0);
+        assert_eq!(height3d_for_eagle("UNKNOWN"), 1.0);
     }
 }

@@ -49,6 +49,8 @@ export function buildHeroMesh(
       return buildKeystone1022(component);
     case 'mem2075':
       return buildMem2075(component);
+    case 'gdew042t2':
+      return buildGdew042t2(component);
     default:
       return null;
   }
@@ -348,6 +350,104 @@ function buildMem2075(c: Component): HeroMeshResult {
   group.add(slot);
 
   return { object: group, primaryMesh: housing, ownedGeometries: geometries, ownedMaterials: materials, ownedTextures: textures };
+}
+
+// ---------------------------------------------------------------------------
+// GDEW042T2 e-paper panel — synthesized "Display" component on C2
+//
+// Dark gray plastic bezel with a white active area, a small yellow-brown FFC
+// ribbon stub on the edge facing the driver (-Y in local frame), and a
+// "GDEW042T2" label tucked into a corner of the screen face.
+//
+// The synthesized component is on the Top side (per `eagle.rs`), so this
+// builder authors its outward face (screen) toward +Y and lets the caller's
+// top-side pass leave it alone — no mirror wrap needed.
+
+function buildGdew042t2(c: Component): HeroMeshResult {
+  const geometries: THREE.BufferGeometry[] = [];
+  const materials: THREE.Material[] = [];
+  const textures: THREE.Texture[] = [];
+
+  const w = c.footprintBbox.width; // 95 mm
+  const d = c.footprintBbox.height; // 110 mm
+  const bezelThickness = Math.max(c.footprintBbox.height3d, 1.2);
+
+  const group = new THREE.Group();
+
+  // Bezel: a dark gray frame the size of the component footprint bbox.
+  const bezelMat = new THREE.MeshStandardMaterial({
+    color: 0x1f2937,
+    roughness: 0.8,
+    metalness: 0.05,
+  });
+  materials.push(bezelMat);
+  const bezelGeom = new THREE.BoxGeometry(w, bezelThickness, d);
+  bezelGeom.translate(0, bezelThickness / 2, 0);
+  geometries.push(bezelGeom);
+  const bezel = new THREE.Mesh(bezelGeom, bezelMat);
+  group.add(bezel);
+
+  // Screen: white plane floated 0.02 mm above the bezel's +Y face. The
+  // 85 × 105 mm active area roughly matches the 4.2-inch panel spec
+  // (84.8 × 63.36 mm visible is the datasheet value but the module body is
+  // larger; we fudge to the visual look).
+  const screenMat = new THREE.MeshBasicMaterial({
+    color: 0xf8fafc,
+    transparent: false,
+  });
+  materials.push(screenMat);
+  const screenGeom = new THREE.PlaneGeometry(85, 105);
+  geometries.push(screenGeom);
+  const screen = new THREE.Mesh(screenGeom, screenMat);
+  screen.rotation.x = -Math.PI / 2; // normal +Z → +Y
+  screen.position.y = bezelThickness + 0.02;
+  group.add(screen);
+
+  // FFC ribbon stub: a thin, flat cable-colored rectangle poking out of the
+  // -Y edge of the bezel (the edge closest to the C2 driver at x=0).
+  const ffcMat = new THREE.MeshStandardMaterial({
+    color: 0xca8a04,
+    roughness: 0.6,
+  });
+  materials.push(ffcMat);
+  const ffcGeom = new THREE.BoxGeometry(24, 0.3, 2);
+  ffcGeom.translate(0, 0.15, 0);
+  geometries.push(ffcGeom);
+  const ffc = new THREE.Mesh(ffcGeom, ffcMat);
+  // The driver sits to -X in world space, but in the local frame (pre-
+  // positioning) we just want the ribbon on the short edge closer to the
+  // driver — that's -D/2 in the component's local Z, which after the
+  // Display component's rotation=0 + side=top mapping ends up on the -Y
+  // side of the world board. Good enough visually.
+  ffc.position.set(0, bezelThickness * 0.3, -d / 2 - 1);
+  group.add(ffc);
+
+  // Corner label: "GDEW042T2" on the screen face, bottom-right corner.
+  const labelTex = makeTextTexture(['GDEW042T2'], 256, 64);
+  textures.push(labelTex);
+  const labelMat = new THREE.MeshBasicMaterial({
+    map: labelTex,
+    transparent: true,
+  });
+  materials.push(labelMat);
+  const labelGeom = new THREE.PlaneGeometry(20, 5);
+  geometries.push(labelGeom);
+  const label = new THREE.Mesh(labelGeom, labelMat);
+  label.rotation.x = -Math.PI / 2;
+  // Inset ~4 mm from the screen's bottom-right corner.
+  label.position.set(w / 2 - 14, bezelThickness + 0.04, d / 2 - 6);
+  // Darken the label text on the white screen — invert the texture's fill
+  // color by overriding the material's color tint.
+  labelMat.color = new THREE.Color(0x1e293b);
+  group.add(label);
+
+  return {
+    object: group,
+    primaryMesh: bezel,
+    ownedGeometries: geometries,
+    ownedMaterials: materials,
+    ownedTextures: textures,
+  };
 }
 
 // ---------------------------------------------------------------------------

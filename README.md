@@ -37,19 +37,20 @@ that shows:
 
 ## Current status
 
-Tasks #1–#10 of the build plan are complete. The backend parses both BOM
-CSVs + the C1 `.kicad_pcb` and merges everything with hand-authored per-MPN
-metadata; the React shell renders the BOM view (build-qty multiplier,
-optional-line toggle, cost footer, **Digi-Key CSV export button**), the
-Discrepancy view (severity-colored cards, localStorage-persisted Resolved
-toggle, red header banner for unresolved build-critical items), and a
-**Three.js 3D viewport of the C1 main board** with orbit controls, a
+Tasks #1–#11 of the build plan are complete. The backend parses both BOM
+CSVs, the C1 `.kicad_pcb`, **and the C2 `.brd`** (EAGLE via `quick-xml`),
+merging everything with hand-authored per-MPN metadata; the React shell
+renders the BOM view (build-qty multiplier, optional-line toggle, cost
+footer, **Digi-Key CSV export button**), the Discrepancy view
+(severity-colored cards, localStorage-persisted Resolved toggle, red
+header banner for unresolved build-critical items), and a **Three.js
+3D viewport of both C1 and C2 boards** with orbit controls, a
 top/bottom/both side filter, click-to-select raycaster picking, and
-**four procedural hero meshes** for the visually dominant components
+**five procedural hero meshes** for the visually dominant components
 (Pi Pico U1, C2 submodule U2, Keystone 1022 battery holder BT1, MEM2075
-microSD slot U3). **The sourcing loop is closed** — open app → resolve
-build-critical items → Export CSV → upload to Digi-Key.
-**The web target is live** at
+microSD slot U3, **and the GDEW042T2 e-paper panel on C2**). **The
+sourcing loop is closed** — open app → resolve build-critical items →
+Export CSV → upload to Digi-Key. **The web target is live** at
 [cwcorella-git.github.io/open-book-builder](https://cwcorella-git.github.io/open-book-builder/),
 auto-deployed on push via `.github/workflows/deploy.yml`. The Assembly
 tab still renders placeholder text.
@@ -94,16 +95,29 @@ tab still renders placeholder text.
   position, footprint, 3D bbox, pad count, and the matching BOM line
   (MPN, function, unit cost, Digi-Key PN, datasheet link). The
   top/bottom/both side filter hides component meshes without touching
-  the board. The C2 board shows an explicit "lands in task #11" empty
-  state.
+  the board.
+- **C2 driver tab** renders the EAGLE-parsed 17.27 × 23.88 mm castellated
+  submodule (4 Layer-20 outline wires + 3 mounting holes) with 17
+  BOM-mirror-flagged components on the bottom face (9 × 0805 caps,
+  1 × 0603 resistor, 1 × 0805 inductor, 3 × SOD-123 diodes, 1 × SOT-23
+  MOSFET, 1 × 24-pin FFC connector) plus the **synthesized GDEW042T2
+  display panel** — a dark-bezeled white-screen hero mesh placed to the
+  +X side of the driver to represent the assembled e-paper module.
+  Structural pseudo-elements (U$2, U$3 castellated pad blocks, JP1 test
+  header) that aren't in the BOM are dropped by the ref-match filter,
+  same as the C1 parser's JP1/JP2 handling. 21 nets populate from
+  `<signals>` with `class="1"` → `Power`, `class="2"` → `Ground`,
+  everything else → `Other` pending semantic refinement in task #13.
 
 **What's mocked:**
 
 - Silkscreen textures on the board faces (task #13 polish) — faces are
   a solid slate color right now.
-- C2 castellated e-paper driver geometry (task #11, EAGLE parser). The
-  GDEW042T2 display panel's hero mesh lives with that work since it
-  physically belongs to the C2 submodule face.
+- Net coloring / category visuals (task #13). Nets are parsed and
+  category-tagged but components aren't tinted by net membership yet.
+- Copper traces, vias, GND pour polygons on both boards. Parsed only
+  to the extent of counting `<contactref>` into `Net.connectedPads`;
+  rendered geometry is deferred to task #13.
 
 See `Roadmap` below and the authoritative plan at
 `~/.claude/plans/melodic-tinkering-newt.md`.
@@ -144,11 +158,17 @@ time. This means:
 
 Parsed KiCad / EAGLE files are treated the same way — the C1
 `.kicad_pcb` (1.3 MB) is copied into `src-tauri/data/` and `include_str!`'d
-by `kicad_pcb.rs`. The C2 `.brd` / `.sch` will follow suit in task #11.
-The only awkward wrinkle: KiCad sprinkles `(tstamp <uuid>)` and
-`(tedit <hex-epoch>)` atoms throughout, which lexpr's default reader
-rejects as malformed numbers. `strip_timestamps()` removes both subexprs
-before handing the text to lexpr — we never consume the values anyway.
+by `kicad_pcb.rs`; the C2 `.brd` (58 KB) sits next to it and is read
+by `eagle.rs`. The only awkward wrinkle: KiCad sprinkles
+`(tstamp <uuid>)` and `(tedit <hex-epoch>)` atoms throughout, which
+lexpr's default reader rejects as malformed numbers. `strip_timestamps()`
+removes both subexprs before handing the text to lexpr — we never
+consume the values anyway. EAGLE's format is cleaner on input but messier
+in parser shape: `<plain>` and `<signals>` carry mixed-content children
+(`wire`, `text`, `rectangle`, `polygon`, `hole`, `via`, `contactref`)
+so we use a manual `quick-xml::Reader` event loop with state tracking
+(`in_plain`, `library_stack`, `signal_stack`) rather than a serde
+deserialize pass.
 
 ### Tech stack
 
@@ -160,7 +180,7 @@ Mirrors `~/Projects/dodec-mapper/` with additions:
 | Frontend | React 19.1 + TypeScript 5.8 + Vite 7 |
 | 3D | Three.js 0.183 + OrbitControls |
 | KiCad parsing | `lexpr` 0.2 (generic S-expr walker — `kicad-parse-gen` is stale since 2018, `kiutils` isn't on crates.io) |
-| EAGLE parsing (pending) | `quick-xml` + serde structs |
+| EAGLE parsing | `quick-xml` 0.36 (manual Reader event loop — serde derive struggles with mixed-content `<plain>` / `<signals>` children) |
 | BOM parsing | Rust `csv` crate |
 | Errors | `thiserror` |
 
@@ -189,7 +209,7 @@ open-book-builder/
 │   │   ├── use-discrepancy-resolution.ts  # Resolved-state wrapper, drives the banner
 │   │   ├── digikey-csv.ts                 # Pure Digi-Key BOM CSV builder + summary
 │   │   ├── exporter.ts                    # saveTextFile(): Tauri save-dialog vs web Blob
-│   │   ├── hero-meshes.ts                 # Procedural Three.js builders (Pico, C2 module, Keystone 1022, MEM2075)
+│   │   ├── hero-meshes.ts                 # Procedural Three.js builders (Pico, C2 module, Keystone 1022, MEM2075, GDEW042T2)
 │   │   └── scene-renderer.ts              # Three.js scene — board extrude + per-component meshes
 │   └── components/
 │       ├── BoardView.tsx                  # Built. Two-pane layout: viewport + detail panel.
@@ -208,14 +228,16 @@ open-book-builder/
     │   ├── assembly.json             # 12 ordered build steps
     │   ├── bom-c1-main.csv           # copied from the-open-book/OSO-BOOK-C1/1-click-bom.csv
     │   ├── bom-c2-driver.csv         # copied from the-open-book/OSO-BOOK-C2-02 (PCBWay)
-    │   └── OSO-BOOK-C1.kicad_pcb     # copied from the-open-book/OSO-BOOK-C1 (1.3 MB, KiCad 6)
+    │   ├── OSO-BOOK-C1.kicad_pcb     # copied from the-open-book/OSO-BOOK-C1 (1.3 MB, KiCad 6)
+    │   └── OSO-BOOK-C2-02.brd        # copied from the-open-book/OSO-BOOK-C2 (58 KB, EAGLE 9.6.2)
     └── src/
         ├── main.rs                   # Dispatches --export-json vs Tauri run
         ├── lib.rs                    # load_board_dataset cmd + export_json_to_path
         ├── types.rs                  # Serde mirrors with kebab-case enums
-        ├── dataset.rs                # Glues static JSONs + BOM CSVs + KiCad into BoardDataset
+        ├── dataset.rs                # Glues static JSONs + BOM CSVs + KiCad + EAGLE into BoardDataset
         ├── kicad_pcb.rs              # lexpr walker → components, mounting holes, Edge.Cuts
-        ├── footprint_heights.rs      # Part-class → 3D extrusion height lookup
+        ├── eagle.rs                  # quick-xml Reader walker → C2 components, holes, outline, nets + synthesized Display
+        ├── footprint_heights.rs      # Part-class → 3D extrusion height lookup (KiCad + EAGLE keyspaces)
         └── bom.rs                    # Two CSV parsers → Vec<BomLine>, cost summarizer
 ```
 
@@ -225,9 +247,11 @@ The canonical shape is `BoardDataset` (see `src/lib/types.ts` and
 `src-tauri/src/types.rs`). One JSON document contains:
 
 - `boards: Record<BoardId, BoardData>` — per-board geometry (components,
-  outline, nets). `c1-main` is now fully populated from the KiCad PCB;
-  `c2-driver` is still an empty stub pending the EAGLE parser (task #11).
-  `nets` stays empty until task #13 parses `.kicad_sch`.
+  outline, nets). `c1-main` comes from the KiCad PCB; `c2-driver` comes
+  from the EAGLE `.brd` plus a synthesized `Display` component that
+  carries the GDEW042T2 hero mesh. C1 nets stay empty until task #13
+  parses `.kicad_sch`; C2 nets come from `<signals>` with class-based
+  category tagging (1=Power, 2=Ground, else=Other).
 - `bom: BomLine[]` — unified list tagged with `board: 'c1-main' | 'c2-driver'`,
   merged with per-MPN metadata (function, datasheet URL, unit cost).
 - `discrepancies: Discrepancy[]` — hand-authored, severity-classed.
@@ -300,7 +324,11 @@ in `package.json` to match the fork's repo name.
   segments, outline 85 × 115 mm; every component has a non-empty `bomRef`
   (JP1 / JP2 solder-jumpers are present in KiCad but not in the BOM,
   so the parser drops them — the ref-matching filter is the source of truth)
-- `boards["c2-driver"]`: still empty until task #11
+- `boards["c2-driver"]`: 18 components (17 EAGLE `<element>`s + 1
+  synthesized `Display` with `heroMeshId="gdew042t2"`), 3 mounting holes,
+  4 outline wires, outline 17.272 × 23.876 mm, 21 nets. Structural
+  pseudo-elements `U$2` / `U$3` / `JP1` are dropped by the ref-match
+  filter (not in the BOM).
 
 ## Canonical discrepancies
 
@@ -340,7 +368,7 @@ The 13-task build plan lives at
 - [x] **#8** Parse KiCad PCB and 2D preview — `lexpr` walker → 27 components + 4 holes + 40 edge segments; `BoardView.tsx` SVG
 - [x] **#9** Build 3D BoardViewport — Three.js extruded board (holes punched through), per-component extruded boxes with part-class heights, OrbitControls, raycaster click-select
 - [x] **#10** Add hero meshes — 4 procedural Three.js builders (pi-pico, c2-module, keystone-1022, mem2075); gdew042t2 deferred to #11 where it physically belongs
-- [ ] **#11** Parse EAGLE C2 driver module — `quick-xml` + serde structs
+- [x] **#11** Parse EAGLE C2 driver module — `quick-xml` manual Reader event loop → 17 components (all MR*-mirrored → bottom), 3 holes, 4 outline wires, 21 nets + synthesized `Display` component with `gdew042t2` procedural hero mesh (bezel + white screen + FFC stub + corner label)
 - [ ] **#12** Build Assembly view — checklist + mini viewport with step-based highlighting
 - [ ] **#13** Polish — net coloring, keyboard shortcuts, About screen
 

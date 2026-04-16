@@ -7,6 +7,7 @@
 
 mod bom;
 mod dataset;
+mod eagle;
 mod footprint_heights;
 mod kicad_pcb;
 mod types;
