@@ -100,9 +100,9 @@ export async function loadBoardDataset(): Promise<BoardDataset> {
 }
 ```
 
-A build script (task #7) will shell out to the Rust binary's
-`--export-json` mode and write `public/board-dataset.json` for the web
-target. Tauri desktop reads the same data live.
+`scripts/bake-dataset.ts` shells out to the Rust binary's `--export-json`
+mode and writes `public/board-dataset.json` for the web target. Tauri
+desktop reads the same data live via the `load_board_dataset` command.
 
 ### Why `include_str!`
 
@@ -195,7 +195,8 @@ The canonical shape is `BoardDataset` (see `src/lib/types.ts` and
 - `costSummary: { perUnitUsd, perTenUnitsUsd, missingLineItems }` —
   non-optional C1 lines only. C2 internals are excluded because the module
   is priced as a single PCBA unit (OSO-BOOK-C2-01).
-- `bomComparison: BomComparison[]` — reserved for task #5's three-way diff.
+- `bomComparison: BomComparison[]` — reserved; the three-way BOM diff
+  UI hasn't landed yet.
 
 ### Why BoardId uses BTreeMap / `kebab-case`
 
@@ -284,8 +285,8 @@ The 13-task build plan lives at
 - [ ] **#12** Build Assembly view — checklist + mini viewport with step-based highlighting
 - [ ] **#13** Polish — net coloring, keyboard shortcuts, About screen
 
-Steps 1–6 give a shipable tool (BOM + discrepancies + sourcing + web share)
-with no 3D. Steps 7–12 add the visualization half.
+Steps 1–7 give a shipable tool (BOM + discrepancies + sourcing + web share)
+with no 3D. Steps 8–13 add the visualization half.
 
 ## Canonical source files
 
