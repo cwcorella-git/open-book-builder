@@ -6,12 +6,14 @@ import { BomView } from './components/BomView';
 import { AssemblyView } from './components/AssemblyView';
 import { DiscrepancyView } from './components/DiscrepancyView';
 import { DiscrepancyBanner } from './components/DiscrepancyBanner';
+import { AboutView } from './components/AboutView';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'board', label: 'Board' },
   { id: 'bom', label: 'BOM' },
   { id: 'assembly', label: 'Assembly' },
   { id: 'discrepancies', label: 'Discrepancies' },
+  { id: 'about', label: 'About' },
 ];
 
 function Shell() {
@@ -81,6 +83,7 @@ function TabContent({ tab }: { tab: Tab }) {
     case 'bom': return <BomView />;
     case 'assembly': return <AssemblyView />;
     case 'discrepancies': return <DiscrepancyView />;
+    case 'about': return <AboutView />;
   }
 }
 
