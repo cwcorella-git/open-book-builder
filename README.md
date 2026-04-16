@@ -49,9 +49,10 @@ top/bottom/both side filter, click-to-select raycaster picking, and
 (Pi Pico U1, C2 submodule U2, Keystone 1022 battery holder BT1, MEM2075
 microSD slot U3). **The sourcing loop is closed** — open app → resolve
 build-critical items → Export CSV → upload to Digi-Key.
-**The web target ships** — `npm run build:web` produces a GitHub-Pages-ready
-`dist/` under `/open-book-builder/`. The Assembly tab still renders
-placeholder text.
+**The web target is live** at
+[cwcorella-git.github.io/open-book-builder](https://cwcorella-git.github.io/open-book-builder/),
+auto-deployed on push via `.github/workflows/deploy.yml`. The Assembly
+tab still renders placeholder text.
 
 **What works today:**
 
@@ -272,6 +273,21 @@ npm run bake-dataset        # writes public/board-dataset.json
 npm run build:web           # bakes dataset, typechecks, vite build --base=/open-book-builder/
 npm run preview:web         # serves dist/ locally at http://localhost:4173/open-book-builder/
 ```
+
+### GitHub Pages deploy
+
+`.github/workflows/deploy.yml` auto-deploys on push to `main`:
+
+- Runs on `ubuntu-24.04`, installs Tauri v2 apt deps
+  (`libwebkit2gtk-4.1-dev`, `libgtk-3-dev`,
+  `libayatana-appindicator3-dev`, `librsvg2-dev`), caches npm + cargo.
+- Runs `npm run build:web`, uploads `dist/` as the Pages artifact,
+  deploys via `actions/deploy-pages@v4`.
+- Cold-run ~4–6 min (cargo dominates); warm-cache runs ~60–90 s.
+- Live at <https://cwcorella-git.github.io/open-book-builder/>.
+
+If you fork this repo, also change the Vite `--base=/open-book-builder/`
+in `package.json` to match the fork's repo name.
 
 **Sanity check** the baked dataset (current expected output):
 
