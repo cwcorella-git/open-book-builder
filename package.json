@@ -5,8 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:web": "npm run bake-dataset && vite",
     "build": "tsc && vite build",
+    "build:web": "npm run bake-dataset && tsc && vite build --base=/open-book-builder/",
     "preview": "vite preview",
+    "preview:web": "vite preview --base=/open-book-builder/",
     "tauri": "tauri",
     "bake-dataset": "tsx scripts/bake-dataset.ts"
   },

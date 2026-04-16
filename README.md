@@ -37,15 +37,16 @@ that shows:
 
 ## Current status
 
-Tasks #1–#6 of the build plan are complete. The backend parses both BOM
+Tasks #1–#7 of the build plan are complete. The backend parses both BOM
 CSVs and merges them with hand-authored per-MPN metadata; the React shell
 renders the BOM view (build-qty multiplier, optional-line toggle, cost
 footer, **Digi-Key CSV export button**) and the Discrepancy view
 (severity-colored cards, localStorage-persisted Resolved toggle, red
 header banner for unresolved build-critical items). **The sourcing loop
 is closed** — open app → resolve build-critical items → Export CSV →
-upload to Digi-Key. Two top-level views (Board 3D, Assembly) still
-render placeholder text.
+upload to Digi-Key. **The web target ships** — `npm run build:web`
+produces a GitHub-Pages-ready `dist/` under `/open-book-builder/`.
+Two top-level views (Board 3D, Assembly) still render placeholder text.
 
 **What works today:**
 
@@ -65,14 +66,16 @@ render placeholder text.
   OSO-BOOK-C2-01 module itself). Honors `qtyMultiplier` and
   `includeOptional`; dispatches through Tauri save-dialog on desktop and
   a Blob download on web — same CSV output on both paths.
+- `npm run build:web` bakes the dataset, typechecks, and emits `dist/`
+  under the `/open-book-builder/` subpath ready for GitHub Pages.
+  `npm run preview:web` serves it locally at
+  `http://localhost:4173/open-book-builder/` for smoke-testing. Plain
+  `npm run build` stays root-relative so Tauri's desktop bundle is
+  unaffected.
 
 **What's mocked:**
 
 - All 3D viewport code (task #9).
-- The dual-target web build pipeline (task #7) — code is shaped for it
-  (see `src/lib/dataset-source.ts` and `src/lib/exporter.ts`) but no
-  `public/board-dataset.json` is baked yet, so the web target can't
-  actually start up.
 
 See `Roadmap` below and the authoritative plan at
 `~/.claude/plans/melodic-tinkering-newt.md`.
@@ -136,10 +139,11 @@ No database. No HTTP server. No Monaco. No xterm.
 ```
 open-book-builder/
 ├── index.html                        # Vite entry, dark theme inline styles
-├── package.json                      # scripts: dev, build, tauri, bake-dataset
+├── package.json                      # scripts: dev, build, tauri, bake-dataset, build:web, preview:web
 ├── vite.config.ts                    # port 1423 (HMR 1424) to avoid dodec-mapper's 1421
-├── public/                           # (reserved for baked board-dataset.json)
-├── scripts/                          # (reserved for bake-dataset.ts, task #7)
+├── public/                           # baked board-dataset.json lands here (gitignored)
+├── scripts/
+│   └── bake-dataset.ts               # Shells `cargo run -- --export-json public/board-dataset.json`
 │
 ├── src/
 │   ├── main.tsx                      # React 19 ReactDOM.createRoot
@@ -221,10 +225,12 @@ npx tsc --noEmit
 # Backend typecheck
 cd src-tauri && cargo check
 
-# Bake the dataset to JSON (one-shot; task #7 will wrap this in a Node script)
-cd src-tauri
-cargo build --bin open-book-builder
-./target/debug/open-book-builder --export-json /tmp/obb-dataset.json
+# Bake the dataset to JSON (used by the web target; also driven by npm run build:web)
+npm run bake-dataset        # writes public/board-dataset.json
+
+# Web build — emits a static dist/ under the /open-book-builder/ subpath
+npm run build:web           # bakes dataset, typechecks, vite build --base=/open-book-builder/
+npm run preview:web         # serves dist/ locally at http://localhost:4173/open-book-builder/
 ```
 
 **Sanity check** the baked dataset (current expected output):
@@ -270,7 +276,7 @@ The 13-task build plan lives at
 - [x] **#4** Build BOM view
 - [x] **#5** Build Discrepancy view — red banner for unresolved build-critical, localStorage Resolved toggle
 - [x] **#6** Implement Digi-Key CSV export — save-as dialog (Tauri) / Blob download (web) + build-qty multiplier
-- [ ] **#7** Set up dual-target build — `scripts/bake-dataset.ts`, ship static web build
+- [x] **#7** Set up dual-target build — `scripts/bake-dataset.ts`, `npm run build:web` emits dist/ under `/open-book-builder/`
 - [ ] **#8** Parse KiCad PCB and schematic — pick parser crate or hand-roll
 - [ ] **#9** Build 3D BoardViewport — Three.js, extruded board, raycaster picking
 - [ ] **#10** Add hero meshes — 5 GLTFs (pi-pico, gdew042t2, keystone-1022, c2-module, mem2075)
