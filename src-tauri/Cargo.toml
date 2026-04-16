@@ -1,0 +1,31 @@
+[package]
+name = "open-book-builder"
+version = "0.1.0"
+description = "Open Book Builder — visualize, verify, and source The Open Book e-reader"
+authors = ["Christopher Corella"]
+edition = "2021"
+
+[lib]
+name = "open_book_builder_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[[bin]]
+name = "open-book-builder"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-fs = "2"
+tauri-plugin-dialog = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+csv = "1"
+thiserror = "1"
+quick-xml = { version = "0.36", features = ["serialize"] }
+# KiCad parser dep is deferred to task #8. Candidates: `kicad-parse-gen`,
+# `lexpr` (generic S-expression parser), or hand-rolled. Decision lives with
+# the task that actually consumes it so we pick based on real file output,
+# not speculation.

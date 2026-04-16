@@ -1,0 +1,32 @@
+{
+  "name": "open-book-builder",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "bake-dataset": "tsx scripts/bake-dataset.ts"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.10.1",
+    "@tauri-apps/plugin-fs": "^2.4.5",
+    "@tauri-apps/plugin-dialog": "^2.6.0",
+    "@types/three": "^0.183.1",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "three": "^0.183.2"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2",
+    "@types/node": "^22",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "^4.6.0",
+    "tsx": "^4.19.2",
+    "typescript": "~5.8.3",
+    "vite": "^7.0.4"
+  }
+}

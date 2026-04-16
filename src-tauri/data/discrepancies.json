@@ -1,0 +1,110 @@
+[
+  {
+    "id": "pcbway-thickness",
+    "severity": "build-critical",
+    "title": "PCBWay order: thickness is 1.6 mm, should be 1.0 mm",
+    "description": "The PCBWay configurator screenshot (pcbway-selection.png) has 1.6 mm highlighted. The README specifies 1.0 mm, and the 3D-printed enclosure's PCB cutout expects a 1 mm board. Boards ordered at 1.6 mm will not fit the case.",
+    "sources": ["pcbway-selection.png", "folder/The-Open-Book-main/README.md"],
+    "affectsComponents": [],
+    "resolution": "In the PCBWay order form, change the thickness to 1.0 mm before checkout."
+  },
+  {
+    "id": "pcbway-hasl-leaded",
+    "severity": "build-critical",
+    "title": "PCBWay order: HASL with lead, should be lead-free HASL or ENIG",
+    "description": "The PCBWay configurator screenshot shows 'HASL with lead' selected. The README specifies 'lead-free HASL finish' (or ENIG). Leaded HASL is RoHS-noncompliant — matters for EU shipping, some resellers, and kit distribution.",
+    "sources": ["pcbway-selection.png", "folder/The-Open-Book-main/README.md"],
+    "affectsComponents": [],
+    "resolution": "In the PCBWay order form, switch surface finish to 'Lead-Free HASL' (or upgrade to ENIG)."
+  },
+  {
+    "id": "c2-module-cost-missing",
+    "severity": "cost-impact",
+    "title": "C2 e-paper driver PCBA cost is missing from every BOM",
+    "description": "None of the three BOMs (COGS-LIST, OpenBook_BOM_Clean PDF, April 2025 image) include the fabrication/assembly cost of the Castellated E-Paper Driver (OSO-BOOK-C2). This is a separate PCBA job from either JLCPCB (C2-01) or PCBWay (C2-02). Real per-unit cost is likely $50-60, not the $43-48 printed on the BOMs.",
+    "sources": ["COGS-LIST", "OpenBook_BOM_Clean.pdf", "file-G4bVKaE1KGNieH6tGEUZQM-...png"],
+    "affectsComponents": ["U2"],
+    "resolution": "Get a PCBA quote from JLCPCB (using OSO-BOOK-C2-01 files) or PCBWay (using OSO-BOOK-C2-02 files). Typical 10-unit small-board PCBA runs $30-80 depending on part sourcing."
+  },
+  {
+    "id": "doc-esp32-misleading",
+    "severity": "informational",
+    "title": "why-the-open-book describes the ESP32-S3 design, not the Pi Pico build",
+    "description": "The vision doc 'why-the-open-book' opens with 'designed around the ESP32-S3' and describes a slim LiPo battery. The current shipping build uses the Raspberry Pi Pico (RP2040) with dual AAA. ESP32-S3 lives on the archived OSO-BOOK-B1 branch. Marketing copy needs an update before use.",
+    "sources": ["why-the-open-book"],
+    "affectsComponents": ["U1", "BT1"],
+    "resolution": "Either rewrite the doc to describe the Pico + AAA build, or flag the ESP32/LiPo language as 'future/aspirational' in the UI."
+  },
+  {
+    "id": "cogs-list-sram-notes",
+    "severity": "informational",
+    "title": "COGS-LIST references an SRAM chip that doesn't exist on C1",
+    "description": "COGS-LIST line 120 mentions 'r12 is our pull-up for the sram chip'. There is no SRAM chip on the Pi Pico main board — the Pico has 264 KB of SRAM internal to the RP2040. This note was transcribed from the older ESP32-S3 (B1) design.",
+    "sources": ["COGS-LIST"],
+    "affectsComponents": [],
+    "resolution": "Ignore the SRAM annotation for C1. R12 on C1, if present in the schematic, is not an SRAM pull-up."
+  },
+  {
+    "id": "cogs-list-audio-notes",
+    "severity": "informational",
+    "title": "COGS-LIST references audio hardware that doesn't exist on C1",
+    "description": "COGS-LIST mentions a headphone jack, 100 µF audio cap, audio ferrite beads, and R6/R7/R8/R9 biasing resistors for headphone output. None of these components are on the Pi Pico main board — they're from the older ESP32-S3 (B1) design which added audio.",
+    "sources": ["COGS-LIST"],
+    "affectsComponents": [],
+    "resolution": "Ignore all audio-related annotations for the C1 build. If you want audio, that's a custom expansion via the JST ports."
+  },
+  {
+    "id": "cogs-list-mosfet-arithmetic",
+    "severity": "cost-impact",
+    "title": "COGS-LIST MOSFET line: $0.32 shown where $6.40 belongs (20 × $0.32)",
+    "description": "COGS-LIST lists P-MOSFETs at '$0.32' with quantity 20, but the line-total shown is $0.32 rather than the correct $6.40 (20 × $0.32). The total 'Estimated Total for 10 Units: $432.89' is therefore ~$6 lower than it should be.",
+    "sources": ["COGS-LIST"],
+    "affectsComponents": ["Q1", "Q2"],
+    "resolution": "Use the OpenBook_BOM_Clean PDF totals ($460.69 / 10 units) which have this arithmetic correct. Or mentally add $6 to the COGS-LIST total."
+  },
+  {
+    "id": "april2025-bom-missing-retainer",
+    "severity": "cost-impact",
+    "title": "April 2025 BOM image omits the Keystone 1022C battery retainer",
+    "description": "The April 2025 screenshot BOM (file-G4bVKaE1KGNieH6tGEUZQM-...png) shows 12 line items with 'Estimated Cost per Unit: $43.26'. It omits the Keystone 1022C retainer clip that appears in both the OpenBook_BOM_Clean PDF and COGS-LIST. Without the clip, AAA cells are not held in place reliably.",
+    "sources": ["file-G4bVKaE1KGNieH6tGEUZQM-Screenshot from 2025-04-14 16-26-25.png"],
+    "affectsComponents": ["BT1"],
+    "resolution": "Add Keystone 1022C (Digi-Key 36-1022C-ND) to any order based on this BOM. Adds $0.86/unit."
+  },
+  {
+    "id": "mosfet-naming-typo",
+    "severity": "naming",
+    "title": "COGS-LIST labels Q1 as 'M channel MOSFET' — should be 'P channel'",
+    "description": "COGS-LIST line 150 says 'Q1 - M channel Mosfet'. The DMG3415U-7 listed in the BOM is a P-channel MOSFET. 'M' is almost certainly a typo for 'P'. (The C2 driver module does have an N-channel IRLML0100 for its boost converter, but that's a different board.)",
+    "sources": ["COGS-LIST"],
+    "affectsComponents": ["Q1", "Q2"],
+    "resolution": "Read 'M channel' as 'P channel' wherever it appears in COGS-LIST for the C1 board."
+  },
+  {
+    "id": "display-part-number-relabel",
+    "severity": "naming",
+    "title": "GDEW042T2 vs GDEY042T81 — same family, confirm before ordering",
+    "description": "The README lists the display as GDEW042T2. COGS-LIST and the April 2025 BOM say GDEY042T81. Both are 4.2\" B&W SPI panels from GoodDisplay; GDEY is a newer model-line label. Firmware may behave differently (controller IC timing), so confirm with the libros team which part is currently tested.",
+    "sources": ["folder/The-Open-Book-main/README.md", "COGS-LIST"],
+    "affectsComponents": ["Display"],
+    "resolution": "Before ordering, verify which display part libros has been tested against. If GDEW042T2 is the tested one, don't substitute blindly."
+  },
+  {
+    "id": "pico-sku-variants",
+    "severity": "naming",
+    "title": "Pico SKU: SC0915 vs SC0918 — both are the same Pico",
+    "description": "COGS-LIST and the April 2025 BOM use SC0915; 1-click-bom.csv uses SC0918. These are two Raspberry Pi distributor SKUs for the same Pico board. Either works.",
+    "sources": ["COGS-LIST", "folder/The-Open-Book-main/OSO-BOOK-C1/1-click-bom.csv"],
+    "affectsComponents": ["U1"],
+    "resolution": "No action needed — whichever Pico Digi-Key has in stock is fine."
+  },
+  {
+    "id": "cogs-list-boost-cap-count",
+    "severity": "naming",
+    "title": "COGS-LIST says 12 caps for the boost circuit; real count is 10",
+    "description": "COGS-LIST line 139 refers to 'BIG LINE 12 ONE MICROFARAD CAPACITORS' for the boost circuit. The actual C2-02 BOM has 9× 1 µF + 1× 4.7 µF = 10 caps total on the e-paper driver module. The count was approximate or describes an earlier C2 revision.",
+    "sources": ["COGS-LIST"],
+    "affectsComponents": [],
+    "resolution": "Trust the C2-02 BOM over the COGS-LIST annotation for cap counts on the driver module."
+  }
+]

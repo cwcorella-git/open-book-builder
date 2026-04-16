@@ -1,0 +1,290 @@
+# Open Book Builder
+
+A desktop + web app for visualizing, verifying, and sourcing
+[The Open Book](https://github.com/joeycastillo/The-Open-Book) — Joey
+Castillo's open-source e-reader (Raspberry Pi Pico + GDEW042T2 4.2" e-paper +
+dual AAA, CC-BY-SA 4.0).
+
+This is a personal tool that also ships as a static web build so the unified
+BOM, discrepancy list, and 3D visualization can be shared.
+
+## Why this exists
+
+Three primary source BOMs disagree in non-obvious ways, and the current
+PCBWay order draft has two build-critical errors that would produce
+unusable boards:
+
+- **PCBWay thickness is set to 1.6 mm**, but the 3D-printed case
+  expects **1.0 mm**. Boards ordered at 1.6 mm won't fit.
+- **PCBWay surface finish is "HASL with lead"**, but the README specifies
+  **lead-free HASL** (RoHS-compliant).
+
+On top of that, the `why-the-open-book` vision doc describes the archived
+ESP32-S3 design, not the shipping Pico build. `COGS-LIST` mixes annotations
+from both boards (SRAM pull-ups, headphone biasing resistors — none of which
+exist on the current C1). The April 2025 BOM omits the Keystone 1022C battery
+retainer clip. COGS-LIST has a MOSFET line-total arithmetic error.
+
+Before sending money to PCBWay or Digi-Key, the author wants **one place**
+that shows:
+
+1. What every component does and what it costs.
+2. A reconciled, unified BOM across the three source BOMs.
+3. The discrepancy inventory with a Resolved toggle.
+4. A 3D visualization of both the C1 main board and the C2 castellated
+   e-paper driver submodule.
+5. A Digi-Key BOM Manager CSV export for sourcing.
+
+## Current status
+
+Tasks #1–#5 of the build plan are complete. The backend parses both BOM
+CSVs and merges them with hand-authored per-MPN metadata; the React shell
+renders the BOM view (build-qty multiplier, optional-line toggle, cost
+footer) and the Discrepancy view (severity-colored cards, localStorage-
+persisted Resolved toggle, red header banner for unresolved build-critical
+items). Two top-level views (Board 3D, Assembly) still render placeholder
+text.
+
+**What works today:**
+
+- `cargo build` + `./open-book-builder --export-json <path>` produces a
+  complete, well-typed `BoardDataset` JSON.
+- `npm run tauri dev` opens the desktop window. **BOM** tab and
+  **Discrepancies** tab are fully functional.
+- On first boot, the red banner surfaces the two PCBWay build-critical
+  issues (thickness and leaded HASL). Flipping their Resolved toggles
+  persists across reloads via `localStorage['obb.resolvedDiscrepancies']`.
+- Per-unit cost totals **$43.27**, matching the April 2025 BOM figure.
+- The only `missingLineItems` entry is `c1-main:OSO-BOOK-C2-01` — exactly
+  the known discrepancy (`c2-module-cost-missing`).
+
+**What's mocked:**
+
+- All 3D viewport code (task #9).
+- The dual-target web build pipeline (task #7) — code is shaped for it
+  (see `src/lib/dataset-source.ts`) but no `public/board-dataset.json`
+  is baked yet.
+- The Digi-Key CSV export button (task #6).
+
+See `Roadmap` below and the authoritative plan at
+`~/.claude/plans/melodic-tinkering-newt.md`.
+
+## Architecture
+
+### Dual-target build model
+
+The same React app runs under Tauri (reading files via `invoke`) and as a
+static site (reading a pre-baked JSON bundle). The boundary is a single
+function:
+
+```ts
+// src/lib/dataset-source.ts
+export async function loadBoardDataset(): Promise<BoardDataset> {
+  if (isTauri()) {
+    const { invoke } = await import('@tauri-apps/api/core');
+    return invoke<BoardDataset>('load_board_dataset');
+  }
+  const res = await fetch(`${import.meta.env.BASE_URL}board-dataset.json`);
+  return res.json();
+}
+```
+
+A build script (task #7) will shell out to the Rust binary's
+`--export-json` mode and write `public/board-dataset.json` for the web
+target. Tauri desktop reads the same data live.
+
+### Why `include_str!`
+
+Static data (`discrepancies.json`, `assembly.json`, `component_functions.json`,
+both BOM CSVs) is bundled into the Rust binary via `include_str!` at compile
+time. This means:
+
+- `tauri dev`, bundled release, and `--export-json` all behave identically.
+- No runtime filesystem reads for canonical data.
+- No "where does this app expect its data directory?" question.
+
+Parsed KiCad / EAGLE files from `the-open-book/` source tree will be merged
+in by tasks #8 and #11 (their own modules, accepting paths — deliberately
+not `include_str!`'d since they're large and project-external).
+
+### Tech stack
+
+Mirrors `~/Projects/dodec-mapper/` with additions:
+
+| Layer | Choice |
+| --- | --- |
+| Desktop shell | Tauri v2 |
+| Frontend | React 19.1 + TypeScript 5.8 + Vite 7 |
+| 3D (pending) | Three.js 0.183 + OrbitControls |
+| KiCad parsing (pending) | TBD at task #8 — candidates: `kicad-parse-gen`, `lexpr`, hand-rolled S-expr |
+| EAGLE parsing (pending) | `quick-xml` + serde structs |
+| BOM parsing | Rust `csv` crate |
+| Errors | `thiserror` |
+
+No database. No HTTP server. No Monaco. No xterm.
+
+## Project layout
+
+```
+open-book-builder/
+├── index.html                        # Vite entry, dark theme inline styles
+├── package.json                      # scripts: dev, build, tauri, bake-dataset
+├── vite.config.ts                    # port 1423 (HMR 1424) to avoid dodec-mapper's 1421
+├── public/                           # (reserved for baked board-dataset.json)
+├── scripts/                          # (reserved for bake-dataset.ts, task #7)
+│
+├── src/
+│   ├── main.tsx                      # React 19 ReactDOM.createRoot
+│   ├── App.tsx                       # Tabbed shell (Board / BOM / Assembly / Discrepancies)
+│   ├── vite-env.d.ts                 # window.__TAURI__ globals
+│   ├── lib/
+│   │   ├── types.ts                       # Mirrors src-tauri/src/types.rs
+│   │   ├── dataset-source.ts              # Tauri-vs-web boundary
+│   │   ├── dataset-context.tsx            # React context + useDataset() hook
+│   │   ├── use-persisted-state.ts         # Generic localStorage-backed useState
+│   │   └── use-discrepancy-resolution.ts  # Resolved-state wrapper, drives the banner
+│   └── components/
+│       ├── BomView.tsx                    # Built. Two-pane: filterable table + detail panel.
+│       ├── DiscrepancyView.tsx            # Built. Severity-grouped cards, Resolved toggle.
+│       └── DiscrepancyBanner.tsx          # Built. Red header bar; hidden when 0 unresolved.
+│
+└── src-tauri/
+    ├── Cargo.toml
+    ├── tauri.conf.json               # productName "Open Book Builder"
+    ├── capabilities/default.json     # dialog:allow-save, fs:allow-write-text-file
+    ├── data/
+    │   ├── component_functions.json  # 17 MPNs with function, datasheet, cost, heroMeshId
+    │   ├── discrepancies.json        # 12 entries covering the 4 severity levels
+    │   ├── assembly.json             # 12 ordered build steps
+    │   ├── bom-c1-main.csv           # copied from the-open-book/OSO-BOOK-C1/1-click-bom.csv
+    │   ├── bom-c2-driver.csv         # copied from the-open-book/OSO-BOOK-C2-02 (PCBWay)
+    │   └── hero-meshes/              # (reserved for 5 GLTFs, task #10)
+    └── src/
+        ├── main.rs                   # Dispatches --export-json vs Tauri run
+        ├── lib.rs                    # load_board_dataset cmd + export_json_to_path
+        ├── types.rs                  # Serde mirrors with kebab-case enums
+        ├── dataset.rs                # Glues static JSONs + BOM CSVs into BoardDataset
+        └── bom.rs                    # Two CSV parsers → Vec<BomLine>, cost summarizer
+```
+
+## Data model
+
+The canonical shape is `BoardDataset` (see `src/lib/types.ts` and
+`src-tauri/src/types.rs`). One JSON document contains:
+
+- `boards: Record<BoardId, BoardData>` — per-board 3D data (components,
+  outline, nets). Currently both boards are empty stubs.
+- `bom: BomLine[]` — unified list tagged with `board: 'c1-main' | 'c2-driver'`,
+  merged with per-MPN metadata (function, datasheet URL, unit cost).
+- `discrepancies: Discrepancy[]` — hand-authored, severity-classed.
+- `assembly: AssemblyStep[]` — ordered, phase-tagged.
+- `costSummary: { perUnitUsd, perTenUnitsUsd, missingLineItems }` —
+  non-optional C1 lines only. C2 internals are excluded because the module
+  is priced as a single PCBA unit (OSO-BOOK-C2-01).
+- `bomComparison: BomComparison[]` — reserved for task #5's three-way diff.
+
+### Why BoardId uses BTreeMap / `kebab-case`
+
+Rust side: `boards: BTreeMap<BoardId, BoardData>` — `BTreeMap` gives stable
+key ordering in the serialized JSON (important for reproducible `--export-json`
+output). Serde `rename_all = "kebab-case"` makes the enum serialize as
+`"c1-main"` and `"c2-driver"` on the wire, matching the TS string-literal
+type.
+
+### `ref` keyword workaround
+
+`ref` is a Rust keyword, so the Component and NetPadRef structs use
+`#[serde(rename = "ref")] pub ref_: String`. TS side just sees `ref: string`.
+
+## Build and verification
+
+```bash
+# Install once
+npm install
+
+# Desktop dev
+npm run tauri dev
+
+# Frontend typecheck (runs automatically on build)
+npx tsc --noEmit
+
+# Backend typecheck
+cd src-tauri && cargo check
+
+# Bake the dataset to JSON (one-shot; task #7 will wrap this in a Node script)
+cd src-tauri
+cargo build --bin open-book-builder
+./target/debug/open-book-builder --export-json /tmp/obb-dataset.json
+```
+
+**Sanity check** the baked dataset (current expected output):
+
+- 23 BOM rows (16 C1 + 7 C2)
+- `costSummary.perUnitUsd ≈ 43.27` (matches April 2025 BOM)
+- `costSummary.perTenUnitsUsd ≈ 432.70`
+- `costSummary.missingLineItems == ["c1-main:OSO-BOOK-C2-01"]`
+- 12 discrepancies, 12 assembly steps
+- Both board entries present with empty components/outline/nets
+
+## Canonical discrepancies
+
+Authored in `src-tauri/data/discrepancies.json`. These are the things the
+BOM / README / vision-doc archaeology surfaced — baked into the dataset so
+the Discrepancies view (task #5) can render them as severity-colored cards.
+
+**Build-critical (2):**
+
+- `pcbway-thickness` — 1.6 mm → 1.0 mm
+- `pcbway-hasl-leaded` — HASL with lead → Lead-Free HASL (or ENIG)
+
+**Cost-impact (3):**
+
+- `c2-module-cost-missing` — no BOM includes C2 PCBA cost
+- `cogs-list-mosfet-arithmetic` — $0.32 where $6.40 belongs
+- `april2025-bom-missing-retainer` — missing Keystone 1022C retainer
+
+**Naming (4):** MOSFET "M channel" typo, GDEW042T2 vs GDEY042T81 display,
+Pico SC0915 vs SC0918 SKU, C2 boost-cap count mismatch.
+
+**Informational (3):** `why-the-open-book` describes ESP32-S3 design;
+COGS-LIST references SRAM and audio hardware from the older B1 board.
+
+## Roadmap
+
+The 13-task build plan lives at
+`~/.claude/plans/melodic-tinkering-newt.md`. Status:
+
+- [x] **#1** Scaffold project directory
+- [x] **#2** Author static data JSONs (component_functions, discrepancies, assembly)
+- [x] **#3** Define TS + Rust types and dataset loader
+- [x] **#4** Build BOM view
+- [x] **#5** Build Discrepancy view — red banner for unresolved build-critical, localStorage Resolved toggle
+- [ ] **#6** Implement Digi-Key CSV export — save-as dialog (Tauri) / Blob download (web) + build-qty multiplier
+- [ ] **#7** Set up dual-target build — `scripts/bake-dataset.ts`, ship static web build
+- [ ] **#8** Parse KiCad PCB and schematic — pick parser crate or hand-roll
+- [ ] **#9** Build 3D BoardViewport — Three.js, extruded board, raycaster picking
+- [ ] **#10** Add hero meshes — 5 GLTFs (pi-pico, gdew042t2, keystone-1022, c2-module, mem2075)
+- [ ] **#11** Parse EAGLE C2 driver module — `quick-xml` + serde structs
+- [ ] **#12** Build Assembly view — checklist + mini viewport with step-based highlighting
+- [ ] **#13** Polish — net coloring, keyboard shortcuts, About screen
+
+Steps 1–6 give a shipable tool (BOM + discrepancies + sourcing + web share)
+with no 3D. Steps 7–12 add the visualization half.
+
+## Canonical source files
+
+Read-only inputs (not modified by this project):
+
+- `~/Projects/the-open-book/CONTEXT.md` — unified component catalog, BOM
+  reconciliation, discrepancy inventory (seed for the hand-authored JSONs).
+- `~/Projects/the-open-book/folder/The-Open-Book-main/OSO-BOOK-C1/` —
+  `1-click-bom.csv`, `.kicad_pcb`, `.kicad_sch`.
+- `~/Projects/the-open-book/folder/The-Open-Book-main/Fabrication Files/Castellated E-Paper Driver/OSO-BOOK-C2-02 (PCBWay)/` —
+  `.brd`, `.sch`, BOM CSV.
+- `~/Projects/the-open-book/COGS-LIST` — third-party cost annotations
+  (with the known arithmetic error and wrong-board noise).
+
+## License
+
+Code: MIT (to be added; matches dodec-mapper's choice).
+Visualization data: derives from upstream CC-BY-SA 4.0 work.

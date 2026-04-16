@@ -1,0 +1,97 @@
+{
+  "_comment": "Hand-authored function/cost/datasheet lookup keyed by MPN. Merged into each BomLine at load time. Seed values from CONTEXT.md §4 (the unified component catalog). Unit costs are USD, from the 10-unit batch in COGS-LIST.",
+  "SC0918": {
+    "function": "The MCU. Raspberry Pi Pico (RP2040 @ 133 MHz, 264 KB SRAM, 2 MB onboard flash). Runs the libros firmware. SC0918 and SC0915 are two RPi distributor SKUs for the same Pico board.",
+    "datasheetUrl": "https://datasheets.raspberrypi.com/pico/pico-datasheet.pdf",
+    "unitCostUsd": 4.00,
+    "heroMeshId": "pi-pico"
+  },
+  "OSO-BOOK-C2-01": {
+    "function": "Castellated e-paper driver submodule. Generates the ±22 V and ±15 V rails the e-paper panel needs, level-shifts SPI, and drives the FFC ribbon. Ordered pre-assembled from JLCPCB/PCBWay; soldered to the C1 main board via castellated edge pads.",
+    "unitCostUsd": null,
+    "heroMeshId": "c2-module",
+    "notes": "Separate PCBA job. The C1 BOM lists this as a part but the cost is a separate fab/assembly line item not included in the C1 BOM totals. Real per-unit $30-80 depending on JLCPCB vs PCBWay and volume."
+  },
+  "MEM2075-00-140-01-A": {
+    "function": "Push/push microSD card slot. Holds the book library on a microSD card (plain UTF-8 text files, title on line 1).",
+    "datasheetUrl": "https://www.gct.co/files/drawings/mem2075.pdf",
+    "unitCostUsd": 1.86,
+    "heroMeshId": "mem2075"
+  },
+  "GD25Q16CTIGR": {
+    "function": "16 Mb SPI NOR flash. Stores the GNU Unifont + per-language glyph data that doesn't fit in the Pico's 2 MB flash. Read over the shared SPI bus via /BABEL_CS.",
+    "datasheetUrl": "https://www.gigadevice.com/datasheet/gd25q16c/",
+    "unitCostUsd": 0.75,
+    "notes": "Canonical part — don't confuse with the pin-compatible MX25L1606E, which an earlier inference misidentified."
+  },
+  "DMG3415U-7": {
+    "function": "P-channel MOSFET. Gate power rails (typically the e-paper boost enable and/or SD card power) so idle current stays low. Two placed on C1; don't confuse with C2's Q1 which is an N-channel IRLML0100.",
+    "datasheetUrl": "https://www.diodes.com/assets/Datasheets/DMG3415U.pdf",
+    "unitCostUsd": 0.32,
+    "notes": "COGS-LIST labels these 'M channel'; that's a typo for 'P channel'."
+  },
+  "CL31B106KQHNFNE": {
+    "function": "10 µF MLCC, 1206, ≥6.3 V. Bulk decoupling on the higher-current rails (battery and Pico VSYS).",
+    "datasheetUrl": "https://product.samsungsem.com/mlcc/CL31B106KQHNFNE.do",
+    "unitCostUsd": 0.17
+  },
+  "CL21B105KAFNNNE": {
+    "function": "1 µF MLCC, 0805, ≥6.3 V. Local decoupling on the 3V3 rail.",
+    "datasheetUrl": "https://product.samsungsem.com/mlcc/CL21B105KAFNNNE.do",
+    "unitCostUsd": 0.13
+  },
+  "RMCF1206JT10K0": {
+    "function": "10 kΩ, 1206. Pull-ups — most likely the I²C SDA/SCL pair for the STEMMA QT expansion connector.",
+    "datasheetUrl": "https://www.stackpole.com/assets/CatalogPdfs/RMCF.pdf",
+    "unitCostUsd": 0.02
+  },
+  "RC0805JR-071KL": {
+    "function": "1 kΩ, 0805. OPTIONAL pull-ups — install only if the STEMMA / I²C expansion ports are used.",
+    "datasheetUrl": "https://www.yageo.com/upload/media/product/productsearch/datasheet/rchip/PYu-RC_Group_51_RoHS_L_11.pdf",
+    "unitCostUsd": 0.02,
+    "notes": "Marked OPTIONAL in 1-click-bom.csv (R1, R2). Skip unless expansion is needed."
+  },
+  "434351045816": {
+    "function": "Right-angle SMD tactile button (Würth). Side-mounted page navigation buttons (left and right of the device body).",
+    "datasheetUrl": "https://www.we-online.com/components/products/datasheet/434351045816.pdf",
+    "unitCostUsd": 0.58
+  },
+  "JS102011SAQN": {
+    "function": "Right-angle SMD slide switch (C&K, SPDT). Power on/off slide switch on the device side.",
+    "datasheetUrl": "https://www.ckswitches.com/media/1474/js.pdf",
+    "unitCostUsd": 0.69
+  },
+  "TL1107AF180WQ": {
+    "function": "3 × 6 mm through-hole tactile button (E-Switch). The menu / directional / select cluster under the screen. 7 placements (B3–B9).",
+    "datasheetUrl": "https://www.e-switch.com/product-catalog/tact/product-lines/tl1107-series-through-hole-round-button-tact-switch",
+    "unitCostUsd": 0.33
+  },
+  "S3B-PH-SM4-TB(LF)(SN)": {
+    "function": "3-pin JST PH SMD connector (STEMMA). OPTIONAL expansion port: power + I²C / GPIO for add-ons (reading light, accessibility input).",
+    "datasheetUrl": "https://www.jst.com/wp-content/uploads/2021/01/ePH.pdf",
+    "unitCostUsd": 0.10
+  },
+  "BM04B-SRSS-TB(LF)(SN)": {
+    "function": "4-pin JST SH SMD connector (STEMMA QT). OPTIONAL dedicated I²C expansion port.",
+    "datasheetUrl": "https://www.jst.com/wp-content/uploads/2021/01/eSH.pdf",
+    "unitCostUsd": 0.10
+  },
+  "1022": {
+    "function": "Dual AAA battery holder (Keystone). SMD-mounted; the 1022C retainer clip is required separately to keep cells in place.",
+    "datasheetUrl": "https://www.keyelco.com/product-pdf.cfm?p=756",
+    "unitCostUsd": 4.45,
+    "heroMeshId": "keystone-1022"
+  },
+  "1022C": {
+    "function": "Retainer clip for the Keystone 1022 battery holder. Snaps over installed AAA cells.",
+    "datasheetUrl": "https://www.keyelco.com/product-pdf.cfm?p=782",
+    "unitCostUsd": 0.86
+  },
+  "GDEW042T2": {
+    "function": "4.2-inch B&W e-paper panel (GoodDisplay). 400 × 300 px, SPI interface, connects via FFC to the C2 driver module. Don't order the tri-color variant — it'll end in heartbreak (per the README).",
+    "datasheetUrl": "https://www.good-display.com/product/206.html",
+    "unitCostUsd": 26.90,
+    "heroMeshId": "gdew042t2",
+    "notes": "COGS-LIST and the April 2025 BOM image use the string 'GDEY042T81', which is a GoodDisplay model-line relabel of the same 4.2\" B&W SPI part. Both refer to the same panel family; confirm exact part tested with the libros firmware before ordering."
+  }
+}
