@@ -25,13 +25,13 @@ const PHASE_COLOR: Record<AssemblyPhase, string> = {
 };
 
 const PHASE_LABEL: Record<AssemblyPhase, string> = {
-  'smd-passives': 'SMD passives',
-  'smd-ics': 'SMD ICs',
-  'smd-mechanical': 'SMD mechanical',
-  tht: 'Through-hole',
-  modules: 'Modules',
-  mechanical: 'Mechanical',
-  'flash-firmware': 'Firmware',
+  'smd-passives': 'Surface-mount: resistors & caps',
+  'smd-ics': 'Surface-mount: chips',
+  'smd-mechanical': 'Surface-mount: connectors',
+  tht: 'Through-hole parts',
+  modules: 'Pre-built modules',
+  mechanical: 'Mechanical assembly',
+  'flash-firmware': 'Software setup',
 };
 
 const ACTIVE_ACCENT = '#60a5fa';
@@ -101,6 +101,7 @@ export function AssemblyView() {
           gap: '8px',
         }}
       >
+        <AssemblyIntro steps={orderedSteps} />
         <ProgressHeader
           completedCount={progress.completedCount}
           totalCount={progress.totalCount}
@@ -176,6 +177,48 @@ export function AssemblyView() {
 }
 
 // ---------------------------------------------------------------------------
+
+function AssemblyIntro({ steps }: { steps: AssemblyStep[] }) {
+  const allTools = useMemo(() => {
+    const set = new Set<string>();
+    for (const s of steps) for (const t of s.tools) set.add(t);
+    return [...set].sort();
+  }, [steps]);
+
+  return (
+    <div style={{
+      fontSize: '12px', color: '#cbd5e1', lineHeight: 1.6,
+      paddingBottom: '10px', borderBottom: '1px solid #334155',
+    }}>
+      <p style={{ margin: 0 }}>
+        You're building the Open Book from bare boards to working e-reader. Most of
+        the work happens on the <strong style={{ color: '#f1f5f9' }}>Main Board</strong> — the
+        E-Paper Driver module arrives pre-assembled from the fab house and gets soldered
+        on in one step.
+      </p>
+      {allTools.length > 0 && (
+        <details style={{ marginTop: '8px' }}>
+          <summary style={{ cursor: 'pointer', color: '#94a3b8', fontSize: '11px' }}>
+            Tools you'll need ({allTools.length})
+          </summary>
+          <div style={{
+            marginTop: '6px', fontSize: '11px', color: '#94a3b8',
+            display: 'flex', flexWrap: 'wrap', gap: '4px',
+          }}>
+            {allTools.map((t) => (
+              <span key={t} style={{
+                padding: '2px 8px', background: '#0f172a',
+                border: '1px solid #1e293b', borderRadius: '3px',
+              }}>
+                {t}
+              </span>
+            ))}
+          </div>
+        </details>
+      )}
+    </div>
+  );
+}
 
 function ProgressHeader({
   completedCount,
