@@ -10,6 +10,7 @@
 //! path and returns parsed structs.
 
 use crate::bom;
+use crate::bom_comparison;
 use crate::eagle;
 use crate::kicad_pcb;
 use crate::types::{AssemblyStep, BoardDataset, BoardId, Discrepancy};
@@ -31,6 +32,8 @@ pub enum DatasetError {
     KiCad(#[from] kicad_pcb::KiCadError),
     #[error("eagle: {0}")]
     Eagle(#[from] eagle::EagleError),
+    #[error("bom-comparison: {0}")]
+    BomComparison(#[from] bom_comparison::BomComparisonError),
     // Used from task #3 onward once we're merging real data.
     #[allow(dead_code)]
     #[error("data: {0}")]
@@ -51,7 +54,7 @@ pub fn load() -> Result<BoardDataset, DatasetError> {
     Ok(BoardDataset {
         boards,
         bom: bom_lines,
-        bom_comparison: Vec::new(),
+        bom_comparison: bom_comparison::load()?,
         discrepancies,
         assembly,
         cost_summary,

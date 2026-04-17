@@ -135,6 +135,15 @@ viewport that highlights each step's components while dimming the rest.
   strokes, 0.12 mm line width) and overlays it via a transparent
   `PlaneGeometry` 0.01 mm above each face with `depthWrite: false` so
   hero-mesh castellations stay visible.
+- **BOM comparison** — clicking any BOM row expands an inline 4-column
+  comparison card (Canonical / COGS-LIST / PDF / April 2025) showing
+  per-source qty and unit cost. Cost cells that diverge from canonical
+  tint amber. Two rows carry amber "diff" badges on the collapsed view:
+  the DMG3415U-7 MOSFET (COGS-LIST 10-unit total shows $0.32 instead of
+  $6.40 — arithmetic error) and CL31B106KQHNFNE 10µF cap (COGS-LIST
+  uses a different MPN at $0.087 vs canonical $0.17). Notes on each
+  comparison entry explain the discrepancy. C2 driver internals show
+  null comparison columns with "priced as part of PCBA" notes.
 - **About tab** orients new readers landing on the static web build:
   four sections covering the Open Book project (CC-BY-SA 4.0 by Joey
   Castillo, Pico + GDEW042T2 on dual-AAA), what this tool is, how
@@ -407,7 +416,8 @@ The 13-task build plan lives at
 - [x] **#13a** Silkscreen overlays — KiCad `F.SilkS`/`B.SilkS` + EAGLE Layer 21/22 parsed to typed line/arc/circle primitives in board coordinates; rasterized to a `CanvasTexture` per face at 8 px/mm and overlaid on thin transparent planes above each board face (lines/arcs/circles only — text deferred)
 - [x] **#13b** Cross-tab navigation — shared `NavigationContext` lifts `tab`/`board`/`selectedRef` out of local state; componentRef chips in Assembly + Discrepancy tabs become `<button>`s that resolve target board (components-first, BOM-fallback) and jump to the Board tab with the ref pre-selected
 - [x] **#13d** About tab — static orientation copy as the fifth tab, covering what the Open Book is, what this app is, how it relates to upstream's older ESP32-S3 `why-the-open-book` doc, and credits/license; live BOM/discrepancy/assembly-step counts pulled from the dataset context
-- [ ] **#13c, #13e, #13f** Remaining polish — net coloring, BOM comparison, copper traces
+- [x] **#13e** BOM Comparison view — hand-authored `bom-comparison.json` (23 entries × 4 sources: Canonical / COGS-LIST / PDF / April 2025); inline expand-row in BomTable shows a 4-column qty/cost mini-table with amber "diff" badge on conflicting rows (2 flagged: MOSFET arithmetic error in COGS-LIST, different 10µF cap MPN at different price); C2 driver internals carry null comparison columns with "priced as PCBA" notes
+- [ ] **#13c, #13f** Remaining polish — net coloring, copper traces
 
 Steps 1–7 give a shipable tool (BOM + discrepancies + sourcing + web share)
 with no 3D. Steps 8–13 add the visualization half — task #8 is the

@@ -6,6 +6,7 @@
 //! at `~/.claude/plans/melodic-tinkering-newt.md`.
 
 mod bom;
+mod bom_comparison;
 mod dataset;
 mod eagle;
 mod footprint_heights;
