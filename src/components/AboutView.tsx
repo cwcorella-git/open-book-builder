@@ -1,7 +1,6 @@
 // About tab — static orientation copy for new readers landing on the web
-// build. No data dependencies; no interaction. Four sections: what the
-// Open Book is, what this app is, how this build relates to upstream's
-// older ESP32-S3 doc, and credits.
+// build. Six sections: what the Open Book is, what this app is, how this
+// build relates to upstream, project status, credits, and developer info.
 
 import { useDataset } from '../lib/dataset-context';
 
@@ -36,8 +35,9 @@ export function AboutView() {
           <Ext href="https://www.oddlyspecificobjects.com/projects/openbook/">The Open Book</Ext>{' '}
           is an open-source hardware e-reader designed by{' '}
           <Ext href="https://joeycastillo.com">Joey Castillo</Ext>, licensed CC-BY-SA 4.0.
-          It pairs a Raspberry Pi Pico with a GoodDisplay GDEW042T2 4.2-inch e-paper panel, runs on
-          two AAA batteries, and reads books from a microSD card.
+          It pairs a Raspberry Pi Pico with a 4.2-inch B&W e-paper panel (originally the GoodDisplay
+          GDEW042T2, now EOL and succeeded by the GDEY042T81), runs on two AAA batteries, and reads
+          books from a microSD card.
         </p>
         <p style={paragraph}>
           The hardware is split across two PCBs. The main board (<code style={code}>OSO-BOOK-C1</code>){' '}
@@ -64,15 +64,16 @@ export function AboutView() {
           the original circuit board design files (KiCad for the main board, EAGLE for the driver
           module). The{' '}
           <em>Discrepancies</em> tab surfaces unresolved build-critical issues as a red banner
-          until you've reviewed them; the <em>BOM</em> tab emits a Digi-Key BOM Manager CSV you can
-          upload directly.
+          until you've reviewed them; the <em>Parts List</em> tab emits a Digi-Key BOM Manager CSV
+          you can upload directly.
         </p>
       </Section>
 
       <Section title="Relationship to the original project">
         <p style={paragraph}>
           This app targets the current two-board Pico design in the project's GitHub (
-          <code style={code}>OSO-BOOK-C1</code> + <code style={code}>OSO-BOOK-C2-02</code>). If
+          <code style={code}>OSO-BOOK-C1</code> + <code style={code}>OSO-BOOK-C2-02</code> for
+          PCBWay, or the newer <code style={code}>OSO-BOOK-C2-03</code> for JLCPCB). If
           you've read the <code style={code}>why-the-open-book</code> document in the project
           tree, note that it describes an earlier ESP32-S3 prototype ("B1") — it's the project's
           origin story, not a spec for what gets built today. The discrepancies surfaced in this
@@ -82,6 +83,32 @@ export function AboutView() {
         <p style={paragraph}>
           The original design files (circuit board layouts and parts lists) are read-only inputs;
           nothing in this tool writes back to the original project.
+        </p>
+      </Section>
+
+      <Section title="Project status (April 2026)">
+        <p style={paragraph}>
+          The Pico-based "Abridged Edition" covered here is the current DIY build. The{' '}
+          <Ext href="https://github.com/joeycastillo/libros">libros firmware</Ext> has not
+          had a commit since February 2024, and the pre-built <code style={code}>book.uf2</code>{' '}
+          on the project site only supports the GDEW042T2 display (IL0398 controller). Since that
+          panel is now EOL at GoodDisplay, builders receiving the replacement GDEY042T81 (SSD1683
+          controller) will need to build from source or apply{' '}
+          <Ext href="https://github.com/joeycastillo/libros/pull/11">PR #11</Ext> for
+          auto-detection.
+        </p>
+        <p style={paragraph}>
+          Separately, Joey has announced the{' '}
+          <Ext href="https://www.crowdsupply.com/oddly-specific-objects/open-book-touch">Open Book Touch</Ext>{' '}
+          — an ESP32-S3-based next-generation e-reader with a 4.26-inch capacitive touch display,
+          front light, WiFi/Bluetooth, and USB-C charging. It is heading to Crowd Supply and
+          represents the project's long-term direction.
+        </p>
+        <p style={paragraph}>
+          Community resources:{' '}
+          <Ext href="https://discord.gg/b6FgeqSZs3">Discord</Ext>{' · '}
+          <Ext href="https://www.oddlyspecificobjects.com/projects/openbook/">Project documentation</Ext>{' · '}
+          <Ext href="https://hackaday.io/project/192688-the-open-book">Hackaday.io</Ext>
         </p>
       </Section>
 

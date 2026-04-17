@@ -82,12 +82,12 @@
   },
   {
     "id": "display-part-number-relabel",
-    "severity": "naming",
-    "title": "GDEW042T2 vs GDEY042T81 — same family, confirm before ordering",
-    "description": "The README lists the display as GDEW042T2. COGS-LIST and the April 2025 BOM say GDEY042T81. Both are 4.2\" B&W SPI panels from GoodDisplay; GDEY is a newer model-line label. Firmware may behave differently (controller IC timing), so confirm with the libros team which part is currently tested.",
-    "sources": ["folder/The-Open-Book-main/README.md", "COGS-LIST"],
+    "severity": "build-critical",
+    "title": "GDEW042T2 (EOL) vs GDEY042T81 — different controller ICs, not a simple relabel",
+    "description": "The README and 1-click-bom.csv list the display as GDEW042T2, which uses the UC8176 (IL0398) controller IC. COGS-LIST and the April 2025 BOM say GDEY042T81, which uses the SSD1683 controller. These are physically pin-compatible (same FPC connector and form factor) but require different firmware drivers. GDEW042T2 is now EOL at GoodDisplay — new builders will almost certainly receive GDEY042T81 panels.",
+    "sources": ["folder/The-Open-Book-main/README.md", "COGS-LIST", "GoodDisplay product pages", "libros source (src/components/display/)"],
     "affectsComponents": ["Display"],
-    "resolution": "Before ordering, verify which display part libros has been tested against. If GDEW042T2 is the tested one, don't substitute blindly."
+    "resolution": "The libros firmware has drivers for both controllers (OpenBook_IL0398 for GDEW042T2, OpenBook_SSD1683 for GDEY042T81), but the pre-built book.uf2 on the project site targets IL0398 only. If you receive a GDEY042T81, you will need to build libros from source or use the branch from PR #11 (joeycastillo/libros#11) which adds auto-detection. Check your display's controller IC before flashing."
   },
   {
     "id": "pico-sku-variants",
@@ -106,5 +106,32 @@
     "sources": ["COGS-LIST"],
     "affectsComponents": [],
     "resolution": "Trust the C2-02 BOM over the COGS-LIST annotation for cap counts on the driver module."
+  },
+  {
+    "id": "c2-01-replaced-by-c2-03",
+    "severity": "build-critical",
+    "title": "JLCPCB driver module is now C2-03, not C2-01 — the README is outdated",
+    "description": "The upstream repo's Fabrication Files directory contains 'OSO-BOOK-C2-03 (JLCPCB)' with gerbers, BOM, and PNP files ready for JLCPCB's PCBA service. The older C2-01 fabrication folder no longer exists in the repo. However, the README still tells builders to use 'OSO-BOOK-C2-01' for JLCPCB orders, and the 1-click-bom.csv lists U2 as 'OSO-BOOK-C2-01'. C2-03 is the same circuit as C2-01 (identical schematic) but uses the smaller board outline from C2-02, with R1 back to 0402 and JLCPCB-compatible design rules.",
+    "sources": ["Fabrication Files/Castellated E-Paper Driver/", "folder/The-Open-Book-main/README.md", "OSO-BOOK-C1/1-click-bom.csv"],
+    "affectsComponents": ["U2"],
+    "resolution": "If ordering the C2 driver from JLCPCB, use the OSO-BOOK-C2-03 fabrication files (gerbers, BOM, PNP) from the upstream repo's Fabrication Files directory. Ignore the README's reference to C2-01."
+  },
+  {
+    "id": "c1-gerber-revision-drift",
+    "severity": "informational",
+    "title": "C1 gerber: the repo has both C1-04 and C1-05, but only C1-04 is documented",
+    "description": "The README instructs builders to upload 'OSO-BOOK-C1-04-rounded.zip' to their PCB fab. However, the repo also contains 'OSO-BOOK-C1-05-rounded.zip' in the same Fabrication Files directory, and the machine-edited kitspace.yaml points to the C1-05 file as the canonical gerber. The schematic header says 'Revision: 05'. C1-05 is likely the current revision, but the README was never updated.",
+    "sources": ["Fabrication Files/Open Book Main Board/", "kitspace.yaml", "folder/The-Open-Book-main/README.md"],
+    "affectsComponents": [],
+    "resolution": "Use OSO-BOOK-C1-05-rounded.zip for new orders — the kitspace.yaml and schematic revision header both point to C1-05 as current. The C1-04 zip is still present as a fallback."
+  },
+  {
+    "id": "button-actuation-force-mismatch",
+    "severity": "naming",
+    "title": "BOM specifies TL1107AF180WQ (1.8 N) but the README links to 130WQ (1.3 N)",
+    "description": "The 1-click-bom.csv and the Digi-Key part number (EG2511-ND) both specify TL1107AF180WQ — the 180 g (1.8 N) actuation force variant. The README's Digi-Key link, however, goes to TL1107AF130WQ (1.3 N, lighter press). This is an inconsistency within the upstream project itself. Either variant fits the same footprint.",
+    "sources": ["OSO-BOOK-C1/1-click-bom.csv", "folder/The-Open-Book-main/README.md"],
+    "affectsComponents": ["B3", "B4", "B5", "B6", "B7", "B8", "B9"],
+    "resolution": "Either variant works. The BOM's 180WQ (1.8 N) gives a firmer click; the README's 130WQ (1.3 N) gives a lighter touch. Order whichever you prefer — the 180WQ is what the BOM auto-orders via Digi-Key."
   }
 ]

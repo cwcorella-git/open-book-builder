@@ -2,7 +2,7 @@
 
 A desktop + web app for visualizing, verifying, and sourcing
 [The Open Book](https://github.com/joeycastillo/The-Open-Book) — Joey
-Castillo's open-source e-reader (Raspberry Pi Pico + GDEW042T2 4.2" e-paper +
+Castillo's open-source e-reader (Raspberry Pi Pico + 4.2" B&W e-paper +
 dual AAA, CC-BY-SA 4.0).
 
 This is a personal tool that also ships as a static web build so the unified
@@ -53,8 +53,9 @@ sourcing loop is closed** — open app → resolve build-critical items →
 Export CSV → upload to Digi-Key. **The web target is live** at
 [cwcorella-git.github.io/open-book-builder](https://cwcorella-git.github.io/open-book-builder/),
 auto-deployed on push via `.github/workflows/deploy.yml`. The **Assembly
-tab** now renders the 12 ordered build steps with a linked mini 3D
-viewport that highlights each step's components while dimming the rest.
+tab** now renders the 13 ordered build steps (including a babel.bin
+font-data flash step) with a linked mini 3D viewport that highlights
+each step's components while dimming the rest.
 
 **What works today:**
 
@@ -97,7 +98,7 @@ viewport that highlights each step's components while dimming the rest.
   (MPN, function, unit cost, Digi-Key PN, datasheet link). The
   top/bottom/both side filter hides component meshes without touching
   the board.
-- **Assembly tab** renders the 12 authored build steps (ordered 10-120,
+- **Assembly tab** renders the 13 authored build steps (ordered 10-120,
   spanning `modules` → `smd-passives` → `smd-ics` → `smd-mechanical` →
   `tht` → `mechanical` → `flash-firmware`) as a scrolling checklist with
   phase-colored pills and ~time-remaining. Clicking a step expands it
@@ -145,10 +146,10 @@ viewport that highlights each step's components while dimming the rest.
   comparison entry explain the discrepancy. C2 driver internals show
   null comparison columns with "priced as part of PCBA" notes.
 - **About tab** orients new readers landing on the static web build:
-  four sections covering the Open Book project (CC-BY-SA 4.0 by Joey
-  Castillo, Pico + GDEW042T2 on dual-AAA), what this tool is, how
-  it relates to upstream's older ESP32-S3 `why-the-open-book` doc
-  (origin story, not a spec for what ships today), and credits/license.
+  six sections covering the Open Book project, what this tool is, how
+  it relates to the original project, current project status (display
+  EOL situation, libros firmware staleness, Open Book Touch on Crowd
+  Supply, community Discord), credits/license, and developer info.
   Live BOM/discrepancy/assembly-step counts pull from the dataset
   context so the copy stays truthful as the data evolves.
 
@@ -273,8 +274,8 @@ open-book-builder/
     ├── capabilities/default.json     # dialog:allow-save, fs:allow-write-text-file
     ├── data/
     │   ├── component_functions.json  # 17 MPNs with function, datasheet, cost, heroMeshId
-    │   ├── discrepancies.json        # 12 entries covering the 4 severity levels
-    │   ├── assembly.json             # 12 ordered build steps
+    │   ├── discrepancies.json        # 15 entries covering the 4 severity levels
+    │   ├── assembly.json             # 13 ordered build steps
     │   ├── bom-comparison.json       # 23-entry 4-source qty/cost comparison (hand-authored)
     │   ├── bom-c1-main.csv           # copied from the-open-book/OSO-BOOK-C1/1-click-bom.csv
     │   ├── bom-c2-driver.csv         # copied from the-open-book/OSO-BOOK-C2-02 (PCBWay)
@@ -372,7 +373,7 @@ in `package.json` to match the fork's repo name.
 - `costSummary.perUnitUsd ≈ 43.27` (matches April 2025 BOM)
 - `costSummary.perTenUnitsUsd ≈ 432.70`
 - `costSummary.missingLineItems == ["c1-main:OSO-BOOK-C2-01"]`
-- 12 discrepancies, 12 assembly steps
+- 15 discrepancies, 13 assembly steps
 - `boards["c1-main"]`: 27 components, 4 mounting holes, 40 Edge.Cuts
   segments, outline 85 × 115 mm; every component has a non-empty `bomRef`
   (JP1 / JP2 solder-jumpers are present in KiCad but not in the BOM,
@@ -389,10 +390,15 @@ Authored in `src-tauri/data/discrepancies.json`. These are the things the
 BOM / README / vision-doc archaeology surfaced — baked into the dataset so
 the Discrepancies view (task #5) can render them as severity-colored cards.
 
-**Build-critical (2):**
+**Build-critical (4):**
 
 - `pcbway-thickness` — 1.6 mm → 1.0 mm
 - `pcbway-hasl-leaded` — HASL with lead → Lead-Free HASL (or ENIG)
+- `display-part-number-relabel` — GDEW042T2 (EOL, IL0398 controller) vs
+  GDEY042T81 (current, SSD1683 controller) — different firmware drivers
+  required, not a simple relabel
+- `c2-01-replaced-by-c2-03` — JLCPCB driver module files updated to C2-03
+  in the upstream repo, but the README still says C2-01
 
 **Cost-impact (3):**
 
@@ -400,11 +406,14 @@ the Discrepancies view (task #5) can render them as severity-colored cards.
 - `cogs-list-mosfet-arithmetic` — $0.32 where $6.40 belongs
 - `april2025-bom-missing-retainer` — missing Keystone 1022C retainer
 
-**Naming (4):** MOSFET "M channel" typo, GDEW042T2 vs GDEY042T81 display,
-Pico SC0915 vs SC0918 SKU, C2 boost-cap count mismatch.
+**Naming (4):** MOSFET "M channel" typo, Pico SC0915 vs SC0918 SKU, C2
+boost-cap count mismatch, button actuation force mismatch (BOM: 180WQ /
+1.8 N; README links: 130WQ / 1.3 N).
 
-**Informational (3):** `why-the-open-book` describes ESP32-S3 design;
-COGS-LIST references SRAM and audio hardware from the older B1 board.
+**Informational (4):** `why-the-open-book` describes ESP32-S3 design;
+COGS-LIST references SRAM and audio hardware from the older B1 board;
+C1 gerber revision drift (C1-05 exists alongside C1-04, kitspace.yaml
+points to C1-05).
 
 ## Roadmap
 

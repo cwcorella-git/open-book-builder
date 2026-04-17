@@ -1,5 +1,12 @@
 # Accessibility Audit: Making Open Book Builder Readable by a First-Time Builder
 
+> **Status: Implemented** (April 2026). All changes below have been applied
+> across commits 4504460–6a5f7b4. A follow-up enrichment pass (cloning the
+> upstream repo, cross-referencing schematics and fabrication files) added 3
+> new discrepancies, a missing assembly step (babel.bin flash), corrected the
+> display part number discrepancy from "naming" to "build-critical", and
+> updated the About tab with current project status.
+
 ## The problem
 
 The tool currently speaks to someone who already knows what they're looking at.

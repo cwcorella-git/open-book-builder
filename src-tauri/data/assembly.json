@@ -9,7 +9,7 @@
     "board": "c1-main",
     "estimatedMinutes": 20,
     "tools": [],
-    "notes": "Upload OSO-BOOK-C1-04-rounded.zip to PCBWay for C1. Use OSO-BOOK-C2-02 files for PCBWay assembly (PCBA) or OSO-BOOK-C2-01 for JLCPCB PCBA."
+    "notes": "Upload OSO-BOOK-C1-05-rounded.zip to your PCB fab for C1 (the kitspace.yaml and schematic revision header both point to C1-05 as current; the README still says C1-04). For the C2 driver: use OSO-BOOK-C2-02 files for PCBWay assembly (PCBA) or OSO-BOOK-C2-03 for JLCPCB PCBA (C2-01 has been replaced by C2-03 in the upstream repo)."
   },
   {
     "id": "smd-passives-c1",
@@ -81,7 +81,7 @@
     "board": "c1-main",
     "estimatedMinutes": 15,
     "tools": ["soldering iron"],
-    "notes": "These are gullwing-style — make sure the tactile switch body seats flat against the board before soldering."
+    "notes": "These are gullwing-style — make sure the tactile switch body seats flat against the board before soldering. Note: the BOM specifies TL1107AF180WQ (1.8 N, firmer click) but the README links to 130WQ (1.3 N, lighter touch). Either fits the same footprint."
   },
   {
     "id": "install-pico",
@@ -105,7 +105,7 @@
     "board": "c1-main",
     "estimatedMinutes": 5,
     "tools": ["tweezers"],
-    "notes": "Don't order the tri-color GDEW042 variant — only the B&W GDEW042T2 works with libros (per the README warning)."
+    "notes": "Don't order the tri-color variant — libros only supports B&W panels. The canonical part is GDEW042T2 (UC8176/IL0398 controller), but it is now EOL at GoodDisplay. If you receive a GDEY042T81 (SSD1683 controller), you'll need to build libros from source with the SSD1683 driver or use the auto-detect branch from PR #11. Both panels use the same FPC connector."
   },
   {
     "id": "flash-firmware",
@@ -117,7 +117,19 @@
     "board": "c1-main",
     "estimatedMinutes": 5,
     "tools": ["USB cable"],
-    "notes": "libros is at joeycastillo/libros on GitHub. First-time firmware write goes to the Pico's onboard flash; the GD25Q16C holds font/glyph data."
+    "notes": "libros is at joeycastillo/libros on GitHub. The pre-built book.uf2 is available at oddlyspecificobjects.com/projects/openbook/. Important: this UF2 targets the IL0398 controller (GDEW042T2). If you have a GDEY042T81 display (SSD1683 controller), you'll need to build from source or use PR #11's branch."
+  },
+  {
+    "id": "flash-babel",
+    "order": 105,
+    "phase": "flash-firmware",
+    "title": "Flash babel.bin (font/glyph data) to the SPI flash chip",
+    "description": "On first boot after flashing libros, the firmware needs GNU Unifont bitmap data on the external GD25Q16C flash chip (U4) to render text. Download babel.bin from the project page and flash it to the SPI flash using the libros bootloader's built-in flash utility. This takes about a minute.",
+    "componentRefs": ["U4"],
+    "board": "c1-main",
+    "estimatedMinutes": 5,
+    "tools": ["USB cable"],
+    "notes": "babel.bin is available at oddlyspecificobjects.com/projects/openbook/. It contains GNU Unifont data covering the Unicode Basic Multilingual Plane (BMP). Without it, the display will not render any text."
   },
   {
     "id": "prepare-sd-card",
@@ -129,18 +141,18 @@
     "board": "c1-main",
     "estimatedMinutes": 15,
     "tools": ["microSD card", "computer with SD adapter"],
-    "notes": "Any capacity works — even 256 MB is enough for hundreds of books. The file format is deliberately simple and durable."
+    "notes": "Any capacity works — even 256 MB is enough for hundreds of books. For chapter breaks and formatting (bold, italic), use the ASCII control codes documented at oddlyspecificobjects.com/projects/openbook/#advanced-text-formatting. The libros-convert tool (joeycastillo/libros-convert on GitHub) can convert Standard Ebooks EPUBs into the Open Book's plain text format automatically."
   },
   {
     "id": "assemble-enclosure",
     "order": 120,
     "phase": "mechanical",
-    "title": "3D-print the case and assemble with M2.5 screws",
-    "description": "Print 'Open Book Abridged - Minimal Case.stl' on any FDM printer. No supports needed. Fit the completed board, insert 2× AAA batteries, close the case with standard M2.5 screws.",
+    "title": "3D-print the case and assemble",
+    "description": "Print 'Open Book Abridged - Minimal Case.stl' from the upstream repo's '3D Printed Case' directory on any FDM printer. No supports needed. Fit the completed board, insert 2× AAA batteries, and close the case. Check screw-boss dimensions in the STL for fastener sizing — the upstream does not specify a screw size.",
     "componentRefs": [],
     "board": "c1-main",
     "estimatedMinutes": 30,
-    "tools": ["3D printer", "M2.5 screws", "screwdriver"],
-    "notes": "Design is under 9 cm × 12 cm × 1 cm when assembled. Watch your PCB thickness — the case expects a 1.0 mm board, not 1.6 mm. See the build-critical discrepancy if you ordered 1.6 mm."
+    "tools": ["3D printer", "screwdriver"],
+    "notes": "Watch your PCB thickness — the case expects a 1.0 mm board, not 1.6 mm. See the build-critical discrepancy if you ordered 1.6 mm."
   }
 ]

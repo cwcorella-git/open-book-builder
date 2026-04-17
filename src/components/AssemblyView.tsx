@@ -515,7 +515,7 @@ function EmptyActivePanel({ allDone }: { allDone: boolean }) {
       }}
     >
       {allDone
-        ? 'All 12 steps complete. Time to turn the page.'
+        ? 'All steps complete. Time to turn the page.'
         : 'Click a step on the left to see its details. The viewport above highlights the components it touches.'}
     </div>
   );
