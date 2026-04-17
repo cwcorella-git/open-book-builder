@@ -258,7 +258,6 @@ pub struct AssemblyStep {
 #[serde(rename_all = "camelCase")]
 pub struct CostSummary {
     pub per_unit_usd: f64,
-    pub per_ten_units_usd: f64,
     pub missing_line_items: Vec<String>,
 }
 

@@ -49,7 +49,7 @@ export function BomView() {
     [rows, selectedKey],
   );
 
-  const { perUnitUsd, perTenUnitsUsd, missingLineItems } = dataset.costSummary;
+  const { perUnitUsd } = dataset.costSummary;
 
   return (
     <div style={{ display: 'flex', gap: '16px', height: '100%' }}>
@@ -72,9 +72,7 @@ export function BomView() {
         />
         <Footer
           perUnitUsd={perUnitUsd}
-          perTenUnitsUsd={perTenUnitsUsd}
           qtyMultiplier={qtyMultiplier}
-          missingLineItems={missingLineItems}
         />
       </section>
 
@@ -353,10 +351,10 @@ function BomRow({
 }
 
 function Footer({
-  perUnitUsd, perTenUnitsUsd, qtyMultiplier, missingLineItems,
+  perUnitUsd, qtyMultiplier,
 }: {
-  perUnitUsd: number; perTenUnitsUsd: number;
-  qtyMultiplier: number; missingLineItems: string[];
+  perUnitUsd: number;
+  qtyMultiplier: number;
 }) {
   const projected = perUnitUsd * qtyMultiplier;
   return (
@@ -366,19 +364,11 @@ function Footer({
       display: 'flex', gap: '24px', flexWrap: 'wrap', alignItems: 'baseline',
     }}>
       <span><b style={{ color: '#f1f5f9' }}>Per unit:</b> ${perUnitUsd.toFixed(2)}</span>
-      <span><b style={{ color: '#f1f5f9' }}>Per 10:</b> ${perTenUnitsUsd.toFixed(2)}</span>
-      {qtyMultiplier !== 1 && qtyMultiplier !== 10 && (
+      {qtyMultiplier > 1 && (
         <span><b style={{ color: '#f1f5f9' }}>× {qtyMultiplier}:</b> ${projected.toFixed(2)}</span>
       )}
-      {missingLineItems.length > 0 && (
-        <span style={{ color: '#fbbf24' }}>
-          ⚠ {missingLineItems.length} line{missingLineItems.length === 1 ? '' : 's'} without price:
-          {' '}
-          <span style={{ fontFamily: 'monospace' }}>{missingLineItems.join(', ')}</span>
-        </span>
-      )}
       <span style={{ color: '#f97316', fontStyle: 'italic' }}>
-        + $30–80 for C2 driver assembly (not included above — see About tab)
+        + $30–80 for E-Paper Driver assembly — see About tab for ordering details
       </span>
       <span style={{ marginLeft: 'auto', color: '#64748b', fontStyle: 'italic' }}>
         E-Paper Driver internals excluded — they arrive pre-assembled as a single unit from the fab house.

@@ -159,7 +159,6 @@ export interface AssemblyStep {
 
 export interface CostSummary {
   perUnitUsd: number;
-  perTenUnitsUsd: number;
   missingLineItems: string[];
 }
 

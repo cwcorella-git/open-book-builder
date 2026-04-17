@@ -215,13 +215,12 @@ pub fn summarize_cost(bom: &[BomLine]) -> crate::types::CostSummary {
         }
         match line.unit_cost_usd {
             Some(price) => per_unit += price * f64::from(line.qty),
-            None => missing.push(format!("c1-main:{}", line.mpn)),
+            None => missing.push(line.mpn.clone()),
         }
     }
 
     crate::types::CostSummary {
         per_unit_usd: per_unit,
-        per_ten_units_usd: per_unit * 10.0,
         missing_line_items: missing,
     }
 }
