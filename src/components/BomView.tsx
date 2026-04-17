@@ -10,14 +10,14 @@ const TOAST_MS = 3000;
 type BoardFilter = 'all' | BoardId;
 
 const BOARD_LABEL: Record<BoardId, string> = {
-  'c1-main': 'C1 main',
-  'c2-driver': 'C2 driver',
+  'c1-main': 'Main Board (C1)',
+  'c2-driver': 'E-Paper Driver (C2)',
 };
 
 const FILTERS: { id: BoardFilter; label: string }[] = [
-  { id: 'all', label: 'Both boards' },
-  { id: 'c1-main', label: 'C1 main' },
-  { id: 'c2-driver', label: 'C2 driver' },
+  { id: 'all', label: 'Both Boards' },
+  { id: 'c1-main', label: 'Main Board' },
+  { id: 'c2-driver', label: 'E-Paper Driver' },
 ];
 
 function lineKey(line: BomLine): string {
@@ -223,7 +223,7 @@ function ExportSlot({
         {rowCount} rows shown
       </span>
       <span style={{ fontSize: '11px', color: '#64748b' }}>
-        · {includedCount} included · {skippedCount} skipped (no Digi-Key PN)
+        · {includedCount} included · {skippedCount} skipped (no Digi-Key part number)
       </span>
       {toast && (
         <span style={{
@@ -277,8 +277,8 @@ function BomTable({
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', color: '#e2e8f0' }}>
         <thead style={{ position: 'sticky', top: 0, background: '#0f172a', zIndex: 1 }}>
           <tr>
-            {['Board', 'Refs', 'Description', 'MPN', 'Qty', 'Qty × ' + qtyMultiplier,
-              'Unit $', 'Line $', ''].map((h, i) => (
+            {['Board', 'Refs', 'Description', 'Part Number', 'Qty', 'Qty × ' + qtyMultiplier,
+              'Unit Cost', 'Line Total', ''].map((h, i) => (
               <th key={i} style={thStyle}>{h}</th>
             ))}
           </tr>
@@ -517,7 +517,7 @@ function Footer({
         </span>
       )}
       <span style={{ marginLeft: 'auto', color: '#64748b', fontStyle: 'italic' }}>
-        C2 driver internals excluded from totals — priced as a single PCBA unit.
+        E-Paper Driver internals excluded — they arrive pre-assembled as a single unit from the fab house.
       </span>
     </div>
   );
@@ -538,7 +538,7 @@ function DetailPanel({ line }: { line: BomLine }) {
         {line.function}
       </div>
 
-      <Field label="MPN" value={<span style={{ fontFamily: 'monospace' }}>{line.mpn}</span>} />
+      <Field label="Part Number" value={<span style={{ fontFamily: 'monospace' }}>{line.mpn}</span>} />
       {line.manufacturer && <Field label="Manufacturer" value={line.manufacturer} />}
       {line.footprint && <Field label="Footprint" value={line.footprint} />}
       <Field label="Qty per unit" value={String(line.qty)} />
@@ -555,7 +555,7 @@ function DetailPanel({ line }: { line: BomLine }) {
           value={
             <a href={line.datasheetUrl} target="_blank" rel="noreferrer"
                style={{ color: '#60a5fa', textDecoration: 'none' }}>
-              {line.datasheetUrl}
+              View Datasheet
             </a>
           }
         />

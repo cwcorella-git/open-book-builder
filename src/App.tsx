@@ -10,7 +10,7 @@ import { AboutView } from './components/AboutView';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'board', label: 'Board' },
-  { id: 'bom', label: 'BOM' },
+  { id: 'bom', label: 'Parts List' },
   { id: 'assembly', label: 'Assembly' },
   { id: 'discrepancies', label: 'Discrepancies' },
   { id: 'about', label: 'About' },
@@ -59,7 +59,7 @@ function Shell() {
           {status.kind === 'loading' && 'Loading dataset…'}
           {status.kind === 'error' && `Error: ${status.message}`}
           {status.kind === 'ready' &&
-            `${status.dataset.bom.length} BOM rows · ${status.dataset.discrepancies.length} discrepancies`}
+            `${status.dataset.bom.length} parts · ${status.dataset.discrepancies.length} discrepancies`}
         </span>
       </header>
 

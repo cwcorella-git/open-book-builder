@@ -35,7 +35,7 @@ export function DiscrepancyBanner({ count, onClick }: Props) {
         <b style={{ color: '#fef2f2' }}>
           {count} unresolved build-critical {noun}
         </b>
-        {' — review before ordering from PCBWay or Digi-Key.'}
+        {' — review before ordering boards from PCBWay or parts from Digi-Key.'}
       </span>
       <span style={{
         marginLeft: 'auto',

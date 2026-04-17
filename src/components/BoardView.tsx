@@ -6,8 +6,8 @@ import type { ColorMode } from '../lib/scene-renderer';
 import type { BoardId, BomLine, Component } from '../lib/types';
 
 const BOARDS: { id: BoardId; label: string }[] = [
-  { id: 'c1-main', label: 'C1 main' },
-  { id: 'c2-driver', label: 'C2 driver' },
+  { id: 'c1-main', label: 'Main Board' },
+  { id: 'c2-driver', label: 'E-Paper Driver' },
 ];
 
 type SideFilter = 'both' | 'top' | 'bottom';
@@ -88,8 +88,8 @@ export function BoardView() {
 }
 
 const COLOR_MODES: { id: ColorMode; label: string }[] = [
-  { id: 'side', label: 'Side' },
-  { id: 'netCategory', label: 'Net' },
+  { id: 'side', label: 'Board Side' },
+  { id: 'netCategory', label: 'Signal Type' },
 ];
 
 function Toolbar({
@@ -137,7 +137,7 @@ function Toolbar({
       </div>
 
       <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-        <span style={{ fontSize: '10px', color: '#64748b', marginRight: '2px' }}>Color:</span>
+        <span style={{ fontSize: '10px', color: '#64748b', marginRight: '2px' }}>Color by:</span>
         {COLOR_MODES.map((m) => (
           <button
             key={m.id}
@@ -156,7 +156,7 @@ function Toolbar({
           onChange={(e) => setShowTraces(e.target.checked)}
           style={{ accentColor: '#f59e0b' }}
         />
-        Traces
+        Copper Traces
       </label>
 
       <span style={{ marginLeft: 'auto', fontSize: '11px', color: '#64748b' }}>
@@ -207,27 +207,27 @@ function DetailPanel({ component, bom }: { component: Component; bom: BomLine[] 
           </span>
         }
       />
-      <Field label="Footprint" value={<span style={{ fontFamily: 'monospace' }}>{component.footprint}</span>} />
+      <Field label="PCB Footprint" value={<span style={{ fontFamily: 'monospace' }}>{component.footprint}</span>} />
       <Field
-        label="Bbox"
+        label="Dimensions"
         value={
           <span style={{ fontFamily: 'monospace' }}>
             {component.footprintBbox.width.toFixed(2)} × {component.footprintBbox.height.toFixed(2)} × {component.footprintBbox.height3d.toFixed(2)} mm
           </span>
         }
       />
-      <Field label="Pads" value={String(component.pads.length)} />
+      <Field label="Solder Points" value={String(component.pads.length)} />
       {component.dominantCategory && (
-        <Field label="Net category" value={component.dominantCategory} />
+        <Field label="Signal Type" value={component.dominantCategory} />
       )}
 
       {line && (
         <>
-          <Field label="MPN" value={<span style={{ fontFamily: 'monospace' }}>{line.mpn}</span>} />
+          <Field label="Part Number" value={<span style={{ fontFamily: 'monospace' }}>{line.mpn}</span>} />
           {line.manufacturer && <Field label="Manufacturer" value={line.manufacturer} />}
           <Field label="Unit cost" value={line.unitCostUsd !== undefined ? `$${line.unitCostUsd.toFixed(2)}` : '—'} />
           {line.digikeyPn && (
-            <Field label="Digi-Key" value={<span style={{ fontFamily: 'monospace' }}>{line.digikeyPn}</span>} />
+            <Field label="Digi-Key PN" value={<span style={{ fontFamily: 'monospace' }}>{line.digikeyPn}</span>} />
           )}
           {line.datasheetUrl && (
             <Field
@@ -239,7 +239,7 @@ function DetailPanel({ component, bom }: { component: Component; bom: BomLine[] 
                   rel="noreferrer"
                   style={{ color: '#60a5fa', textDecoration: 'none' }}
                 >
-                  {line.datasheetUrl}
+                  View Datasheet
                 </a>
               }
             />
@@ -266,7 +266,7 @@ function DetailPlaceholder() {
       fontStyle: 'italic', lineHeight: 1.5,
     }}>
       Click a component in the 3D viewport to see its position, footprint,
-      and BOM metadata. Drag to orbit, scroll to zoom.
+      and part details. Drag to orbit, scroll to zoom.
     </div>
   );
 }
