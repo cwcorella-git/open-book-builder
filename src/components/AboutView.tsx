@@ -36,7 +36,9 @@ export function AboutView() {
           is an open-source hardware e-reader designed by{' '}
           <Ext href="https://joeycastillo.com">Joey Castillo</Ext>, licensed CC-BY-SA 4.0.
           It pairs a Raspberry Pi Pico with a 4.2-inch B&W e-paper display, runs on two AAA
-          batteries, and reads books from a microSD card.
+          batteries, and reads books from a microSD card. The firmware supports bold, italic,
+          chapter breaks, front-matter metadata, and the full Unicode Basic Multilingual Plane
+          including right-to-left scripts.
         </p>
         <p style={paragraph}>
           The hardware is split across two PCBs. The <strong style={strong}>main board</strong>{' '}

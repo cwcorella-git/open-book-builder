@@ -129,19 +129,19 @@
     "board": "c1-main",
     "estimatedMinutes": 5,
     "tools": ["USB cable"],
-    "notes": "babel.bin is available at oddlyspecificobjects.com/projects/openbook/. It contains GNU Unifont data covering the Unicode Basic Multilingual Plane (BMP). Without it, the display will not render any text."
+    "notes": "babel.bin is available at oddlyspecificobjects.com/projects/openbook/. It contains GNU Unifont bitmap data covering the entire Unicode Basic Multilingual Plane — Latin, Cyrillic, CJK, Arabic, Hebrew, and more, with automatic right-to-left text detection."
   },
   {
     "id": "prepare-sd-card",
     "order": 110,
     "phase": "flash-firmware",
     "title": "Prepare a microSD card with books",
-    "description": "Format a microSD card as FAT (the standard SD card format — most cards ship this way). Copy plain UTF-8 .txt files onto it — first line of each file is the book title. Optional: use the ASCII control codes documented in the libros README for chapter breaks and formatting.",
+    "description": "Format a microSD card as FAT (the standard SD card format — most cards ship this way). Copy UTF-8 .txt files onto it — first line of each file is the book title. The firmware supports bold, italic, chapter title pages, and front-matter metadata (title, author, description, genre, language) via inline control codes.",
     "componentRefs": ["U3"],
     "board": "c1-main",
     "estimatedMinutes": 15,
     "tools": ["microSD card", "computer with SD adapter"],
-    "notes": "Any capacity works — even 256 MB is enough for hundreds of books. For chapter breaks and formatting (bold, italic), use the ASCII control codes documented at oddlyspecificobjects.com/projects/openbook/#advanced-text-formatting. The libros-convert tool (joeycastillo/libros-convert on GitHub) can convert Standard Ebooks EPUBs into the Open Book's plain text format automatically."
+    "notes": "Any capacity works — even 256 MB is enough for hundreds of books. Formatting reference: Shift In (U+000F) toggles italic → bold+italic, Shift Out (U+000E) reverts; Record Separator (U+001E) at the start of a line creates a chapter title page at 2× size. Front matter goes between --- delimiters with TITL/AUTH/DESC/GNRE/LANG keys. Full details at oddlyspecificobjects.com/projects/openbook/. The libros-convert tool (joeycastillo/libros-convert on GitHub) converts Standard Ebooks EPUBs into this format automatically."
   },
   {
     "id": "assemble-enclosure",

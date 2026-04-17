@@ -13,7 +13,7 @@
     "notes": "Separate PCBA job — cost not included in the C1 BOM totals. Real per-unit $30-80 depending on fab house and volume. Three board revisions exist: C2-01 (old JLCPCB, oversized), C2-02 (PCBWay, current), C2-03 (new JLCPCB, replaces C2-01). All share an identical schematic; only R1's package size differs (0402 vs 0603). The BOM ref 'OSO-BOOK-C2-01' in 1-click-bom.csv is stale — use C2-03 for JLCPCB orders."
   },
   "MEM2075-00-140-01-A": {
-    "function": "Push/push microSD card slot. Holds the book library on a microSD card (plain UTF-8 text files, title on line 1).",
+    "function": "Push/push microSD card slot. Holds the book library on a microSD card — UTF-8 .txt files with support for bold, italic, chapter breaks, and front-matter metadata via inline control codes.",
     "datasheetUrl": "https://www.gct.co/files/drawings/mem2075.pdf",
     "unitCostUsd": 1.86,
     "heroMeshId": "mem2075"
