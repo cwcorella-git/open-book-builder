@@ -71,7 +71,7 @@ export function AboutView() {
               <td style={specLabel}>Thickness</td>
               <td style={specValue}>
                 <strong style={strong}>1.0 mm</strong>
-                <span style={{ color: '#94a3b8' }}>{' '}(not the 1.6 mm default — the case won't fit)</span>
+                <span style={{ color: '#94a3b8' }}>{' '}(required — the 3D-printed case is designed for this thickness)</span>
               </td>
             </tr>
             <tr>

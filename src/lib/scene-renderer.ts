@@ -1,9 +1,8 @@
 // Three.js scene for the Board tab. `initScene()` builds a renderer + scene
 // from a `BoardData` and returns a `SceneState` the React wrapper can drive
 // imperatively (side filter, selection highlight) without re-initializing
-// the WebGL context. Dispose idiom mirrors
-// /home/user/Projects/dodec-mapper/src/lib/scene-renderer.ts:337-344 and
-// tracks every BufferGeometry/Material we create for teardown.
+// the WebGL context. The dispose idiom tracks every BufferGeometry/Material
+// we create for teardown.
 //
 // Coordinate conventions (also documented in the task #9 plan section):
 // - Board sits in the X–Z plane; +Y is up (out of the top copper face).

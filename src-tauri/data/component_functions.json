@@ -1,5 +1,5 @@
 {
-  "_comment": "Hand-authored function/cost/datasheet lookup keyed by MPN. Merged into each BomLine at load time. Seed values from CONTEXT.md §4 (the unified component catalog). Unit costs are USD, from the 10-unit batch in COGS-LIST.",
+  "_comment": "Hand-authored function/cost/datasheet lookup keyed by MPN. Merged into each BomLine at load time. Unit costs are USD at single-unit Digi-Key pricing unless noted.",
   "SC0918": {
     "function": "The MCU. Raspberry Pi Pico (RP2040 @ 133 MHz, 264 KB SRAM, 2 MB onboard flash). Runs the libros firmware. SC0918 and SC0915 are two RPi distributor SKUs for the same Pico board.",
     "datasheetUrl": "https://datasheets.raspberrypi.com/pico/pico-datasheet.pdf",
@@ -10,7 +10,7 @@
     "function": "Castellated e-paper driver submodule. Generates the ±22 V and ±15 V rails the e-paper panel needs, converts signal levels between the Pico and the display, and drives the FFC ribbon. Ordered pre-assembled from JLCPCB or PCBWay; soldered to the C1 main board via castellated edge pads.",
     "unitCostUsd": null,
     "heroMeshId": "c2-module",
-    "notes": "Separate PCBA job — cost not included in the C1 BOM totals. Real per-unit $30-80 depending on fab house and volume. Three board revisions exist: C2-01 (old JLCPCB, oversized), C2-02 (PCBWay, current), C2-03 (new JLCPCB, replaces C2-01). All share an identical schematic; only R1's package size differs (0402 vs 0603). The BOM ref 'OSO-BOOK-C2-01' in 1-click-bom.csv is stale — use C2-03 for JLCPCB orders."
+    "notes": "Separate PCBA job — cost not included in the C1 BOM totals. Per-unit $30-80 depending on fab house and volume. Three board revisions exist: C2-01 (old JLCPCB, oversized), C2-02 (PCBWay, current), C2-03 (new JLCPCB, replaces C2-01). All share an identical schematic; only R1's package size differs (0402 vs 0603). Use C2-02 for PCBWay orders, C2-03 for JLCPCB."
   },
   "MEM2075-00-140-01-A": {
     "function": "Push/push microSD card slot. Holds the book library on a microSD card — UTF-8 .txt files with support for bold, italic, chapter breaks, and front-matter metadata via inline control codes.",
@@ -22,13 +22,12 @@
     "function": "16 Mb SPI NOR flash. Stores the GNU Unifont + per-language glyph data that doesn't fit in the Pico's 2 MB flash. Read over the shared SPI bus via /BABEL_CS.",
     "datasheetUrl": "https://www.gigadevice.com/datasheet/gd25q16c/",
     "unitCostUsd": 0.75,
-    "notes": "Canonical part — don't confuse with the pin-compatible MX25L1606E, which an earlier inference misidentified."
+    "notes": "The pin-compatible MX25L1606E also works in this footprint."
   },
   "DMG3415U-7": {
-    "function": "P-channel MOSFET. Q1 (gate = EN / GPIO18) switches the +3.3VP rail powering the SD card and flash chip. Q2 (gate = ~EN2 / GPIO15) switches a secondary load (likely the C2 module's 3.3 V supply). Don't confuse with C2's Q1 which is an N-channel IRLML0100.",
+    "function": "P-channel MOSFET. Q1 (gate = EN / GPIO18) switches the +3.3VP rail powering the SD card and flash chip. Q2 (gate = ~EN2 / GPIO15) switches the C2 module's 3.3 V supply.",
     "datasheetUrl": "https://www.diodes.com/assets/Datasheets/DMG3415U.pdf",
-    "unitCostUsd": 0.32,
-    "notes": "COGS-LIST labels these 'M channel'; that's a typo for 'P channel'."
+    "unitCostUsd": 0.32
   },
   "CL31B106KQHNFNE": {
     "function": "10 µF MLCC, 1206, ≥6.3 V. Bulk decoupling on the battery rail (+BATT) and the switched 3.3 V rail (+3.3VP).",
@@ -88,7 +87,7 @@
     "unitCostUsd": 0.86
   },
   "GDEW042T2": {
-    "function": "4.2-inch B&W e-paper panel (GoodDisplay), 400 × 300 px, SPI interface, connects via FFC to the C2 driver module. The BOM lists the GDEW042T2 but you'll receive a GDEY042T81 — same connector, drop-in compatible. Don't order the tri-color variant.",
+    "function": "4.2-inch B&W e-paper panel (GoodDisplay), 400 × 300 px, SPI interface, connects via FFC to the C2 driver module. The BOM lists the GDEW042T2 but you'll receive a GDEY042T81 — same connector, drop-in compatible. Order the B&W variant specifically.",
     "datasheetUrl": "https://www.good-display.com/product/206.html",
     "unitCostUsd": 26.90,
     "heroMeshId": "gdew042t2",

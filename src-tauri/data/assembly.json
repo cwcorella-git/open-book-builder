@@ -9,7 +9,7 @@
     "board": "c1-main",
     "estimatedMinutes": 20,
     "tools": [],
-    "notes": "Upload OSO-BOOK-C1-05-rounded.zip to your PCB fab for C1 (the kitspace.yaml and schematic revision header both point to C1-05 as current; the README still says C1-04). For the C2 driver: use OSO-BOOK-C2-02 files for PCBWay assembly (PCBA) or OSO-BOOK-C2-03 for JLCPCB PCBA (C2-01 has been replaced by C2-03 in the upstream repo)."
+    "notes": "Upload OSO-BOOK-C1-05-rounded.zip to your PCB fab for C1. For the C2 driver: use OSO-BOOK-C2-02 files for PCBWay assembly (PCBA) or OSO-BOOK-C2-03 for JLCPCB PCBA."
   },
   {
     "id": "smd-passives-c1",
@@ -21,7 +21,7 @@
     "board": "c1-main",
     "estimatedMinutes": 15,
     "tools": ["soldering iron", "fine-tip", "flux", "tweezers"],
-    "notes": "R1/R2 are OPTIONAL — skip unless the STEMMA/I²C expansion ports will be used."
+    "notes": "R1/R2 are OPTIONAL — install them if you plan to use the STEMMA/I²C expansion ports."
   },
   {
     "id": "smd-ics-c1",
@@ -69,7 +69,7 @@
     "board": "c1-main",
     "estimatedMinutes": 15,
     "tools": ["soldering iron", "flux"],
-    "notes": "You don't hand-solder the C2 internals — those were assembled at the fab house. You just solder the castellated edge pads to the C1 pads beneath."
+    "notes": "The C2 internals were assembled at the fab house. Solder the castellated edge pads to the matching C1 pads beneath."
   },
   {
     "id": "tht-buttons-c1",
@@ -93,19 +93,19 @@
     "board": "c1-main",
     "estimatedMinutes": 10,
     "tools": ["soldering iron", "flux"],
-    "notes": "If you plan to iterate on libros firmware a lot, pin headers are a more forgiving choice. For a finished device, castellated is the right call."
+    "notes": "Pin headers make reflashing easy if you plan to iterate on firmware. Castellated gives the slimmest profile for a finished device."
   },
   {
     "id": "attach-display",
     "order": 90,
     "phase": "mechanical",
     "title": "Attach the e-paper panel via FFC (flat ribbon cable) to the C2 module",
-    "description": "Slide the panel's FPC (flexible printed circuit) tail into the 24-pin 0.5 mm FFC connector (the latching clip) on the C2 module. Make sure the contact side faces the correct way (check the connector's latching direction). Close the connector latch. The GDEY042T81 and older GDEW042T2 both use the same connector — either panel works.",
+    "description": "Slide the panel's FPC (flexible printed circuit) tail into the 24-pin 0.5 mm FFC connector (the latching clip) on the C2 module. Make sure the contact side faces the correct way (check the connector's latching direction). Close the connector latch.",
     "componentRefs": [],
     "board": "c1-main",
     "estimatedMinutes": 5,
     "tools": ["tweezers"],
-    "notes": "Order a 4.2-inch B&W GoodDisplay panel — you'll almost certainly receive a GDEY042T81. Don't order the tri-color variant; libros only supports B&W."
+    "notes": "Order a 4.2-inch B&W GoodDisplay panel — you'll receive a GDEY042T81. The firmware auto-detects it via PR #11. Order the B&W variant specifically."
   },
   {
     "id": "flash-firmware",
@@ -117,7 +117,7 @@
     "board": "c1-main",
     "estimatedMinutes": 15,
     "tools": ["USB cable", "Pico SDK"],
-    "notes": "PR #11 (joeycastillo/libros#11) auto-detects which display you have via the busy-pin polarity — no configuration needed, works with both the older GDEW042T2 and the current GDEY042T81. If you happen to have an original GDEW042T2 and don't want to set up the Pico SDK, the pre-built book.uf2 at oddlyspecificobjects.com/projects/openbook/ will also work — but only with that specific display."
+    "notes": "PR #11 (https://github.com/joeycastillo/libros/pull/11) auto-detects which display you have via the busy-pin polarity — works with both the GDEY042T81 and the older GDEW042T2. A pre-built book.uf2 is available at https://oddlyspecificobjects.com/projects/openbook/ for the GDEW042T2 specifically; for the GDEY042T81, build from the PR #11 branch."
   },
   {
     "id": "flash-babel",
@@ -129,7 +129,7 @@
     "board": "c1-main",
     "estimatedMinutes": 5,
     "tools": ["USB cable"],
-    "notes": "babel.bin is available at oddlyspecificobjects.com/projects/openbook/. It contains GNU Unifont bitmap data covering the entire Unicode Basic Multilingual Plane — Latin, Cyrillic, CJK, Arabic, Hebrew, and more, with automatic right-to-left text detection."
+    "notes": "babel.bin is available at https://oddlyspecificobjects.com/projects/openbook/. It contains GNU Unifont bitmap data covering the entire Unicode Basic Multilingual Plane — Latin, Cyrillic, CJK, Arabic, Hebrew, and more, with automatic right-to-left text detection."
   },
   {
     "id": "prepare-sd-card",
@@ -141,18 +141,18 @@
     "board": "c1-main",
     "estimatedMinutes": 15,
     "tools": ["microSD card", "computer with SD adapter"],
-    "notes": "Any capacity works — even 256 MB is enough for hundreds of books. Formatting reference: Shift In (U+000F) toggles italic → bold+italic, Shift Out (U+000E) reverts; Record Separator (U+001E) at the start of a line creates a chapter title page at 2× size. Front matter goes between --- delimiters with TITL/AUTH/DESC/GNRE/LANG keys. Full details at oddlyspecificobjects.com/projects/openbook/. The libros-convert tool (joeycastillo/libros-convert on GitHub) converts Standard Ebooks EPUBs into this format automatically."
+    "notes": "Any capacity works — even 256 MB is enough for hundreds of books. Formatting reference: Shift In (U+000F) toggles italic → bold+italic, Shift Out (U+000E) reverts; Record Separator (U+001E) at the start of a line creates a chapter title page at 2× size. Front matter goes between --- delimiters with TITL/AUTH/DESC/GNRE/LANG keys. Full details at https://oddlyspecificobjects.com/projects/openbook/. The libros-convert tool (https://github.com/joeycastillo/libros-convert) converts Standard Ebooks EPUBs into this format automatically."
   },
   {
     "id": "assemble-enclosure",
     "order": 120,
     "phase": "mechanical",
     "title": "3D-print the case and assemble",
-    "description": "Print 'Open Book Abridged - Minimal Case.stl' from the upstream repo's '3D Printed Case' directory on any FDM printer. No supports needed. Fit the completed board, insert 2× AAA batteries, and close the case. Check screw-boss dimensions in the STL for fastener sizing — the upstream does not specify a screw size.",
+    "description": "Print 'Open Book Abridged - Minimal Case.stl' from the upstream repo's 3D Printed Case directory (https://github.com/joeycastillo/The-Open-Book/tree/main/3D%20Printed%20Case). The STL prints support-free on any FDM printer. Fit the completed board, insert 2× AAA batteries, and close the case.",
     "componentRefs": [],
     "board": "c1-main",
     "estimatedMinutes": 30,
     "tools": ["3D printer", "screwdriver"],
-    "notes": "Watch your PCB thickness — the case expects a 1.0 mm board, not 1.6 mm."
+    "notes": "The case is designed for a 1.0 mm thick PCB — match this when ordering your C1 board."
   }
 ]

@@ -4,8 +4,7 @@
 // topology. Side filter + selection ride through `setSideFilter` /
 // `setSelectedRef` on the live scene state.
 //
-// Mirrors /home/user/Projects/dodec-mapper/src/components/Viewport.tsx for
-// its ref-based mount + React 19 StrictMode safety.
+// Uses a ref-based mount pattern for React 19 StrictMode safety.
 
 import { useEffect, useRef } from 'react';
 import { initScene, type ColorMode, type SceneState, type SideFilter } from '../lib/scene-renderer';
