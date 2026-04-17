@@ -367,9 +367,6 @@ function Footer({
       {qtyMultiplier > 1 && (
         <span><b style={{ color: '#f1f5f9' }}>× {qtyMultiplier}:</b> ${projected.toFixed(2)}</span>
       )}
-      <span style={{ color: '#f97316', fontStyle: 'italic' }}>
-        + $30–80 for E-Paper Driver assembly — see About tab for ordering details
-      </span>
       <span style={{ marginLeft: 'auto', color: '#64748b', fontStyle: 'italic' }}>
         E-Paper Driver internals excluded — they arrive pre-assembled as a single unit from the fab house.
       </span>
