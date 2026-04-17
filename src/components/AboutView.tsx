@@ -174,8 +174,8 @@ export function AboutView() {
           source: <Ext href="https://github.com/joeycastillo/The-Open-Book">github.com/joeycastillo/The-Open-Book</Ext>.
         </p>
         <p style={paragraph}>
-          This tool is MIT-licensed and was built by Christopher Corella with Claude Code as a
-          scaffolding and pair-programming partner. Issues and patches welcome at{' '}
+          This tool is MIT-licensed and was built with Claude Code as a scaffolding and
+          pair-programming partner. Issues and patches welcome at{' '}
           <Ext href="https://github.com/cwcorella-git/open-book-builder">github.com/cwcorella-git/open-book-builder</Ext>.
         </p>
       </Section>

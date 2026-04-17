@@ -430,7 +430,7 @@ function DetailPanel({ line }: { line: BomLine }) {
         background: '#0f172a', border: '1px solid #1e293b', borderRadius: '4px',
         color: '#64748b',
       }}>
-        Raw BOM description: <span style={{ color: '#94a3b8' }}>{line.description}</span>
+        Raw CSV description: <span style={{ color: '#94a3b8' }}>{line.description}</span>
       </div>
     </div>
   );
