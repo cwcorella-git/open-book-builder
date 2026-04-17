@@ -25,6 +25,8 @@ interface BoardViewportProps {
   highlightedRefs?: ReadonlyArray<string> | null;
   colorMode?: ColorMode;
   showTraces?: boolean;
+  /** When set to a non-empty array, smoothly orbit the camera to frame these refs. */
+  focusRefs?: ReadonlyArray<string> | null;
 }
 
 export function BoardViewport({
@@ -35,6 +37,7 @@ export function BoardViewport({
   highlightedRefs,
   colorMode,
   showTraces,
+  focusRefs,
 }: BoardViewportProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<SceneState | null>(null);
@@ -94,6 +97,10 @@ export function BoardViewport({
   useEffect(() => {
     sceneRef.current?.setTracesVisible(showTraces ?? false);
   }, [showTraces]);
+
+  useEffect(() => {
+    if (focusRefs && focusRefs.length > 0) sceneRef.current?.focusOnRefs(focusRefs);
+  }, [focusRefs]);
 
   return (
     <div

@@ -159,6 +159,7 @@ export function AssemblyView() {
             selectedRef={null}
             onSelect={noop}
             highlightedRefs={highlightedRefs}
+            focusRefs={highlightedRefs}
           />
         </div>
         <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>

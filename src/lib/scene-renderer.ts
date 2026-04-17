@@ -56,6 +56,8 @@ export interface SceneState {
   setHighlightedRefs(refs: ReadonlyArray<string> | null): void;
   setColorMode(mode: ColorMode): void;
   setTracesVisible(visible: boolean): void;
+  /** Smoothly orbit the camera to frame the given component refs. */
+  focusOnRefs(refs: ReadonlyArray<string>): void;
   onSelect: ((ref: string | null) => void) | null;
 }
 
@@ -423,6 +425,7 @@ export function initScene(
 
   const onPointerDown = (e: PointerEvent) => {
     pointerDownAt = { x: e.clientX, y: e.clientY };
+    tweenActive = false; // cancel camera animation on user interaction
   };
 
   const onPointerUp = (e: PointerEvent) => {
@@ -463,11 +466,73 @@ export function initScene(
   });
   resizeObserver.observe(container);
 
+  // --- Camera tween (focusOnRefs) ------------------------------------------
+
+  const TWEEN_SPEED = 2.5; // completes in ~0.4s
+  let tweenActive = false;
+  const tweenStartPos = new THREE.Vector3();
+  const tweenEndPos = new THREE.Vector3();
+  const tweenStartTarget = new THREE.Vector3();
+  const tweenEndTarget = new THREE.Vector3();
+  let tweenProgress = 0;
+
+  function easeInOutCubic(t: number): number {
+    return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
+  }
+
+  function focusOnRefs(refs: ReadonlyArray<string>): void {
+    if (refs.length === 0) return;
+
+    const box = new THREE.Box3();
+    let found = false;
+    for (const entry of componentEntries) {
+      if (refs.includes(entry.ref)) {
+        box.expandByObject(entry.root);
+        found = true;
+      }
+    }
+    if (!found) return;
+
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z, 1);
+
+    const fovRad = THREE.MathUtils.degToRad(camera.fov / 2);
+    const dist = Math.min(
+      Math.max((maxDim / (2 * Math.tan(fovRad))) * 1.8, controls.minDistance),
+      controls.maxDistance,
+    );
+
+    // Preserve current viewing direction so the camera approaches from its
+    // current angle rather than snapping to overhead.
+    const viewDir = camera.position.clone().sub(controls.target).normalize();
+
+    tweenStartPos.copy(camera.position);
+    tweenEndPos.copy(center).addScaledVector(viewDir, dist);
+    tweenStartTarget.copy(controls.target);
+    tweenEndTarget.copy(center);
+    tweenProgress = 0;
+    tweenActive = true;
+  }
+
   // --- Animation loop ------------------------------------------------------
 
   let animFrameId = 0;
+  let lastTime = performance.now();
   const animate = () => {
     animFrameId = requestAnimationFrame(animate);
+    const now = performance.now();
+    const dt = (now - lastTime) / 1000;
+    lastTime = now;
+
+    if (tweenActive) {
+      tweenProgress = Math.min(tweenProgress + dt * TWEEN_SPEED, 1);
+      const t = easeInOutCubic(tweenProgress);
+      camera.position.lerpVectors(tweenStartPos, tweenEndPos, t);
+      controls.target.lerpVectors(tweenStartTarget, tweenEndTarget, t);
+      if (tweenProgress >= 1) tweenActive = false;
+    }
+
     controls.update();
     renderer.render(scene, camera);
   };
@@ -482,6 +547,7 @@ export function initScene(
     setHighlightedRefs: applyHighlightedRefs,
     setColorMode: applyColorMode,
     setTracesVisible: applyTracesVisible,
+    focusOnRefs,
     dispose: () => {
       cancelAnimationFrame(animFrameId);
       resizeObserver.disconnect();
