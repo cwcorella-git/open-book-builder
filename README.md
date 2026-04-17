@@ -152,13 +152,19 @@ viewport that highlights each step's components while dimming the rest.
   Live BOM/discrepancy/assembly-step counts pull from the dataset
   context so the copy stays truthful as the data evolves.
 
+- **Net category coloring** — toolbar "Color: Side | Net" toggle in
+  the Board tab swaps component mesh colors to an 8-color palette
+  based on dominant net category (Power red, Ground slate, SPI amber,
+  I2C cyan, GPIO lime, Debug violet, Analog orange, Other dim slate).
+  Classification runs in Rust via a name-based heuristic on per-pad
+  net names; the dominant category is baked into `Component.dominantCategory`.
+  Detail panel also shows the category when selected.
+
 **What's mocked:**
 
-- Net coloring / category visuals (task #13). Nets are parsed and
-  category-tagged but components aren't tinted by net membership yet.
 - Copper traces, vias, GND pour polygons on both boards. Parsed only
   to the extent of counting `<contactref>` into `Net.connectedPads`;
-  rendered geometry is deferred to task #13.
+  rendered geometry is deferred to task #13f.
 
 See `Roadmap` below and the authoritative plan at
 `~/.claude/plans/melodic-tinkering-newt.md`.
@@ -269,6 +275,7 @@ open-book-builder/
     │   ├── component_functions.json  # 17 MPNs with function, datasheet, cost, heroMeshId
     │   ├── discrepancies.json        # 12 entries covering the 4 severity levels
     │   ├── assembly.json             # 12 ordered build steps
+    │   ├── bom-comparison.json       # 23-entry 4-source qty/cost comparison (hand-authored)
     │   ├── bom-c1-main.csv           # copied from the-open-book/OSO-BOOK-C1/1-click-bom.csv
     │   ├── bom-c2-driver.csv         # copied from the-open-book/OSO-BOOK-C2-02 (PCBWay)
     │   ├── OSO-BOOK-C1.kicad_pcb     # copied from the-open-book/OSO-BOOK-C1 (1.3 MB, KiCad 6)
@@ -281,6 +288,8 @@ open-book-builder/
         ├── kicad_pcb.rs              # lexpr walker → components, mounting holes, Edge.Cuts
         ├── eagle.rs                  # quick-xml Reader walker → C2 components, holes, outline, nets + synthesized Display
         ├── footprint_heights.rs      # Part-class → 3D extrusion height lookup (KiCad + EAGLE keyspaces)
+        ├── net_category.rs           # Net-name heuristic classifier + dominant-category picker
+        ├── bom_comparison.rs         # Loads bom-comparison.json (4-source qty/cost comparison)
         └── bom.rs                    # Two CSV parsers → Vec<BomLine>, cost summarizer
 ```
 
@@ -292,9 +301,10 @@ The canonical shape is `BoardDataset` (see `src/lib/types.ts` and
 - `boards: Record<BoardId, BoardData>` — per-board geometry (components,
   outline, nets). `c1-main` comes from the KiCad PCB; `c2-driver` comes
   from the EAGLE `.brd` plus a synthesized `Display` component that
-  carries the GDEW042T2 hero mesh. C1 nets stay empty until task #13
-  parses `.kicad_sch`; C2 nets come from `<signals>` with class-based
-  category tagging (1=Power, 2=Ground, else=Other).
+  carries the GDEW042T2 hero mesh. C2 nets come from `<signals>` with
+  class-based category tagging (1=Power, 2=Ground, else=Other).
+  Per-component `dominantCategory` is computed from pad net-name
+  heuristics for both boards.
 - `bom: BomLine[]` — unified list tagged with `board: 'c1-main' | 'c2-driver'`,
   merged with per-MPN metadata (function, datasheet URL, unit cost).
 - `discrepancies: Discrepancy[]` — hand-authored, severity-classed.
@@ -302,8 +312,8 @@ The canonical shape is `BoardDataset` (see `src/lib/types.ts` and
 - `costSummary: { perUnitUsd, perTenUnitsUsd, missingLineItems }` —
   non-optional C1 lines only. C2 internals are excluded because the module
   is priced as a single PCBA unit (OSO-BOOK-C2-01).
-- `bomComparison: BomComparison[]` — reserved; the three-way BOM diff
-  UI hasn't landed yet.
+- `bomComparison: BomComparison[]` — 4-source comparison data (Canonical /
+  COGS-LIST / PDF / April 2025), surfaced as inline expand-rows in the BOM tab.
 
 ### Why BoardId uses BTreeMap / `kebab-case`
 
@@ -417,7 +427,8 @@ The 13-task build plan lives at
 - [x] **#13b** Cross-tab navigation — shared `NavigationContext` lifts `tab`/`board`/`selectedRef` out of local state; componentRef chips in Assembly + Discrepancy tabs become `<button>`s that resolve target board (components-first, BOM-fallback) and jump to the Board tab with the ref pre-selected
 - [x] **#13d** About tab — static orientation copy as the fifth tab, covering what the Open Book is, what this app is, how it relates to upstream's older ESP32-S3 `why-the-open-book` doc, and credits/license; live BOM/discrepancy/assembly-step counts pulled from the dataset context
 - [x] **#13e** BOM Comparison view — hand-authored `bom-comparison.json` (23 entries × 4 sources: Canonical / COGS-LIST / PDF / April 2025); inline expand-row in BomTable shows a 4-column qty/cost mini-table with amber "diff" badge on conflicting rows (2 flagged: MOSFET arithmetic error in COGS-LIST, different 10µF cap MPN at different price); C2 driver internals carry null comparison columns with "priced as PCBA" notes
-- [ ] **#13c, #13f** Remaining polish — net coloring, copper traces
+- [x] **#13c** Net category coloring — heuristic net-name classifier (`net_category.rs`) computes `Component.dominantCategory` at parse time for both boards; Board tab toolbar gains "Color: Side | Net" toggle swapping material colors to an 8-category palette (Power/Ground/SPI/I2C/GPIO/Debug/Analog/Other); EAGLE parser now populates pad `netName` via signal→contactref lookup
+- [ ] **#13f** Copper traces — remaining polish
 
 Steps 1–7 give a shipable tool (BOM + discrepancies + sourcing + web share)
 with no 3D. Steps 8–13 add the visualization half — task #8 is the

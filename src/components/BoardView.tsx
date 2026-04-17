@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useDataset } from '../lib/dataset-context';
 import { useNavigation } from '../lib/navigation-context';
 import { BoardViewport } from './BoardViewport';
+import type { ColorMode } from '../lib/scene-renderer';
 import type { BoardId, BomLine, Component } from '../lib/types';
 
 const BOARDS: { id: BoardId; label: string }[] = [
@@ -20,6 +21,7 @@ export function BoardView() {
   const dataset = useDataset();
   const { board, setBoard, selectedRef, selectComponent } = useNavigation();
   const [sideFilter, setSideFilter] = useState<SideFilter>('both');
+  const [colorMode, setColorMode] = useState<ColorMode>('side');
 
   const boardData = dataset.boards[board];
 
@@ -46,6 +48,8 @@ export function BoardView() {
           setBoard={handleBoardChange}
           sideFilter={sideFilter}
           setSideFilter={setSideFilter}
+          colorMode={colorMode}
+          setColorMode={setColorMode}
           componentCount={boardData.components.length}
           holeCount={boardData.outline.holes.length}
         />
@@ -55,6 +59,7 @@ export function BoardView() {
             sideFilter={sideFilter}
             selectedRef={selectedRef}
             onSelect={selectComponent}
+            colorMode={colorMode}
           />
         ) : (
           <EmptyBoard board={board} />
@@ -78,13 +83,20 @@ export function BoardView() {
   );
 }
 
+const COLOR_MODES: { id: ColorMode; label: string }[] = [
+  { id: 'side', label: 'Side' },
+  { id: 'netCategory', label: 'Net' },
+];
+
 function Toolbar({
-  board, setBoard, sideFilter, setSideFilter, componentCount, holeCount,
+  board, setBoard, sideFilter, setSideFilter, colorMode, setColorMode, componentCount, holeCount,
 }: {
   board: BoardId;
   setBoard: (b: BoardId) => void;
   sideFilter: SideFilter;
   setSideFilter: (s: SideFilter) => void;
+  colorMode: ColorMode;
+  setColorMode: (m: ColorMode) => void;
   componentCount: number;
   holeCount: number;
 }) {
@@ -113,6 +125,19 @@ function Toolbar({
             style={pillStyle(s.id === sideFilter)}
           >
             {s.label}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+        <span style={{ fontSize: '10px', color: '#64748b', marginRight: '2px' }}>Color:</span>
+        {COLOR_MODES.map((m) => (
+          <button
+            key={m.id}
+            onClick={() => setColorMode(m.id)}
+            style={pillStyle(m.id === colorMode)}
+          >
+            {m.label}
           </button>
         ))}
       </div>
@@ -175,6 +200,9 @@ function DetailPanel({ component, bom }: { component: Component; bom: BomLine[] 
         }
       />
       <Field label="Pads" value={String(component.pads.length)} />
+      {component.dominantCategory && (
+        <Field label="Net category" value={component.dominantCategory} />
+      )}
 
       {line && (
         <>

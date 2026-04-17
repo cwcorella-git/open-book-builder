@@ -8,7 +8,7 @@
 // its ref-based mount + React 19 StrictMode safety.
 
 import { useEffect, useRef } from 'react';
-import { initScene, type SceneState, type SideFilter } from '../lib/scene-renderer';
+import { initScene, type ColorMode, type SceneState, type SideFilter } from '../lib/scene-renderer';
 import type { BoardData } from '../lib/types';
 
 interface BoardViewportProps {
@@ -24,6 +24,7 @@ interface BoardViewportProps {
    * unchanged.
    */
   highlightedRefs?: ReadonlyArray<string> | null;
+  colorMode?: ColorMode;
 }
 
 export function BoardViewport({
@@ -32,6 +33,7 @@ export function BoardViewport({
   selectedRef,
   onSelect,
   highlightedRefs,
+  colorMode,
 }: BoardViewportProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<SceneState | null>(null);
@@ -83,6 +85,10 @@ export function BoardViewport({
   useEffect(() => {
     sceneRef.current?.setHighlightedRefs(highlightedRefs ?? null);
   }, [highlightedRefs]);
+
+  useEffect(() => {
+    sceneRef.current?.setColorMode(colorMode ?? 'side');
+  }, [colorMode]);
 
   return (
     <div

@@ -120,6 +120,8 @@ pub struct Component {
     pub pads: Vec<Pad>,
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub hero_mesh_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub dominant_category: Option<NetCategory>,
     pub board: BoardId,
 }
 

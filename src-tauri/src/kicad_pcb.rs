@@ -275,6 +275,7 @@ fn classify_footprint<'a>(
         side,
         footprint: fp_name.to_string(),
         footprint_bbox,
+        dominant_category: crate::net_category::pick_dominant(&pads),
         pads,
         hero_mesh_id: bom_line.hero_mesh_id.clone(),
         board: BoardId::C1Main,

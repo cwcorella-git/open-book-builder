@@ -306,6 +306,18 @@ pub fn load_c2_board(bom: &[BomLine]) -> Result<BoardData, EagleError> {
         })
         .collect();
 
+    // Build (element_name, pad_name) → net_name lookup from parsed signals
+    // so that per-component pads carry their net names for category classification.
+    let mut pad_net_map: HashMap<(String, String), String> = HashMap::new();
+    for net in &nets {
+        for cref in &net.connected_pads {
+            pad_net_map.insert(
+                (cref.ref_.clone(), cref.pad.clone()),
+                net.name.clone(),
+            );
+        }
+    }
+
     // Cross-reference elements against the C2 BOM. Any element whose ref
     // doesn't appear in *any* BOM line (either board) gets dropped — that's
     // how U$2 / U$3 (castellated BIGOVAL blocks) and JP1 (unpopulated test
@@ -335,7 +347,7 @@ pub fn load_c2_board(bom: &[BomLine]) -> Result<BoardData, EagleError> {
         // Pad records. Nets wire into these via `contactref` lookups, so
         // pad numbers need to match `<contactref pad="..."/>`.
         let pads = if let Some(pkg) = pkg_opt {
-            build_pads(pkg)
+            build_pads(pkg, &el.name, &pad_net_map)
         } else {
             Vec::new()
         };
@@ -366,6 +378,7 @@ pub fn load_c2_board(bom: &[BomLine]) -> Result<BoardData, EagleError> {
             side,
             footprint: format!("{}:{}", el.library, el.package),
             footprint_bbox: bbox,
+            dominant_category: crate::net_category::pick_dominant(&pads),
             pads,
             hero_mesh_id: bom_line.hero_mesh_id.clone(),
             board: BoardId::C2Driver,
@@ -556,7 +569,11 @@ fn package_bbox(pkg: &PackageDef, package_name: &str) -> FootprintBbox {
     }
 }
 
-fn build_pads(pkg: &PackageDef) -> Vec<Pad> {
+fn build_pads(
+    pkg: &PackageDef,
+    element_name: &str,
+    pad_net_map: &HashMap<(String, String), String>,
+) -> Vec<Pad> {
     let mut pads = Vec::with_capacity(pkg.smds.len() + pkg.pads.len());
     for s in &pkg.smds {
         pads.push(Pad {
@@ -565,7 +582,9 @@ fn build_pads(pkg: &PackageDef) -> Vec<Pad> {
             y: s.y,
             shape: "rect".into(),
             size: (s.dx.abs(), s.dy.abs()),
-            net_name: None,
+            net_name: pad_net_map
+                .get(&(element_name.to_string(), s.name.clone()))
+                .cloned(),
             through_hole: false,
         });
     }
@@ -576,7 +595,9 @@ fn build_pads(pkg: &PackageDef) -> Vec<Pad> {
             y: p.y,
             shape: "circle".into(),
             size: (p.diameter, p.diameter),
-            net_name: None,
+            net_name: pad_net_map
+                .get(&(element_name.to_string(), p.name.clone()))
+                .cloned(),
             through_hole: true,
         });
     }
@@ -623,6 +644,7 @@ fn synthesize_display_component(bom: &[BomLine]) -> Option<Component> {
         },
         pads: Vec::new(),
         hero_mesh_id: display_bom.hero_mesh_id.clone(),
+        dominant_category: None, // virtual component, no pads
         board: BoardId::C2Driver,
     })
 }

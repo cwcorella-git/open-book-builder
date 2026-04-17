@@ -11,6 +11,7 @@ mod dataset;
 mod eagle;
 mod footprint_heights;
 mod kicad_pcb;
+mod net_category;
 mod types;
 
 use types::BoardDataset;

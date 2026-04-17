@@ -31,11 +31,13 @@ import type {
   Component,
   EdgeSegment,
   Hole,
+  NetCategory,
   Side,
   SilkscreenLayer,
 } from './types';
 
 export type SideFilter = 'both' | 'top' | 'bottom';
+export type ColorMode = 'side' | 'netCategory';
 
 export interface SceneState {
   dispose(): void;
@@ -50,8 +52,21 @@ export interface SceneState {
    * drives one (Board tab → click selection; Assembly tab → step refs).
    */
   setHighlightedRefs(refs: ReadonlyArray<string> | null): void;
+  setColorMode(mode: ColorMode): void;
   onSelect: ((ref: string | null) => void) | null;
 }
+
+// Net-category → hex color palette for the netCategory color mode.
+const CATEGORY_COLORS: Record<NetCategory, number> = {
+  power:   0xef4444, // red
+  ground:  0x64748b, // slate
+  spi:     0xf59e0b, // amber
+  i2c:     0x22d3ee, // cyan
+  gpio:    0xa3e635, // lime
+  debug:   0xc084fc, // violet
+  analog:  0xfb923c, // orange
+  other:   0x475569, // dim slate
+};
 
 const BOARD_THICKNESS_MM = 1.0;
 const BOARD_COLOR = 0x1e293b;
@@ -199,8 +214,12 @@ export function initScene(
   interface ComponentEntry {
     ref: string;
     side: Side;
+    dominantCategory: NetCategory | undefined;
     root: THREE.Object3D;
     primaryMaterial: THREE.MeshStandardMaterial;
+    // The side-based color (orange top / cyan bottom) assigned at construction
+    // time. Stored so `setColorMode('side')` can revert to it.
+    sideColor: number;
     // Every MeshStandardMaterial on this component's mesh tree. For boxes
     // that's just [primaryMaterial]; for hero meshes it's body + castellations
     // + USB + any other extruded parts. MeshBasicMaterial labels are excluded
@@ -221,8 +240,10 @@ export function initScene(
     componentEntries.push({
       ref: c.ref,
       side: c.side,
+      dominantCategory: c.dominantCategory ?? undefined,
       root: entry.root,
       primaryMaterial: entry.primaryMaterial,
+      sideColor: c.side === 'top' ? TOP_COLOR : BOTTOM_COLOR,
       allMaterials: standardMats,
     });
     for (const g of entry.geometries) ownedGeometries.add(g);
@@ -324,6 +345,16 @@ export function initScene(
     }
   };
 
+  const applyColorMode = (mode: ColorMode) => {
+    for (const entry of componentEntries) {
+      const color =
+        mode === 'netCategory'
+          ? CATEGORY_COLORS[entry.dominantCategory ?? 'other']
+          : entry.sideColor;
+      entry.primaryMaterial.color.setHex(color);
+    }
+  };
+
   applySideFilter(initialSideFilter);
   applySelection(initialSelectedRef);
   applyHighlightedRefs(initialHighlightedRefs);
@@ -398,6 +429,7 @@ export function initScene(
     setSideFilter: applySideFilter,
     setSelectedRef: applySelection,
     setHighlightedRefs: applyHighlightedRefs,
+    setColorMode: applyColorMode,
     dispose: () => {
       cancelAnimationFrame(animFrameId);
       resizeObserver.disconnect();

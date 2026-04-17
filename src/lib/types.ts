@@ -58,6 +58,7 @@ export interface Component {
   footprintBbox: FootprintBbox;
   pads: Pad[];
   heroMeshId?: string;
+  dominantCategory?: NetCategory;
   board: BoardId;
 }
 
