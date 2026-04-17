@@ -4,7 +4,7 @@
     "order": 10,
     "phase": "modules",
     "title": "Order the C1 main board (bare PCB) and the C2 e-paper driver (pre-assembled board)",
-    "description": "Before you solder anything, get both boards fabricated. The C1 main board ships as a bare PCB; the C2 castellated (half-circle edge pads) e-paper driver arrives pre-assembled. Confirm PCBWay order settings are correct (see Discrepancies tab �� thickness 1.0 mm, lead-free HASL (the metallic coating on exposed copper pads)).",
+    "description": "Before you solder anything, get both boards fabricated. The C1 main board ships as a bare PCB; the C2 castellated (half-circle edge pads) e-paper driver arrives pre-assembled. See the ordering guide on the About tab for exact gerber files and PCB specs (1.0 mm thickness, lead-free HASL).",
     "componentRefs": [],
     "board": "c1-main",
     "estimatedMinutes": 20,
@@ -33,7 +33,7 @@
     "board": "c1-main",
     "estimatedMinutes": 10,
     "tools": ["soldering iron", "flux", "solder wick", "tweezers"],
-    "notes": "Watch Q1/Q2 orientation — the DMG3415U-7 is P-channel (the COGS-LIST 'M channel' label is a typo)."
+    "notes": "Watch Q1/Q2 orientation — the DMG3415U-7 is P-channel."
   },
   {
     "id": "smd-mechanical-c1",
@@ -57,7 +57,7 @@
     "board": "c1-main",
     "estimatedMinutes": 10,
     "tools": ["soldering iron", "larger tip", "flux"],
-    "notes": "If you have an April 2025 BOM, it omits the 1022C retainer — make sure you've ordered it (Digi-Key 36-1022C-ND)."
+    "notes": "The 1022C retainer clip is easy to miss — make sure you've ordered it (Digi-Key 36-1022C-ND)."
   },
   {
     "id": "install-c2-module",
@@ -153,6 +153,6 @@
     "board": "c1-main",
     "estimatedMinutes": 30,
     "tools": ["3D printer", "screwdriver"],
-    "notes": "Watch your PCB thickness — the case expects a 1.0 mm board, not 1.6 mm. See the build-critical discrepancy if you ordered 1.6 mm."
+    "notes": "Watch your PCB thickness — the case expects a 1.0 mm board, not 1.6 mm."
   }
 ]

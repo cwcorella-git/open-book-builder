@@ -10,23 +10,10 @@ BOM, discrepancy list, and 3D visualization can be shared.
 
 ## Why this exists
 
-Three primary source BOMs disagree in non-obvious ways, and the current
-PCBWay order draft has two build-critical errors that would produce
-unusable boards:
-
-- **PCBWay thickness is set to 1.6 mm**, but the 3D-printed case
-  expects **1.0 mm**. Boards ordered at 1.6 mm won't fit.
-- **PCBWay surface finish is "HASL with lead"**, but the README specifies
-  **lead-free HASL** (RoHS-compliant).
-
-On top of that, the `why-the-open-book` vision doc describes the archived
-ESP32-S3 design, not the shipping Pico build. `COGS-LIST` mixes annotations
-from both boards (SRAM pull-ups, headphone biasing resistors — none of which
-exist on the current C1). The April 2025 BOM omits the Keystone 1022C battery
-retainer clip. COGS-LIST has a MOSFET line-total arithmetic error.
-
-Before sending money to PCBWay or Digi-Key, the author wants **one place**
-that shows:
+The upstream project's documentation is scattered across several BOMs,
+a README with outdated file references, and a vision doc describing a
+different board. Before sending money to PCBWay or Digi-Key, this tool
+provides **one place** that shows:
 
 1. What every component does and what it costs.
 2. A reconciled, unified BOM across the three source BOMs.
@@ -274,7 +261,7 @@ open-book-builder/
     ├── capabilities/default.json     # dialog:allow-save, fs:allow-write-text-file
     ├── data/
     │   ├── component_functions.json  # 17 MPNs with function, datasheet, cost, heroMeshId
-    │   ├── discrepancies.json        # 15 entries covering the 4 severity levels
+    │   ├── discrepancies.json        # 5 entries covering the 4 severity levels
     │   ├── assembly.json             # 13 ordered build steps
     │   ├── bom-comparison.json       # 23-entry 4-source qty/cost comparison (hand-authored)
     │   ├── bom-c1-main.csv           # copied from the-open-book/OSO-BOOK-C1/1-click-bom.csv
@@ -373,7 +360,7 @@ in `package.json` to match the fork's repo name.
 - `costSummary.perUnitUsd ≈ 43.27` (matches April 2025 BOM)
 - `costSummary.perTenUnitsUsd ≈ 432.70`
 - `costSummary.missingLineItems == ["c1-main:OSO-BOOK-C2-01"]`
-- 15 discrepancies, 13 assembly steps
+- 5 discrepancies, 13 assembly steps
 - `boards["c1-main"]`: 27 components, 4 mounting holes, 40 Edge.Cuts
   segments, outline 85 × 115 mm; every component has a non-empty `bomRef`
   (JP1 / JP2 solder-jumpers are present in KiCad but not in the BOM,
@@ -386,34 +373,27 @@ in `package.json` to match the fork's repo name.
 
 ## Canonical discrepancies
 
-Authored in `src-tauri/data/discrepancies.json`. These are the things the
-BOM / README / vision-doc archaeology surfaced — baked into the dataset so
-the Discrepancies view (task #5) can render them as severity-colored cards.
+Authored in `src-tauri/data/discrepancies.json` (5 entries). Most of the
+original 15 discrepancies were outmoded: ordering-related issues are now
+resolved by the About tab's ordering guide (correct gerber files, PCB
+specs); source-document-only issues (COGS-LIST typos, arithmetic errors,
+annotations from the older B1 board) were removed since builders using
+this app never encounter those documents.
 
-**Build-critical (4):**
+**Build-critical (1):**
 
-- `pcbway-thickness` — 1.6 mm → 1.0 mm
-- `pcbway-hasl-leaded` — HASL with lead → Lead-Free HASL (or ENIG)
 - `display-part-number-relabel` — GDEW042T2 (EOL, IL0398 controller) vs
   GDEY042T81 (current, SSD1683 controller) — different firmware drivers
   required, not a simple relabel
-- `c2-01-replaced-by-c2-03` — JLCPCB driver module files updated to C2-03
-  in the upstream repo, but the README still says C2-01
 
-**Cost-impact (3):**
+**Cost-impact (1):** `c2-module-cost-missing` — no upstream BOM includes
+the C2 PCBA assembly cost ($30–80/unit).
 
-- `c2-module-cost-missing` — no BOM includes C2 PCBA cost
-- `cogs-list-mosfet-arithmetic` — $0.32 where $6.40 belongs
-- `april2025-bom-missing-retainer` — missing Keystone 1022C retainer
+**Naming (1):** Button actuation force mismatch (BOM: 180WQ / 1.8 N;
+README links: 130WQ / 1.3 N) — either works, builder preference.
 
-**Naming (4):** MOSFET "M channel" typo, Pico SC0915 vs SC0918 SKU, C2
-boost-cap count mismatch, button actuation force mismatch (BOM: 180WQ /
-1.8 N; README links: 130WQ / 1.3 N).
-
-**Informational (4):** `why-the-open-book` describes ESP32-S3 design;
-COGS-LIST references SRAM and audio hardware from the older B1 board;
-C1 gerber revision drift (C1-05 exists alongside C1-04, kitspace.yaml
-points to C1-05).
+**Informational (2):** Upstream README references outdated file versions
+(C1-04, C2-01); upstream vision doc describes ESP32-S3 design, not Pico.
 
 ## Roadmap
 

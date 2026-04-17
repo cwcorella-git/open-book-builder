@@ -1,6 +1,6 @@
-// About tab — static orientation copy for new readers landing on the web
-// build. Six sections: what the Open Book is, what this app is, how this
-// build relates to upstream, project status, credits, and developer info.
+// About tab — orientation copy and ordering guide for builders.
+// Six sections: what the Open Book is, ordering the boards, what this app
+// does, project status, credits, and developer info.
 
 import { useDataset } from '../lib/dataset-context';
 
@@ -35,54 +35,109 @@ export function AboutView() {
           <Ext href="https://www.oddlyspecificobjects.com/projects/openbook/">The Open Book</Ext>{' '}
           is an open-source hardware e-reader designed by{' '}
           <Ext href="https://joeycastillo.com">Joey Castillo</Ext>, licensed CC-BY-SA 4.0.
-          It pairs a Raspberry Pi Pico with a 4.2-inch B&W e-paper panel (originally the GoodDisplay
-          GDEW042T2, now EOL and succeeded by the GDEY042T81), runs on two AAA batteries, and reads
-          books from a microSD card.
+          It pairs a Raspberry Pi Pico with a 4.2-inch B&W e-paper display, runs on two AAA
+          batteries, and reads books from a microSD card.
         </p>
         <p style={paragraph}>
-          The hardware is split across two PCBs. The main board (<code style={code}>OSO-BOOK-C1</code>){' '}
-          carries the Pico, battery holder, buttons, microSD slot, and the connector for the
-          display. A small daughter board (<code style={code}>OSO-BOOK-C2-02</code>) solders onto the
-          main board via half-circle edge pads called "castellations." It generates the high voltages the
-          e-paper display needs and converts signal levels between the Pico and the screen. Isolating
-          that circuitry on a separately-orderable module keeps the main board simple and hand-solderable.
-        </p>
-      </Section>
-
-      <Section title="What this app is">
-        <p style={paragraph}>
-          Open Book Builder is a personal tool for sanity-checking a build of the Open Book before
-          ordering PCBs and parts. Three parts lists circulating in the project's GitHub repository
-          disagreed on quantities and costs; a PCBWay order had two build-critical errors; a community
-          cost-of-goods list mixed annotations from an older board into the current design. This tool
-          unifies those sources into one place.
-        </p>
-        <p style={paragraph}>
-          It currently knows about <Stat n={bom.length} unit="parts" />,{' '}
-          <Stat n={discrepancies.length} unit="discrepancies" />, and{' '}
-          <Stat n={assembly.length} unit="assembly steps" />, and renders both boards in 3D from
-          the original circuit board design files (KiCad for the main board, EAGLE for the driver
-          module). The{' '}
-          <em>Discrepancies</em> tab surfaces unresolved build-critical issues as a red banner
-          until you've reviewed them; the <em>Parts List</em> tab emits a Digi-Key BOM Manager CSV
-          you can upload directly.
+          The hardware is split across two PCBs. The <strong style={strong}>main board</strong>{' '}
+          (<code style={code}>OSO-BOOK-C1</code>) carries the Pico, battery holder, buttons,
+          microSD slot, and the connector for the display. A small{' '}
+          <strong style={strong}>daughter board</strong> (<code style={code}>OSO-BOOK-C2</code>)
+          solders onto the main board via half-circle edge pads called "castellations." It generates
+          the high voltages the e-paper display needs and converts signal levels between the Pico and
+          the screen. You order the daughter board pre-assembled from a fab house and solder it on
+          in one step.
         </p>
       </Section>
 
-      <Section title="Relationship to the original project">
+      <Section title="Ordering the boards">
         <p style={paragraph}>
-          This app targets the current two-board Pico design in the project's GitHub (
-          <code style={code}>OSO-BOOK-C1</code> + <code style={code}>OSO-BOOK-C2-02</code> for
-          PCBWay, or the newer <code style={code}>OSO-BOOK-C2-03</code> for JLCPCB). If
-          you've read the <code style={code}>why-the-open-book</code> document in the project
-          tree, note that it describes an earlier ESP32-S3 prototype ("B1") — it's the project's
-          origin story, not a spec for what gets built today. The discrepancies surfaced in this
-          tool are partly about reconciling that drift: the doc mentions SRAM and audio hardware
-          that simply aren't on the current boards.
+          You need two boards and one display panel. Upload the gerber files from the{' '}
+          <Ext href="https://github.com/joeycastillo/The-Open-Book/tree/main/Fabrication%20Files">
+            upstream Fabrication Files directory
+          </Ext>{' '}
+          to your PCB fab. <em>Note: the upstream README references older file versions — the specs
+          below are current.</em>
+        </p>
+
+        <h3 style={subheading}>C1 main board (bare PCB — you solder the parts)</h3>
+        <table style={specTable}>
+          <tbody>
+            <tr><td style={specLabel}>Gerber file</td><td style={specValue}><code style={code}>OSO-BOOK-C1-05-rounded.zip</code></td></tr>
+            <tr><td style={specLabel}>Layers</td><td style={specValue}>2</td></tr>
+            <tr>
+              <td style={specLabel}>Thickness</td>
+              <td style={specValue}>
+                <strong style={strong}>1.0 mm</strong>
+                <span style={{ color: '#94a3b8' }}>{' '}(not the 1.6 mm default — the case won't fit)</span>
+              </td>
+            </tr>
+            <tr>
+              <td style={specLabel}>Surface finish</td>
+              <td style={specValue}>
+                <strong style={strong}>Lead-free HASL</strong>
+                <span style={{ color: '#94a3b8' }}>{' '}(or ENIG if you want gold pads)</span>
+              </td>
+            </tr>
+            <tr><td style={specLabel}>Solder mask</td><td style={specValue}>Green (or any color — cosmetic only)</td></tr>
+            <tr><td style={specLabel}>Copper weight</td><td style={specValue}>1 oz (standard)</td></tr>
+          </tbody>
+        </table>
+
+        <h3 style={subheading}>C2 e-paper driver (pre-assembled — the fab house populates it)</h3>
+        <p style={paragraph}>
+          Upload the <strong style={strong}>gerber + BOM + pick-and-place</strong> files to your
+          fab house's assembly (PCBA) service. Same board specs as C1 (1.0 mm, lead-free HASL).
+        </p>
+        <table style={specTable}>
+          <tbody>
+            <tr>
+              <td style={specLabel}>JLCPCB</td>
+              <td style={specValue}>
+                <code style={code}>OSO-BOOK-C2-03</code> files
+                <span style={{ color: '#94a3b8' }}>{' '}(the README says C2-01, but that's been replaced)</span>
+              </td>
+            </tr>
+            <tr>
+              <td style={specLabel}>PCBWay</td>
+              <td style={specValue}><code style={code}>OSO-BOOK-C2-02</code> files</td>
+            </tr>
+          </tbody>
+        </table>
+        <p style={paragraph}>
+          Budget <strong style={strong}>$30–80 per unit</strong> for the C2 assembly — this cost is
+          not included in any upstream BOM total.
+        </p>
+
+        <h3 style={subheading}>Display</h3>
+        <p style={paragraph}>
+          The original display (GoodDisplay GDEW042T2) is now <strong style={strong}>end-of-life</strong>.
+          Its replacement, the GDEY042T81, is physically identical but uses a different controller
+          chip. If you receive the newer panel, you'll need to build the{' '}
+          <Ext href="https://github.com/joeycastillo/libros">libros firmware</Ext> from source
+          instead of using the pre-built UF2 — see the{' '}
+          <em>Discrepancies</em> tab for details.
+        </p>
+      </Section>
+
+      <Section title="What this app does">
+        <p style={paragraph}>
+          Open Book Builder is a pre-flight check for the Open Book build. It combines a unified
+          parts list, ordering specs, assembly steps, and interactive 3D views of both boards —
+          everything you need to verify your build before spending money.
         </p>
         <p style={paragraph}>
-          The original design files (circuit board layouts and parts lists) are read-only inputs;
-          nothing in this tool writes back to the original project.
+          It currently tracks <Stat n={bom.length} unit="parts" />,{' '}
+          <Stat n={discrepancies.length} unit="known discrepancies" /> between upstream sources,
+          and <Stat n={assembly.length} unit="assembly steps" />, and renders both boards in 3D
+          from the original design files (KiCad for the main board, EAGLE for the driver module).
+          The <em>Parts List</em> tab exports a Digi-Key BOM Manager CSV you can upload directly.
+        </p>
+        <p style={paragraph}>
+          This app targets the two-board Pico design in the{' '}
+          <Ext href="https://github.com/joeycastillo/The-Open-Book">upstream GitHub repo</Ext>.
+          The design files are read-only inputs — nothing in this tool writes back to the
+          original project.
         </p>
       </Section>
 
@@ -91,8 +146,8 @@ export function AboutView() {
           The Pico-based "Abridged Edition" covered here is the current DIY build. The{' '}
           <Ext href="https://github.com/joeycastillo/libros">libros firmware</Ext> has not
           had a commit since February 2024, and the pre-built <code style={code}>book.uf2</code>{' '}
-          on the project site only supports the GDEW042T2 display (IL0398 controller). Since that
-          panel is now EOL at GoodDisplay, builders receiving the replacement GDEY042T81 (SSD1683
+          on the project site only supports the original GDEW042T2 display (IL0398 controller).
+          Since that panel is now EOL, builders receiving the replacement GDEY042T81 (SSD1683
           controller) will need to build from source or apply{' '}
           <Ext href="https://github.com/joeycastillo/libros/pull/11">PR #11</Ext> for
           auto-detection.
@@ -102,7 +157,8 @@ export function AboutView() {
           <Ext href="https://www.crowdsupply.com/oddly-specific-objects/open-book-touch">Open Book Touch</Ext>{' '}
           — an ESP32-S3-based next-generation e-reader with a 4.26-inch capacitive touch display,
           front light, WiFi/Bluetooth, and USB-C charging. It is heading to Crowd Supply and
-          represents the project's long-term direction.
+          represents the project's long-term direction. The Pico-based build remains the accessible
+          DIY option.
         </p>
         <p style={paragraph}>
           Community resources:{' '}
@@ -141,6 +197,8 @@ export function AboutView() {
 
 const paragraph: React.CSSProperties = { margin: 0 };
 
+const strong: React.CSSProperties = { color: '#f1f5f9' };
+
 const code: React.CSSProperties = {
   fontFamily: 'monospace',
   fontSize: '12px',
@@ -148,6 +206,33 @@ const code: React.CSSProperties = {
   background: '#0f172a',
   padding: '1px 5px',
   borderRadius: '3px',
+};
+
+const subheading: React.CSSProperties = {
+  margin: 0,
+  fontSize: '12px',
+  color: '#e2e8f0',
+  fontWeight: 600,
+};
+
+const specTable: React.CSSProperties = {
+  width: '100%',
+  borderCollapse: 'collapse',
+  fontSize: '12px',
+};
+
+const specLabel: React.CSSProperties = {
+  padding: '5px 10px 5px 0',
+  color: '#94a3b8',
+  whiteSpace: 'nowrap',
+  verticalAlign: 'top',
+  borderBottom: '1px solid #1e293b',
+};
+
+const specValue: React.CSSProperties = {
+  padding: '5px 0',
+  color: '#e2e8f0',
+  borderBottom: '1px solid #1e293b',
 };
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
