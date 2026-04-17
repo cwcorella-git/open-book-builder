@@ -94,7 +94,9 @@ export function DiscrepancyView() {
             padding: '40px', textAlign: 'center', color: '#64748b', fontSize: '13px',
             border: '1px dashed #334155', borderRadius: '8px',
           }}>
-            No discrepancies match the current filter.
+            {discrepancies.length === 0
+              ? 'All upstream discrepancies have been resolved. The ordering guide, assembly instructions, and parts list give you everything you need.'
+              : 'No discrepancies match the current filter.'}
           </div>
         )}
       </div>

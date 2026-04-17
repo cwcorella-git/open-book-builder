@@ -261,7 +261,7 @@ open-book-builder/
     ├── capabilities/default.json     # dialog:allow-save, fs:allow-write-text-file
     ├── data/
     │   ├── component_functions.json  # 17 MPNs with function, datasheet, cost, heroMeshId
-    │   ├── discrepancies.json        # 5 entries covering the 4 severity levels
+    │   ├── discrepancies.json        # Empty — all discrepancies resolved into app content
     │   ├── assembly.json             # 13 ordered build steps
     │   ├── bom-comparison.json       # 23-entry 4-source qty/cost comparison (hand-authored)
     │   ├── bom-c1-main.csv           # copied from the-open-book/OSO-BOOK-C1/1-click-bom.csv
@@ -360,7 +360,7 @@ in `package.json` to match the fork's repo name.
 - `costSummary.perUnitUsd ≈ 43.27` (matches April 2025 BOM)
 - `costSummary.perTenUnitsUsd ≈ 432.70`
 - `costSummary.missingLineItems == ["c1-main:OSO-BOOK-C2-01"]`
-- 5 discrepancies, 13 assembly steps
+- 0 discrepancies (all resolved), 13 assembly steps
 - `boards["c1-main"]`: 27 components, 4 mounting holes, 40 Edge.Cuts
   segments, outline 85 × 115 mm; every component has a non-empty `bomRef`
   (JP1 / JP2 solder-jumpers are present in KiCad but not in the BOM,
@@ -373,25 +373,20 @@ in `package.json` to match the fork's repo name.
 
 ## Canonical discrepancies
 
-Authored in `src-tauri/data/discrepancies.json` (5 entries, zero
-build-critical). Most of the original 15 discrepancies were outmoded:
-ordering-related issues are resolved by the About tab's ordering guide;
-source-document-only issues were removed; the display EOL situation is
-now handled by the assembly instructions (firmware flash step builds from
-PR #11, which auto-detects the display).
+The original 15 discrepancies have all been resolved — their content has
+been disseminated into the ordering guide (About tab), assembly
+instructions, parts list footer, and component descriptions. The
+`discrepancies.json` array is now empty. The Discrepancies tab shows an
+"all clear" message.
 
-**Build-critical: 0** — all resolved by the ordering guide and assembly
-instructions.
-
-**Cost-impact (1):** `c2-module-cost-missing` — no upstream BOM includes
-the C2 PCBA assembly cost ($30–80/unit).
-
-**Naming (1):** Button actuation force mismatch (BOM: 180WQ / 1.8 N;
-README links: 130WQ / 1.3 N) — either works, builder preference.
-
-**Informational (3):** Display EOL handled by assembly guide (PR #11
-firmware); upstream README references outdated file versions (C1-04,
-C2-01); upstream vision doc describes ESP32-S3 design, not Pico.
+Where the information went:
+- **PCB ordering errors** (thickness, surface finish, file versions) →
+  About tab ordering guide
+- **Display EOL** → Assembly tab firmware flash step (builds from PR #11)
+- **C2 assembly cost gap** → Parts List footer + About tab ordering guide
+- **Button variant preference** → component function text + assembly notes
+- **Source-doc-only issues** (COGS-LIST typos, ESP32-S3 vision doc) →
+  removed; builders using this app never encounter those documents
 
 ## Roadmap
 

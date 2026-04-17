@@ -516,6 +516,9 @@ function Footer({
           <span style={{ fontFamily: 'monospace' }}>{missingLineItems.join(', ')}</span>
         </span>
       )}
+      <span style={{ color: '#f97316', fontStyle: 'italic' }}>
+        + $30–80 for C2 driver assembly (not included above — see About tab)
+      </span>
       <span style={{ marginLeft: 'auto', color: '#64748b', fontStyle: 'italic' }}>
         E-Paper Driver internals excluded — they arrive pre-assembled as a single unit from the fab house.
       </span>

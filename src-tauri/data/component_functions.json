@@ -62,7 +62,7 @@
     "unitCostUsd": 0.69
   },
   "TL1107AF180WQ": {
-    "function": "3 × 6 mm through-hole tactile button (E-Switch). The menu / directional / select cluster under the screen. 7 placements (B3–B9).",
+    "function": "3 × 6 mm through-hole tactile button (E-Switch). The menu / directional / select cluster under the screen. 7 placements (B3–B9). The BOM specifies the 180WQ (1.8 N, firmer click); the upstream README links to the 130WQ (1.3 N, lighter touch). Either fits the same footprint — order whichever feel you prefer.",
     "datasheetUrl": "https://www.e-switch.com/product-catalog/tact/product-lines/tl1107-series-through-hole-round-button-tact-switch",
     "unitCostUsd": 0.33
   },

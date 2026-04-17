@@ -58,8 +58,11 @@ function Shell() {
         <span style={{ marginLeft: 'auto', fontSize: '11px', color: '#64748b' }}>
           {status.kind === 'loading' && 'Loading dataset…'}
           {status.kind === 'error' && `Error: ${status.message}`}
-          {status.kind === 'ready' &&
-            `${status.dataset.bom.length} parts · ${status.dataset.discrepancies.length} discrepancies`}
+          {status.kind === 'ready' && (
+            status.dataset.discrepancies.length > 0
+              ? `${status.dataset.bom.length} parts · ${status.dataset.discrepancies.length} discrepancies`
+              : `${status.dataset.bom.length} parts`
+          )}
         </span>
       </header>
 
