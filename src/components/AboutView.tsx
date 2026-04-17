@@ -41,52 +41,47 @@ export function AboutView() {
         </p>
         <p style={paragraph}>
           The hardware is split across two PCBs. The main board (<code style={code}>OSO-BOOK-C1</code>){' '}
-          carries the Pico, battery holder, buttons, microSD slot, and the FFC connector for the
-          display. A castellated submodule (<code style={code}>OSO-BOOK-C2-02</code>) generates the
-          ±22 V / ±15 V rails the e-paper needs and level-shifts the SPI bus. Isolating that circuitry
-          on a separately-orderable module keeps the main board 2-layer and hand-solderable.
+          carries the Pico, battery holder, buttons, microSD slot, and the connector for the
+          display. A small daughter board (<code style={code}>OSO-BOOK-C2-02</code>) solders onto the
+          main board via half-circle edge pads called "castellations." It generates the high voltages the
+          e-paper display needs and converts signal levels between the Pico and the screen. Isolating
+          that circuitry on a separately-orderable module keeps the main board simple and hand-solderable.
         </p>
       </Section>
 
       <Section title="What this app is">
         <p style={paragraph}>
           Open Book Builder is a personal tool for sanity-checking a build of the Open Book before
-          ordering PCBs and parts. Three BOMs circulating in the upstream repo disagreed on
-          quantities and costs; a PCBWay order had two build-critical errors; a community COGS list
-          mixed annotations from an older board into the current design. This tool unifies those
-          sources into one place.
+          ordering PCBs and parts. Three parts lists circulating in the project's GitHub repository
+          disagreed on quantities and costs; a PCBWay order had two build-critical errors; a community
+          cost-of-goods list mixed annotations from an older board into the current design. This tool
+          unifies those sources into one place.
         </p>
         <p style={paragraph}>
-          It currently knows about <Stat n={bom.length} unit="BOM rows" />,{' '}
+          It currently knows about <Stat n={bom.length} unit="parts" />,{' '}
           <Stat n={discrepancies.length} unit="discrepancies" />, and{' '}
           <Stat n={assembly.length} unit="assembly steps" />, and renders both boards in 3D from
-          the upstream KiCad and EAGLE source files. The{' '}
+          the original circuit board design files (KiCad for the main board, EAGLE for the driver
+          module). The{' '}
           <em>Discrepancies</em> tab surfaces unresolved build-critical issues as a red banner
           until you've reviewed them; the <em>BOM</em> tab emits a Digi-Key BOM Manager CSV you can
           upload directly.
         </p>
-        <p style={paragraph}>
-          Tauri v2 + React 19 + Three.js. The same codebase ships as a desktop app (reads the
-          KiCad/EAGLE files live via a Rust <code style={code}>invoke</code> command) and as a
-          static web build (dataset baked to JSON at build time). The web build is hosted on{' '}
-          <Ext href="https://cwcorella-git.github.io/open-book-builder/">GitHub Pages</Ext>.
-        </p>
       </Section>
 
-      <Section title="Relationship to upstream">
+      <Section title="Relationship to the original project">
         <p style={paragraph}>
-          This app targets the current two-board Pico design in the upstream repo (
+          This app targets the current two-board Pico design in the project's GitHub (
           <code style={code}>OSO-BOOK-C1</code> + <code style={code}>OSO-BOOK-C2-02</code>). If
-          you've read the <code style={code}>why-the-open-book</code> document in the upstream
+          you've read the <code style={code}>why-the-open-book</code> document in the project
           tree, note that it describes an earlier ESP32-S3 prototype ("B1") — it's the project's
           origin story, not a spec for what gets built today. The discrepancies surfaced in this
           tool are partly about reconciling that drift: the doc mentions SRAM and audio hardware
           that simply aren't on the current boards.
         </p>
         <p style={paragraph}>
-          Source files (KiCad <code style={code}>.kicad_pcb</code> + <code style={code}>.kicad_sch</code>,
-          EAGLE <code style={code}>.brd</code> + <code style={code}>.sch</code>, BOM CSVs) are
-          read-only inputs; nothing in this tool writes back to the upstream repo.
+          The original design files (circuit board layouts and parts lists) are read-only inputs;
+          nothing in this tool writes back to the original project.
         </p>
       </Section>
 
@@ -100,6 +95,15 @@ export function AboutView() {
           This tool is MIT-licensed and was built by Christopher Corella with Claude Code as a
           scaffolding and pair-programming partner. Issues and patches welcome at{' '}
           <Ext href="https://github.com/cwcorella-git/open-book-builder">github.com/cwcorella-git/open-book-builder</Ext>.
+        </p>
+      </Section>
+
+      <Section title="For developers">
+        <p style={paragraph}>
+          Tauri v2 + React 19 + Three.js. The same codebase ships as a desktop app (reads the
+          design files live via a Rust <code style={code}>invoke</code> command) and as a
+          static web build (dataset baked to JSON at build time). The web build is hosted on{' '}
+          <Ext href="https://cwcorella-git.github.io/open-book-builder/">GitHub Pages</Ext>.
         </p>
       </Section>
     </div>
