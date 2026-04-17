@@ -179,6 +179,37 @@ pub struct SilkscreenCircle {
     pub radius: f32,
 }
 
+// Copper trace segments and vias. Parsed from KiCad `(segment)` / `(via)` and
+// EAGLE `<signal>/<wire>` / `<via>`. Rendered as `THREE.LineSegments` per layer
+// + `CylinderGeometry` per via behind a "Show traces" toggle (default off).
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "kebab-case")]
+pub enum CopperLayer {
+    FCu,
+    BCu,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CopperSegment {
+    pub start: (f32, f32),
+    pub end: (f32, f32),
+    pub width: f32,
+    pub layer: CopperLayer,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub net_name: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Via {
+    pub at: (f32, f32),
+    pub diameter: f32,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub net_name: Option<String>,
+}
+
 // Board-space silkscreen primitives keyed by face. Task #13a emits lines, arcs,
 // and circles from both parsers; text glyphs, polygonal fills, and fab-layer
 // data are deliberately out of scope. See plan "Task #13a detail".
@@ -209,6 +240,10 @@ pub struct BoardData {
     pub components: Vec<Component>,
     pub outline: BoardOutline,
     pub nets: Vec<Net>,
+    #[serde(default)]
+    pub traces: Vec<CopperSegment>,
+    #[serde(default)]
+    pub vias: Vec<Via>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -21,13 +21,14 @@
 //!   points. The KiCad origin is (0, 0) at the top-left, so this matches the
 //!   canvas convention — no flip needed.
 //!
-//! Nets, copper traces, and vias are explicitly out of scope for task #8;
-//! the `nets` field stays empty until task #13.
+//! Top-level `(segment ...)` and `(via ...)` nodes produce `CopperSegment`
+//! and `Via` records for copper-trace rendering. `nets` stays empty — the
+//! net-name classification is driven per-pad, not from a top-level net list.
 
 use crate::types::{
-    BoardData, BoardId, BoardOutline, BomLine, Component, EdgeSegment,
-    FootprintBbox, Hole, Pad, Side, SilkscreenArc, SilkscreenCircle,
-    SilkscreenLayer, SilkscreenLine,
+    BoardData, BoardId, BoardOutline, BomLine, Component, CopperLayer,
+    CopperSegment, EdgeSegment, FootprintBbox, Hole, Pad, Side, SilkscreenArc,
+    SilkscreenCircle, SilkscreenLayer, SilkscreenLine, Via,
 };
 use lexpr::Value;
 use std::collections::HashMap;
@@ -75,6 +76,8 @@ pub fn load_c1_board(c1_bom: &[BomLine]) -> Result<BoardData, KiCadError> {
     let mut edge_segments = Vec::<EdgeSegment>::new();
     let mut silkscreen_top = SilkscreenLayer::default();
     let mut silkscreen_bottom = SilkscreenLayer::default();
+    let mut traces = Vec::<CopperSegment>::new();
+    let mut vias = Vec::<Via>::new();
 
     for child in positional(&root) {
         match head_symbol(child) {
@@ -107,6 +110,16 @@ pub fn load_c1_board(c1_bom: &[BomLine]) -> Result<BoardData, KiCadError> {
                     push_silk_circle(layer, circle, &mut silkscreen_top, &mut silkscreen_bottom);
                 }
             }
+            Some("segment") => {
+                if let Some(seg) = parse_copper_segment(child) {
+                    traces.push(seg);
+                }
+            }
+            Some("via") => {
+                if let Some(v) = parse_via(child) {
+                    vias.push(v);
+                }
+            }
             _ => {}
         }
     }
@@ -124,6 +137,8 @@ pub fn load_c1_board(c1_bom: &[BomLine]) -> Result<BoardData, KiCadError> {
             silkscreen_bottom,
         },
         nets: Vec::new(),
+        traces,
+        vias,
     })
 }
 
@@ -442,6 +457,52 @@ fn outline_extents(segments: &[EdgeSegment]) -> (f32, f32) {
         }
     }
     (maxx, maxy)
+}
+
+// ---------------------------------------------------------------------------
+// Copper traces + vias (task #13f)
+
+/// Parse `(segment (start X Y) (end X Y) (width W) (layer L) (net N) ...)`
+fn parse_copper_segment(v: &Value) -> Option<CopperSegment> {
+    let layer_str = find_tagged(v, "layer")
+        .and_then(|l| positional(l).first().and_then(|a| string_of(a)))?;
+    let copper_layer = match layer_str {
+        "F.Cu" => CopperLayer::FCu,
+        "B.Cu" => CopperLayer::BCu,
+        _ => return None, // inner layers not rendered
+    };
+    let start = point_of(v, "start")?;
+    let end = point_of(v, "end")?;
+    let width = find_tagged(v, "width")
+        .and_then(|w| positional(w).first().and_then(|a| as_f32(a)))
+        .unwrap_or(0.25);
+    let net_name = find_tagged(v, "net")
+        .and_then(|n| positional(n).get(1).and_then(|a| string_of(a)).map(String::from));
+    Some(CopperSegment {
+        start,
+        end,
+        width,
+        layer: copper_layer,
+        net_name,
+    })
+}
+
+/// Parse `(via (at X Y) (size S) (drill D) (layers L1 L2) (net N) ...)`
+fn parse_via(v: &Value) -> Option<Via> {
+    let (x, y) = find_tagged(v, "at").and_then(|a| {
+        let p = positional(a);
+        Some((as_f32(p.first()?)?, as_f32(p.get(1)?)?))
+    })?;
+    let diameter = find_tagged(v, "size")
+        .and_then(|s| positional(s).first().and_then(|a| as_f32(a)))
+        .unwrap_or(0.6);
+    let net_name = find_tagged(v, "net")
+        .and_then(|n| positional(n).get(1).and_then(|a| string_of(a)).map(String::from));
+    Some(Via {
+        at: (x, y),
+        diameter,
+        net_name,
+    })
 }
 
 // ---------------------------------------------------------------------------

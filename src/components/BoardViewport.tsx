@@ -25,6 +25,7 @@ interface BoardViewportProps {
    */
   highlightedRefs?: ReadonlyArray<string> | null;
   colorMode?: ColorMode;
+  showTraces?: boolean;
 }
 
 export function BoardViewport({
@@ -34,6 +35,7 @@ export function BoardViewport({
   onSelect,
   highlightedRefs,
   colorMode,
+  showTraces,
 }: BoardViewportProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<SceneState | null>(null);
@@ -89,6 +91,10 @@ export function BoardViewport({
   useEffect(() => {
     sceneRef.current?.setColorMode(colorMode ?? 'side');
   }, [colorMode]);
+
+  useEffect(() => {
+    sceneRef.current?.setTracesVisible(showTraces ?? false);
+  }, [showTraces]);
 
   return (
     <div

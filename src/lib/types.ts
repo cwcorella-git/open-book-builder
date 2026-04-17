@@ -85,6 +85,26 @@ export interface EdgeSegment {
   points: [number, number][];
 }
 
+// Copper trace segments and vias. Parsed from KiCad (segment)/(via) and EAGLE
+// <signal>/<wire>/<via>. Rendered as LineSegments per layer + CylinderGeometry
+// per via behind a "Show traces" toggle (default off).
+
+export type CopperLayer = 'f-cu' | 'b-cu';
+
+export interface CopperSegment {
+  start: [number, number];
+  end: [number, number];
+  width: number;
+  layer: CopperLayer;
+  netName?: string;
+}
+
+export interface Via {
+  at: [number, number];
+  diameter: number;
+  netName?: string;
+}
+
 // Board-space silkscreen primitives keyed by face. Lines / arcs / circles only;
 // text glyphs and polygon fills are out of scope for task #13a. Matches the
 // Rust `SilkscreenLayer` shape (camelCase on the wire).
@@ -123,6 +143,8 @@ export interface BoardData {
   components: Component[];
   outline: BoardOutline;
   nets: Net[];
+  traces: CopperSegment[];
+  vias: Via[];
 }
 
 export interface Discrepancy {

@@ -29,11 +29,14 @@ import { buildHeroMesh } from './hero-meshes';
 import type {
   BoardData,
   Component,
+  CopperLayer,
+  CopperSegment,
   EdgeSegment,
   Hole,
   NetCategory,
   Side,
   SilkscreenLayer,
+  Via,
 } from './types';
 
 export type SideFilter = 'both' | 'top' | 'bottom';
@@ -53,6 +56,7 @@ export interface SceneState {
    */
   setHighlightedRefs(refs: ReadonlyArray<string> | null): void;
   setColorMode(mode: ColorMode): void;
+  setTracesVisible(visible: boolean): void;
   onSelect: ((ref: string | null) => void) | null;
 }
 
@@ -90,6 +94,14 @@ const SILK_PX_PER_MM = 8;
 const SILK_COLOR = '#e2e8f0';
 const SILK_LINE_MM = 0.12;
 const SILK_Y_OFFSET_MM = 0.01;
+
+// Copper trace overlay constants. Traces sit just above the silk overlays
+// so they're visible but behind component meshes in the depth buffer.
+const TRACE_TOP_COLOR = 0xf59e0b; // amber — matches top-side component tint
+const TRACE_BOTTOM_COLOR = 0x38bdf8; // cyan — matches bottom-side tint
+const TRACE_Y_OFFSET_MM = 0.015;
+const VIA_COLOR = 0xd4af37; // gold
+const VIA_SEGMENTS = 8; // cylinder tessellation
 
 export function initScene(
   container: HTMLElement,
@@ -195,6 +207,46 @@ export function initScene(
     ownedMaterials.add(overlay.material);
     ownedTextures.add(overlay.texture);
   }
+
+  // --- Copper trace overlays -------------------------------------------------
+  //
+  // Task #13f: LineSegments per copper layer + CylinderGeometry per via.
+  // Default hidden; toggled by the "Show traces" checkbox in BoardView.
+
+  const traceGroup = new THREE.Group();
+  traceGroup.visible = false;
+  scene.add(traceGroup);
+
+  for (const face of ['f-cu', 'b-cu'] as const) {
+    const layerTraces = boardData.traces.filter((t) => t.layer === face);
+    if (layerTraces.length === 0) continue;
+    const result = buildTraceLines(
+      layerTraces,
+      widthMm,
+      heightMm,
+      face,
+      BOARD_THICKNESS_MM,
+    );
+    traceGroup.add(result.mesh);
+    ownedGeometries.add(result.geometry);
+    ownedMaterials.add(result.material);
+  }
+
+  if (boardData.vias.length > 0) {
+    const result = buildVias(
+      boardData.vias,
+      widthMm,
+      heightMm,
+      BOARD_THICKNESS_MM,
+    );
+    traceGroup.add(result.mesh);
+    ownedGeometries.add(result.geometry);
+    ownedMaterials.add(result.material);
+  }
+
+  const applyTracesVisible = (visible: boolean) => {
+    traceGroup.visible = visible;
+  };
 
   // --- Component meshes ----------------------------------------------------
   //
@@ -430,6 +482,7 @@ export function initScene(
     setSelectedRef: applySelection,
     setHighlightedRefs: applyHighlightedRefs,
     setColorMode: applyColorMode,
+    setTracesVisible: applyTracesVisible,
     dispose: () => {
       cancelAnimationFrame(animFrameId);
       resizeObserver.disconnect();
@@ -748,6 +801,101 @@ function rasterizeSilkscreen(
   const texture = new THREE.CanvasTexture(canvas as HTMLCanvasElement);
   texture.needsUpdate = true;
   return texture;
+}
+
+// ---------------------------------------------------------------------------
+// Copper trace + via mesh builders (task #13f)
+
+interface TraceLinesResult {
+  mesh: THREE.LineSegments;
+  geometry: THREE.BufferGeometry;
+  material: THREE.LineBasicMaterial;
+}
+
+function buildTraceLines(
+  traces: CopperSegment[],
+  widthMm: number,
+  heightMm: number,
+  layer: CopperLayer,
+  boardThickness: number,
+): TraceLinesResult {
+  // Each trace is a pair of vertices in XZ plane (board coordinates).
+  const positions = new Float32Array(traces.length * 6);
+  for (let i = 0; i < traces.length; i++) {
+    const t = traces[i];
+    const off = i * 6;
+    positions[off + 0] = t.start[0] - widthMm / 2;
+    positions[off + 1] = 0; // Y set below via mesh position
+    positions[off + 2] = t.start[1] - heightMm / 2;
+    positions[off + 3] = t.end[0] - widthMm / 2;
+    positions[off + 4] = 0;
+    positions[off + 5] = t.end[1] - heightMm / 2;
+  }
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+  const color = layer === 'f-cu' ? TRACE_TOP_COLOR : TRACE_BOTTOM_COLOR;
+  const material = new THREE.LineBasicMaterial({
+    color,
+    transparent: true,
+    opacity: 0.85,
+    depthWrite: false,
+  });
+
+  const mesh = new THREE.LineSegments(geometry, material);
+  mesh.position.y =
+    layer === 'f-cu'
+      ? boardThickness + TRACE_Y_OFFSET_MM
+      : -TRACE_Y_OFFSET_MM;
+
+  return { mesh, geometry, material };
+}
+
+interface ViasResult {
+  mesh: THREE.Group;
+  geometry: THREE.CylinderGeometry;
+  material: THREE.MeshStandardMaterial;
+}
+
+function buildVias(
+  vias: Via[],
+  widthMm: number,
+  heightMm: number,
+  boardThickness: number,
+): ViasResult {
+  // Shared geometry + material for all vias. Each via is an individual Mesh
+  // positioned at its (x, z) with the cylinder spanning the full board depth
+  // plus a tiny extension so they poke above/below.
+  const representativeRadius = vias.length > 0 ? vias[0].diameter / 2 : 0.3;
+  const height = boardThickness * 1.02;
+  const geometry = new THREE.CylinderGeometry(
+    representativeRadius,
+    representativeRadius,
+    height,
+    VIA_SEGMENTS,
+  );
+  const material = new THREE.MeshStandardMaterial({
+    color: VIA_COLOR,
+    metalness: 0.6,
+    roughness: 0.3,
+    transparent: true,
+    opacity: 0.9,
+    depthWrite: false,
+  });
+
+  const group = new THREE.Group();
+  for (const v of vias) {
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(
+      v.at[0] - widthMm / 2,
+      boardThickness / 2, // center the cylinder in the board
+      v.at[1] - heightMm / 2,
+    );
+    group.add(mesh);
+  }
+
+  return { mesh: group, geometry, material };
 }
 
 // ---------------------------------------------------------------------------

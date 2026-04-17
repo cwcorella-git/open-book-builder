@@ -22,6 +22,7 @@ export function BoardView() {
   const { board, setBoard, selectedRef, selectComponent } = useNavigation();
   const [sideFilter, setSideFilter] = useState<SideFilter>('both');
   const [colorMode, setColorMode] = useState<ColorMode>('side');
+  const [showTraces, setShowTraces] = useState(false);
 
   const boardData = dataset.boards[board];
 
@@ -50,6 +51,8 @@ export function BoardView() {
           setSideFilter={setSideFilter}
           colorMode={colorMode}
           setColorMode={setColorMode}
+          showTraces={showTraces}
+          setShowTraces={setShowTraces}
           componentCount={boardData.components.length}
           holeCount={boardData.outline.holes.length}
         />
@@ -60,6 +63,7 @@ export function BoardView() {
             selectedRef={selectedRef}
             onSelect={selectComponent}
             colorMode={colorMode}
+            showTraces={showTraces}
           />
         ) : (
           <EmptyBoard board={board} />
@@ -89,7 +93,8 @@ const COLOR_MODES: { id: ColorMode; label: string }[] = [
 ];
 
 function Toolbar({
-  board, setBoard, sideFilter, setSideFilter, colorMode, setColorMode, componentCount, holeCount,
+  board, setBoard, sideFilter, setSideFilter, colorMode, setColorMode,
+  showTraces, setShowTraces, componentCount, holeCount,
 }: {
   board: BoardId;
   setBoard: (b: BoardId) => void;
@@ -97,6 +102,8 @@ function Toolbar({
   setSideFilter: (s: SideFilter) => void;
   colorMode: ColorMode;
   setColorMode: (m: ColorMode) => void;
+  showTraces: boolean;
+  setShowTraces: (v: boolean) => void;
   componentCount: number;
   holeCount: number;
 }) {
@@ -141,6 +148,16 @@ function Toolbar({
           </button>
         ))}
       </div>
+
+      <label style={{ display: 'flex', gap: '4px', alignItems: 'center', fontSize: '10px', color: '#64748b', cursor: 'pointer' }}>
+        <input
+          type="checkbox"
+          checked={showTraces}
+          onChange={(e) => setShowTraces(e.target.checked)}
+          style={{ accentColor: '#f59e0b' }}
+        />
+        Traces
+      </label>
 
       <span style={{ marginLeft: 'auto', fontSize: '11px', color: '#64748b' }}>
         {componentCount} components · {holeCount} mounting holes

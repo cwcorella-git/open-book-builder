@@ -29,16 +29,16 @@
 //!
 //! Task #11 handles placements + outline + holes + nets + a synthesized
 //! virtual `Display` component so the C2 tab shows the GDEW042T2 panel
-//! (whose BOM line lives on C1 with `refs=["Display"]`). Copper trace
-//! geometry (`<signal>/<wire>`, `<via>`, `<polygon>`) is parsed only to the
-//! extent of counting `<contactref>` into `Net.connected_pads`; rendering
-//! traces is deferred to #13 polish.
+//! (whose BOM line lives on C1 with `refs=["Display"]`). Task #13f adds
+//! copper trace and via extraction from `<signal>/<wire>` (layers 1/16)
+//! and `<signal>/<via>` for the "Show traces" toggle.
 
 use crate::footprint_heights;
 use crate::types::{
-    BoardData, BoardId, BoardOutline, BomLine, Component, EdgeSegment,
-    FootprintBbox, Hole, Net, NetCategory, NetPadRef, Pad, Side, SilkscreenArc,
-    SilkscreenCircle, SilkscreenLayer, SilkscreenLine,
+    BoardData, BoardId, BoardOutline, BomLine, Component, CopperLayer,
+    CopperSegment, EdgeSegment, FootprintBbox, Hole, Net, NetCategory, NetPadRef,
+    Pad, Side, SilkscreenArc, SilkscreenCircle, SilkscreenLayer, SilkscreenLine,
+    Via,
 };
 use quick_xml::events::{BytesStart, Event};
 use quick_xml::Reader;
@@ -83,6 +83,11 @@ pub fn load_c2_board(bom: &[BomLine]) -> Result<BoardData, EagleError> {
     // to board coords at element-instantiation time further down.
     let mut silkscreen_top = SilkscreenLayer::default();
     let mut silkscreen_bottom = SilkscreenLayer::default();
+
+    // Copper trace + via accumulators — captured from <wire>/<via> inside
+    // <signal> context. Layer 1 = top copper (F.Cu), layer 16 = bottom (B.Cu).
+    let mut traces = Vec::<CopperSegment>::new();
+    let mut vias = Vec::<Via>::new();
 
     // Parser state — tracks which subtree we're inside so we interpret the
     // shared element names (wire, text, etc.) in the right context.
@@ -260,6 +265,46 @@ pub fn load_c2_board(bom: &[BomLine]) -> Result<BoardData, EagleError> {
                             board: BoardId::C2Driver,
                         });
                     }
+                    "wire" if !signal_stack.is_empty() => {
+                        // Copper traces inside <signal>. Layer 1 = top,
+                        // layer 16 = bottom. Other layers (e.g. polygon
+                        // outlines) are ignored.
+                        let layer = attr_u32(&e, "layer")?.unwrap_or(0);
+                        let copper_layer = match layer {
+                            1 => Some(CopperLayer::FCu),
+                            16 => Some(CopperLayer::BCu),
+                            _ => None,
+                        };
+                        if let Some(cl) = copper_layer {
+                            let sig = signal_stack.last().unwrap();
+                            traces.push(CopperSegment {
+                                start: (
+                                    attr_f32(&e, "x1")?.unwrap_or(0.0),
+                                    attr_f32(&e, "y1")?.unwrap_or(0.0),
+                                ),
+                                end: (
+                                    attr_f32(&e, "x2")?.unwrap_or(0.0),
+                                    attr_f32(&e, "y2")?.unwrap_or(0.0),
+                                ),
+                                width: attr_f32(&e, "width")?.unwrap_or(0.25),
+                                layer: cl,
+                                net_name: Some(sig.name.clone()),
+                            });
+                        }
+                    }
+                    "via" if !signal_stack.is_empty() => {
+                        let sig = signal_stack.last().unwrap();
+                        let x = attr_f32(&e, "x")?.unwrap_or(0.0);
+                        let y = attr_f32(&e, "y")?.unwrap_or(0.0);
+                        let diameter = attr_f32(&e, "diameter")?
+                            .or(attr_f32(&e, "drill")?.map(|d| d * 2.0))
+                            .unwrap_or(0.6);
+                        vias.push(Via {
+                            at: (x, y),
+                            diameter,
+                            net_name: Some(sig.name.clone()),
+                        });
+                    }
                     _ => {}
                 }
             }
@@ -405,6 +450,8 @@ pub fn load_c2_board(bom: &[BomLine]) -> Result<BoardData, EagleError> {
             silkscreen_bottom,
         },
         nets,
+        traces,
+        vias,
     })
 }
 

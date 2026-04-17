@@ -159,12 +159,12 @@ viewport that highlights each step's components while dimming the rest.
   Classification runs in Rust via a name-based heuristic on per-pad
   net names; the dominant category is baked into `Component.dominantCategory`.
   Detail panel also shows the category when selected.
-
-**What's mocked:**
-
-- Copper traces, vias, GND pour polygons on both boards. Parsed only
-  to the extent of counting `<contactref>` into `Net.connectedPads`;
-  rendered geometry is deferred to task #13f.
+- **Copper traces** — toolbar "Traces" checkbox (default off) renders
+  `(segment)` / `(via)` (KiCad) and `<wire layer="1"/"16">` / `<via>`
+  (EAGLE) as `THREE.LineSegments` per copper layer (F.Cu amber, B.Cu
+  cyan) plus gold `CylinderGeometry` vias. C1: 296 segments + 76 vias;
+  C2: 153 segments + 27 vias. Off by default to keep the view clean;
+  toggle on to trace signal routing visually.
 
 See `Roadmap` below and the authoritative plan at
 `~/.claude/plans/melodic-tinkering-newt.md`.
@@ -428,7 +428,7 @@ The 13-task build plan lives at
 - [x] **#13d** About tab — static orientation copy as the fifth tab, covering what the Open Book is, what this app is, how it relates to upstream's older ESP32-S3 `why-the-open-book` doc, and credits/license; live BOM/discrepancy/assembly-step counts pulled from the dataset context
 - [x] **#13e** BOM Comparison view — hand-authored `bom-comparison.json` (23 entries × 4 sources: Canonical / COGS-LIST / PDF / April 2025); inline expand-row in BomTable shows a 4-column qty/cost mini-table with amber "diff" badge on conflicting rows (2 flagged: MOSFET arithmetic error in COGS-LIST, different 10µF cap MPN at different price); C2 driver internals carry null comparison columns with "priced as PCBA" notes
 - [x] **#13c** Net category coloring — heuristic net-name classifier (`net_category.rs`) computes `Component.dominantCategory` at parse time for both boards; Board tab toolbar gains "Color: Side | Net" toggle swapping material colors to an 8-category palette (Power/Ground/SPI/I2C/GPIO/Debug/Analog/Other); EAGLE parser now populates pad `netName` via signal→contactref lookup
-- [ ] **#13f** Copper traces — remaining polish
+- [x] **#13f** Copper traces — `(segment)`/`(via)` (KiCad) and `<wire layer="1"/"16">`/`<via>` (EAGLE) parsed in Rust; rendered as `THREE.LineSegments` per copper layer (F.Cu amber, B.Cu cyan) + gold `CylinderGeometry` vias behind a "Traces" toolbar checkbox (default off). C1: 296 segments + 76 vias; C2: 153 segments + 27 vias
 
 Steps 1–7 give a shipable tool (BOM + discrepancies + sourcing + web share)
 with no 3D. Steps 8–13 add the visualization half — task #8 is the
