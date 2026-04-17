@@ -11,8 +11,8 @@
   {
     "id": "pcbway-hasl-leaded",
     "severity": "build-critical",
-    "title": "PCBWay order: HASL with lead, should be lead-free HASL or ENIG",
-    "description": "The PCBWay configurator screenshot shows 'HASL with lead' selected. The README specifies 'lead-free HASL finish' (or ENIG). Leaded HASL is RoHS-noncompliant — matters for EU shipping, some resellers, and kit distribution.",
+    "title": "PCBWay order: HASL (Hot Air Solder Leveling) with lead, should be lead-free HASL or ENIG (gold-plated finish)",
+    "description": "The PCBWay configurator screenshot shows 'HASL with lead' selected. The README specifies 'lead-free HASL finish' (or ENIG). Leaded HASL is RoHS-noncompliant (contains restricted hazardous substances under EU regulations) — matters for EU shipping, some resellers, and kit distribution.",
     "sources": ["pcbway-selection.png", "folder/The-Open-Book-main/README.md"],
     "affectsComponents": [],
     "resolution": "In the PCBWay order form, switch surface finish to 'Lead-Free HASL' (or upgrade to ENIG)."
@@ -20,11 +20,11 @@
   {
     "id": "c2-module-cost-missing",
     "severity": "cost-impact",
-    "title": "C2 e-paper driver PCBA cost is missing from every BOM",
-    "description": "None of the three BOMs (COGS-LIST, OpenBook_BOM_Clean PDF, April 2025 image) include the fabrication/assembly cost of the Castellated E-Paper Driver (OSO-BOOK-C2). This is a separate PCBA job from either JLCPCB (C2-01) or PCBWay (C2-02). Real per-unit cost is likely $50-60, not the $43-48 printed on the BOMs.",
+    "title": "C2 e-paper driver assembly (PCBA) cost is missing from every BOM",
+    "description": "None of the three BOMs (COGS-LIST, OpenBook_BOM_Clean PDF, April 2025 image) include the fabrication/assembly cost of the Castellated E-Paper Driver (OSO-BOOK-C2). This is a separate pre-assembled board (PCBA) job from either JLCPCB (C2-01) or PCBWay (C2-02). Real per-unit cost is likely $50-60, not the $43-48 printed on the BOMs.",
     "sources": ["COGS-LIST", "OpenBook_BOM_Clean.pdf", "file-G4bVKaE1KGNieH6tGEUZQM-...png"],
     "affectsComponents": ["U2"],
-    "resolution": "Get a PCBA quote from JLCPCB (using OSO-BOOK-C2-01 files) or PCBWay (using OSO-BOOK-C2-02 files). Typical 10-unit small-board PCBA runs $30-80 depending on part sourcing."
+    "resolution": "Get an assembly (PCBA) quote from JLCPCB (using OSO-BOOK-C2-01 files) or PCBWay (using OSO-BOOK-C2-02 files). Typical 10-unit small-board assembly runs $30-80 depending on part sourcing."
   },
   {
     "id": "doc-esp32-misleading",
