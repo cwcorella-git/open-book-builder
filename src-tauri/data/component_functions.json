@@ -7,10 +7,10 @@
     "heroMeshId": "pi-pico"
   },
   "OSO-BOOK-C2-01": {
-    "function": "Castellated e-paper driver submodule. Generates the ±22 V and ±15 V rails the e-paper panel needs, level-shifts SPI, and drives the FFC ribbon. Ordered pre-assembled from JLCPCB/PCBWay; soldered to the C1 main board via castellated edge pads.",
+    "function": "Castellated e-paper driver submodule. Generates the ±22 V and ±15 V rails the e-paper panel needs, converts signal levels between the Pico and the display, and drives the FFC ribbon. Ordered pre-assembled from JLCPCB or PCBWay; soldered to the C1 main board via castellated edge pads.",
     "unitCostUsd": null,
     "heroMeshId": "c2-module",
-    "notes": "Separate PCBA job. The C1 BOM lists this as a part but the cost is a separate fab/assembly line item not included in the C1 BOM totals. Real per-unit $30-80 depending on JLCPCB vs PCBWay and volume."
+    "notes": "Separate PCBA job — cost not included in the C1 BOM totals. Real per-unit $30-80 depending on fab house and volume. Three board revisions exist: C2-01 (old JLCPCB, oversized), C2-02 (PCBWay, current), C2-03 (new JLCPCB, replaces C2-01). All share an identical schematic; only R1's package size differs (0402 vs 0603). The BOM ref 'OSO-BOOK-C2-01' in 1-click-bom.csv is stale — use C2-03 for JLCPCB orders."
   },
   "MEM2075-00-140-01-A": {
     "function": "Push/push microSD card slot. Holds the book library on a microSD card (plain UTF-8 text files, title on line 1).",
