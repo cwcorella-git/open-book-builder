@@ -5,7 +5,7 @@
 import { useDataset } from '../lib/dataset-context';
 
 export function AboutView() {
-  const { bom, discrepancies, assembly } = useDataset();
+  const { bom, assembly } = useDataset();
 
   return (
     <div
@@ -128,9 +128,8 @@ export function AboutView() {
           everything you need to verify your build before spending money.
         </p>
         <p style={paragraph}>
-          It currently tracks <Stat n={bom.length} unit="parts" />,{' '}
-          <Stat n={discrepancies.length} unit="known discrepancies" /> between upstream sources,
-          and <Stat n={assembly.length} unit="assembly steps" />, and renders both boards in 3D
+          It currently tracks <Stat n={bom.length} unit="parts" /> and{' '}
+          <Stat n={assembly.length} unit="assembly steps" />, and renders both boards in 3D
           from the original design files (KiCad for the main board, EAGLE for the driver module).
           The <em>Parts List</em> tab exports a Digi-Key BOM Manager CSV you can upload directly.
         </p>

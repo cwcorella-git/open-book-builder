@@ -6,9 +6,6 @@ export type BoardId = 'c1-main' | 'c2-driver';
 export type NetCategory =
   | 'power' | 'ground' | 'spi' | 'i2c' | 'gpio' | 'debug' | 'analog' | 'other';
 
-export type Severity =
-  | 'build-critical' | 'cost-impact' | 'naming' | 'informational';
-
 export type AssemblyPhase =
   | 'smd-passives' | 'smd-ics' | 'smd-mechanical'
   | 'tht' | 'modules' | 'mechanical' | 'flash-firmware';
@@ -147,30 +144,6 @@ export interface BoardData {
   vias: Via[];
 }
 
-export interface Discrepancy {
-  id: string;
-  severity: Severity;
-  title: string;
-  description: string;
-  sources: string[];
-  affectsComponents: string[];
-  resolution: string;
-}
-
-export interface BomComparison {
-  bomRef: string;
-  canonicalQty: number;
-  canonicalCost?: number;
-  cogsQty?: number;
-  cogsCost?: number;
-  pdfQty?: number;
-  pdfCost?: number;
-  april2025Qty?: number;
-  april2025Cost?: number;
-  conflict: boolean;
-  note?: string;
-}
-
 export interface AssemblyStep {
   id: string;
   order: number;
@@ -193,8 +166,6 @@ export interface CostSummary {
 export interface BoardDataset {
   boards: Record<BoardId, BoardData>;
   bom: BomLine[];
-  bomComparison: BomComparison[];
-  discrepancies: Discrepancy[];
   assembly: AssemblyStep[];
   costSummary: CostSummary;
 }

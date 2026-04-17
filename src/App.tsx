@@ -1,29 +1,20 @@
 import { DatasetProvider, useDatasetStatus } from './lib/dataset-context';
 import { NavigationProvider, useNavigation, type Tab } from './lib/navigation-context';
-import { useDiscrepancyResolution } from './lib/use-discrepancy-resolution';
 import { BoardView } from './components/BoardView';
 import { BomView } from './components/BomView';
 import { AssemblyView } from './components/AssemblyView';
-import { DiscrepancyView } from './components/DiscrepancyView';
-import { DiscrepancyBanner } from './components/DiscrepancyBanner';
 import { AboutView } from './components/AboutView';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'board', label: 'Board' },
   { id: 'bom', label: 'Parts List' },
   { id: 'assembly', label: 'Assembly' },
-  { id: 'discrepancies', label: 'Discrepancies' },
   { id: 'about', label: 'About' },
 ];
 
 function Shell() {
   const { tab, setTab } = useNavigation();
   const status = useDatasetStatus();
-
-  // Hook must be called unconditionally; feed empty array when not ready.
-  const discrepancies =
-    status.kind === 'ready' ? status.dataset.discrepancies : [];
-  const { unresolvedBuildCritical } = useDiscrepancyResolution(discrepancies);
 
   return (
     <div style={{
@@ -58,18 +49,9 @@ function Shell() {
         <span style={{ marginLeft: 'auto', fontSize: '11px', color: '#64748b' }}>
           {status.kind === 'loading' && 'Loading dataset…'}
           {status.kind === 'error' && `Error: ${status.message}`}
-          {status.kind === 'ready' && (
-            status.dataset.discrepancies.length > 0
-              ? `${status.dataset.bom.length} parts · ${status.dataset.discrepancies.length} discrepancies`
-              : `${status.dataset.bom.length} parts`
-          )}
+          {status.kind === 'ready' && `${status.dataset.bom.length} parts`}
         </span>
       </header>
-
-      <DiscrepancyBanner
-        count={unresolvedBuildCritical.length}
-        onClick={() => setTab('discrepancies')}
-      />
 
       <main style={{ flex: 1, overflow: 'auto', padding: '16px' }}>
         {status.kind === 'loading' && <Placeholder text="Loading…" />}
@@ -85,7 +67,6 @@ function TabContent({ tab }: { tab: Tab }) {
     case 'board': return <BoardView />;
     case 'bom': return <BomView />;
     case 'assembly': return <AssemblyView />;
-    case 'discrepancies': return <DiscrepancyView />;
     case 'about': return <AboutView />;
   }
 }

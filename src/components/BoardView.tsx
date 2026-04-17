@@ -195,7 +195,7 @@ function DetailPanel({ component, bom }: { component: Component; bom: BomLine[] 
         <div style={{ color: '#cbd5e1', lineHeight: 1.45 }}>{line.function}</div>
       ) : (
         <div style={{ color: '#fbbf24', fontStyle: 'italic' }}>
-          No BOM entry matches {component.bomRef}.
+          No Parts List entry matches {component.bomRef}.
         </div>
       )}
 

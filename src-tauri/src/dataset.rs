@@ -1,8 +1,8 @@
-//! Assembles the canonical `BoardDataset`. Static JSONs (discrepancies,
-//! assembly steps, component-function lookup) are `include_str!`'d at compile
-//! time so they work identically in `tauri dev`, bundled release, and the
-//! `--export-json` CLI mode used by the web build. Parsed KiCad/EAGLE/BOM
-//! data is merged in by subsequent tasks.
+//! Assembles the canonical `BoardDataset`. Static JSONs (assembly steps,
+//! component-function lookup) are `include_str!`'d at compile time so they
+//! work identically in `tauri dev`, bundled release, and the `--export-json`
+//! CLI mode used by the web build. Parsed KiCad/EAGLE/BOM data is merged in
+//! by subsequent tasks.
 //!
 //! This module deliberately does not touch the filesystem: all runtime data
 //! either lives in the binary (static JSONs) or will be loaded through its
@@ -10,14 +10,12 @@
 //! path and returns parsed structs.
 
 use crate::bom;
-use crate::bom_comparison;
 use crate::eagle;
 use crate::kicad_pcb;
-use crate::types::{AssemblyStep, BoardDataset, BoardId, Discrepancy};
+use crate::types::{AssemblyStep, BoardDataset, BoardId};
 use std::collections::BTreeMap;
 use thiserror::Error;
 
-const DISCREPANCIES_JSON: &str = include_str!("../data/discrepancies.json");
 const ASSEMBLY_JSON: &str = include_str!("../data/assembly.json");
 
 #[derive(Debug, Error)]
@@ -32,8 +30,6 @@ pub enum DatasetError {
     KiCad(#[from] kicad_pcb::KiCadError),
     #[error("eagle: {0}")]
     Eagle(#[from] eagle::EagleError),
-    #[error("bom-comparison: {0}")]
-    BomComparison(#[from] bom_comparison::BomComparisonError),
     // Used from task #3 onward once we're merging real data.
     #[allow(dead_code)]
     #[error("data: {0}")]
@@ -41,7 +37,6 @@ pub enum DatasetError {
 }
 
 pub fn load() -> Result<BoardDataset, DatasetError> {
-    let discrepancies: Vec<Discrepancy> = serde_json::from_str(DISCREPANCIES_JSON)?;
     let assembly: Vec<AssemblyStep> = serde_json::from_str(ASSEMBLY_JSON)?;
 
     let bom_lines = bom::load_all()?;
@@ -54,8 +49,6 @@ pub fn load() -> Result<BoardDataset, DatasetError> {
     Ok(BoardDataset {
         boards,
         bom: bom_lines,
-        bom_comparison: bom_comparison::load()?,
-        discrepancies,
         assembly,
         cost_summary,
     })

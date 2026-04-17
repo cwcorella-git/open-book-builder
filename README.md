@@ -183,7 +183,7 @@ desktop reads the same data live via the `load_board_dataset` command.
 
 ### Why `include_str!`
 
-Static data (`discrepancies.json`, `assembly.json`, `component_functions.json`,
+Static data (`assembly.json`, `component_functions.json`,
 both BOM CSVs) is bundled into the Rust binary via `include_str!` at compile
 time. This means:
 
@@ -234,14 +234,13 @@ open-book-builder/
 │
 ├── src/
 │   ├── main.tsx                      # React 19 ReactDOM.createRoot
-│   ├── App.tsx                       # Tabbed shell (Board / BOM / Assembly / Discrepancies)
+│   ├── App.tsx                       # Tabbed shell (Board / Parts List / Assembly / About)
 │   ├── vite-env.d.ts                 # window.__TAURI__ globals
 │   ├── lib/
 │   │   ├── types.ts                       # Mirrors src-tauri/src/types.rs
 │   │   ├── dataset-source.ts              # Tauri-vs-web boundary (isTauri())
 │   │   ├── dataset-context.tsx            # React context + useDataset() hook
 │   │   ├── use-persisted-state.ts         # Generic localStorage-backed useState
-│   │   ├── use-discrepancy-resolution.ts  # Resolved-state wrapper, drives the banner
 │   │   ├── use-assembly-progress.ts        # Assembly checkbox state + progress aggregates
 │   │   ├── digikey-csv.ts                 # Pure Digi-Key BOM CSV builder + summary
 │   │   ├── exporter.ts                    # saveTextFile(): Tauri save-dialog vs web Blob
@@ -251,9 +250,7 @@ open-book-builder/
 │       ├── BoardView.tsx                  # Built. Two-pane layout: viewport + detail panel.
 │       ├── BoardViewport.tsx              # Built. React wrapper around scene-renderer.
 │       ├── BomView.tsx                    # Built. Two-pane table + detail panel + CSV export.
-│       ├── AssemblyView.tsx               # Built. Step checklist + mini viewport with multi-highlight.
-│       ├── DiscrepancyView.tsx            # Built. Severity-grouped cards, Resolved toggle.
-│       └── DiscrepancyBanner.tsx          # Built. Red header bar; hidden when 0 unresolved.
+│       └── AssemblyView.tsx               # Built. Step checklist + mini viewport with multi-highlight.
 │
 └── src-tauri/
     ├── Cargo.toml
@@ -261,9 +258,7 @@ open-book-builder/
     ├── capabilities/default.json     # dialog:allow-save, fs:allow-write-text-file
     ├── data/
     │   ├── component_functions.json  # 17 MPNs with function, datasheet, cost, heroMeshId
-    │   ├── discrepancies.json        # Empty — all discrepancies resolved into app content
     │   ├── assembly.json             # 13 ordered build steps
-    │   ├── bom-comparison.json       # 23-entry 4-source qty/cost comparison (hand-authored)
     │   ├── bom-c1-main.csv           # copied from the-open-book/OSO-BOOK-C1/1-click-bom.csv
     │   ├── bom-c2-driver.csv         # copied from the-open-book/OSO-BOOK-C2-02 (PCBWay)
     │   ├── OSO-BOOK-C1.kicad_pcb     # copied from the-open-book/OSO-BOOK-C1 (1.3 MB, KiCad 6)
@@ -277,7 +272,6 @@ open-book-builder/
         ├── eagle.rs                  # quick-xml Reader walker → C2 components, holes, outline, nets + synthesized Display
         ├── footprint_heights.rs      # Part-class → 3D extrusion height lookup (KiCad + EAGLE keyspaces)
         ├── net_category.rs           # Net-name heuristic classifier + dominant-category picker
-        ├── bom_comparison.rs         # Loads bom-comparison.json (4-source qty/cost comparison)
         └── bom.rs                    # Two CSV parsers → Vec<BomLine>, cost summarizer
 ```
 
@@ -295,13 +289,10 @@ The canonical shape is `BoardDataset` (see `src/lib/types.ts` and
   heuristics for both boards.
 - `bom: BomLine[]` — unified list tagged with `board: 'c1-main' | 'c2-driver'`,
   merged with per-MPN metadata (function, datasheet URL, unit cost).
-- `discrepancies: Discrepancy[]` — hand-authored, severity-classed.
 - `assembly: AssemblyStep[]` — ordered, phase-tagged.
 - `costSummary: { perUnitUsd, perTenUnitsUsd, missingLineItems }` —
   non-optional C1 lines only. C2 internals are excluded because the module
   is priced as a single PCBA unit (OSO-BOOK-C2-01).
-- `bomComparison: BomComparison[]` — 4-source comparison data (Canonical /
-  COGS-LIST / PDF / April 2025), surfaced as inline expand-rows in the BOM tab.
 
 ### Why BoardId uses BTreeMap / `kebab-case`
 
@@ -360,7 +351,7 @@ in `package.json` to match the fork's repo name.
 - `costSummary.perUnitUsd ≈ 43.27` (matches April 2025 BOM)
 - `costSummary.perTenUnitsUsd ≈ 432.70`
 - `costSummary.missingLineItems == ["c1-main:OSO-BOOK-C2-01"]`
-- 0 discrepancies (all resolved), 13 assembly steps
+- 13 assembly steps
 - `boards["c1-main"]`: 27 components, 4 mounting holes, 40 Edge.Cuts
   segments, outline 85 × 115 mm; every component has a non-empty `bomRef`
   (JP1 / JP2 solder-jumpers are present in KiCad but not in the BOM,
@@ -376,8 +367,7 @@ in `package.json` to match the fork's repo name.
 The original 15 discrepancies have all been resolved — their content has
 been disseminated into the ordering guide (About tab), assembly
 instructions, parts list footer, and component descriptions. The
-`discrepancies.json` array is now empty. The Discrepancies tab shows an
-"all clear" message.
+Discrepancies tab and all supporting code have been removed.
 
 Where the information went:
 - **PCB ordering errors** (thickness, surface finish, file versions) →
@@ -408,11 +398,11 @@ The 13-task build plan lives at
 - [x] **#13a** Silkscreen overlays — KiCad `F.SilkS`/`B.SilkS` + EAGLE Layer 21/22 parsed to typed line/arc/circle primitives in board coordinates; rasterized to a `CanvasTexture` per face at 8 px/mm and overlaid on thin transparent planes above each board face (lines/arcs/circles only — text deferred)
 - [x] **#13b** Cross-tab navigation — shared `NavigationContext` lifts `tab`/`board`/`selectedRef` out of local state; componentRef chips in Assembly + Discrepancy tabs become `<button>`s that resolve target board (components-first, BOM-fallback) and jump to the Board tab with the ref pre-selected
 - [x] **#13d** About tab — static orientation copy as the fifth tab, covering what the Open Book is, what this app is, how it relates to upstream's older ESP32-S3 `why-the-open-book` doc, and credits/license; live BOM/discrepancy/assembly-step counts pulled from the dataset context
-- [x] **#13e** BOM Comparison view — hand-authored `bom-comparison.json` (23 entries × 4 sources: Canonical / COGS-LIST / PDF / April 2025); inline expand-row in BomTable shows a 4-column qty/cost mini-table with amber "diff" badge on conflicting rows (2 flagged: MOSFET arithmetic error in COGS-LIST, different 10µF cap MPN at different price); C2 driver internals carry null comparison columns with "priced as PCBA" notes
+- [x] **#13e** ~~BOM Comparison view~~ — removed; canonical cost data from upstream BOM CSVs + Digi-Key pricing is authoritative. The comparison with personal research docs (COGS-LIST / PDF / April 2025 image) is no longer needed.
 - [x] **#13c** Net category coloring — heuristic net-name classifier (`net_category.rs`) computes `Component.dominantCategory` at parse time for both boards; Board tab toolbar gains "Color: Side | Net" toggle swapping material colors to an 8-category palette (Power/Ground/SPI/I2C/GPIO/Debug/Analog/Other); EAGLE parser now populates pad `netName` via signal→contactref lookup
 - [x] **#13f** Copper traces — `(segment)`/`(via)` (KiCad) and `<wire layer="1"/"16">`/`<via>` (EAGLE) parsed in Rust; rendered as `THREE.LineSegments` per copper layer (F.Cu amber, B.Cu cyan) + gold `CylinderGeometry` vias behind a "Traces" toolbar checkbox (default off). C1: 296 segments + 76 vias; C2: 153 segments + 27 vias
 
-Steps 1–7 give a shipable tool (BOM + discrepancies + sourcing + web share)
+Steps 1–7 give a shippable tool (BOM + sourcing + web share)
 with no 3D. Steps 8–13 add the visualization half — task #8 is the
 parser + a 2D SVG stepping-stone; task #9 upgrades it to Three.js.
 

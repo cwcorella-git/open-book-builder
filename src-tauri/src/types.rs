@@ -34,15 +34,6 @@ pub enum NetCategory {
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "kebab-case")]
-pub enum Severity {
-    BuildCritical,
-    CostImpact,
-    Naming,
-    Informational,
-}
-
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "kebab-case")]
 pub enum AssemblyPhase {
     SmdPassives,
     SmdIcs,
@@ -248,42 +239,6 @@ pub struct BoardData {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Discrepancy {
-    pub id: String,
-    pub severity: Severity,
-    pub title: String,
-    pub description: String,
-    pub sources: Vec<String>,
-    pub affects_components: Vec<String>,
-    pub resolution: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct BomComparison {
-    pub bom_ref: String,
-    pub canonical_qty: u32,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub canonical_cost: Option<f64>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub cogs_qty: Option<u32>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub cogs_cost: Option<f64>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub pdf_qty: Option<u32>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub pdf_cost: Option<f64>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub april2025_qty: Option<u32>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub april2025_cost: Option<f64>,
-    pub conflict: bool,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub note: Option<String>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct AssemblyStep {
     pub id: String,
     pub order: u32,
@@ -312,8 +267,6 @@ pub struct CostSummary {
 pub struct BoardDataset {
     pub boards: BTreeMap<BoardId, BoardData>,
     pub bom: Vec<BomLine>,
-    pub bom_comparison: Vec<BomComparison>,
-    pub discrepancies: Vec<Discrepancy>,
     pub assembly: Vec<AssemblyStep>,
     pub cost_summary: CostSummary,
 }

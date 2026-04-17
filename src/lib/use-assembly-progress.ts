@@ -20,9 +20,9 @@ export interface AssemblyProgress {
 }
 
 /**
- * localStorage-backed completion state for the Assembly tab. Sibling of
- * `useDiscrepancyResolution` — same `usePersistedState` primitive, same
- * `obb.*` key convention. Keyed by stable `step.id` so new authored steps
+ * localStorage-backed completion state for the Assembly tab. Uses the
+ * `usePersistedState` primitive with the `obb.*` key convention. Keyed by
+ * stable `step.id` so new authored steps
  * default to uncompleted and the user's progress survives data updates.
  */
 export function useAssemblyProgress(steps: AssemblyStep[]): AssemblyProgress {

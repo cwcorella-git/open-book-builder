@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDataset } from '../lib/dataset-context';
-import type { BomLine, BomComparison, BoardId } from '../lib/types';
+import type { BomLine, BoardId } from '../lib/types';
 import { buildDigiKeyCsv, summarizeExport } from '../lib/digikey-csv';
 import { saveTextFile } from '../lib/exporter';
 
@@ -69,7 +69,6 @@ export function BomView() {
           qtyMultiplier={qtyMultiplier}
           selectedKey={selectedKey}
           onSelect={setSelectedKey}
-          bomComparison={dataset.bomComparison}
         />
         <Footer
           perUnitUsd={perUnitUsd}
@@ -258,20 +257,11 @@ function ExportSlot({
 }
 
 function BomTable({
-  rows, qtyMultiplier, selectedKey, onSelect, bomComparison,
+  rows, qtyMultiplier, selectedKey, onSelect,
 }: {
   rows: BomLine[]; qtyMultiplier: number;
   selectedKey: string | null; onSelect: (key: string) => void;
-  bomComparison: BomComparison[];
 }) {
-  const [expandedMpn, setExpandedMpn] = useState<string | null>(null);
-
-  const comparisonByRef = useMemo(() => {
-    const map = new Map<string, BomComparison>();
-    for (const c of bomComparison) map.set(c.bomRef, c);
-    return map;
-  }, [bomComparison]);
-
   return (
     <div style={{ flex: 1, overflow: 'auto', border: '1px solid #1e293b', borderRadius: '6px' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', color: '#e2e8f0' }}>
@@ -292,8 +282,6 @@ function BomTable({
             const lineTotal = lineUnit !== undefined && lineUnit !== null
               ? lineUnit * totalQty
               : null;
-            const comparison = comparisonByRef.get(line.mpn);
-            const isExpanded = expandedMpn === line.mpn;
             return (
               <BomRow
                 key={key}
@@ -302,10 +290,7 @@ function BomTable({
                 totalQty={totalQty}
                 lineUnit={lineUnit}
                 lineTotal={lineTotal}
-                comparison={comparison}
-                isExpanded={isExpanded}
                 onSelect={() => onSelect(key)}
-                onToggleExpand={() => setExpandedMpn(isExpanded ? null : line.mpn)}
               />
             );
           })}
@@ -323,173 +308,49 @@ function BomTable({
 }
 
 function BomRow({
-  line, isSelected, totalQty, lineUnit, lineTotal,
-  comparison, isExpanded, onSelect, onToggleExpand,
+  line, isSelected, totalQty, lineUnit, lineTotal, onSelect,
 }: {
   line: BomLine;
   isSelected: boolean; totalQty: number;
   lineUnit: number | null | undefined; lineTotal: number | null;
-  comparison: BomComparison | undefined;
-  isExpanded: boolean;
   onSelect: () => void;
-  onToggleExpand: () => void;
 }) {
-  const hasComparison = comparison !== undefined;
-  const hasConflict = comparison?.conflict === true;
-
   return (
-    <>
-      <tr
-        onClick={() => { onSelect(); onToggleExpand(); }}
-        style={{
-          cursor: 'pointer',
-          background: isSelected ? '#1e293b' : 'transparent',
-          borderBottom: isExpanded ? 'none' : '1px solid #1e293b',
-          opacity: line.optional ? 0.75 : 1,
-        }}
-      >
-        <td style={tdStyle}>
-          <BoardPill board={line.board} />
-        </td>
-        <td style={tdStyle}>
-          <span style={{ fontFamily: 'monospace', color: '#cbd5e1' }}>
-            {line.refs.join(', ') || '—'}
-          </span>
-        </td>
-        <td style={{ ...tdStyle, maxWidth: '260px' }}>
-          <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {line.description}
-          </div>
-        </td>
-        <td style={{ ...tdStyle, fontFamily: 'monospace', color: '#94a3b8' }}>
-          <span style={{ display: 'inline-flex', gap: '6px', alignItems: 'center' }}>
-            {line.mpn}
-            {hasConflict && <ConflictBadge />}
-          </span>
-        </td>
-        <td style={{ ...tdStyle, textAlign: 'right' }}>{line.qty}</td>
-        <td style={{ ...tdStyle, textAlign: 'right', color: '#94a3b8' }}>{totalQty}</td>
-        <td style={{ ...tdStyle, textAlign: 'right' }}>{formatUsd(lineUnit)}</td>
-        <td style={{ ...tdStyle, textAlign: 'right' }}>{formatUsd(lineTotal)}</td>
-        <td style={tdStyle}>
-          {line.optional && <OptionalChip />}
-        </td>
-      </tr>
-      {isExpanded && hasComparison && (
-        <tr style={{ background: '#0f172a', borderBottom: '1px solid #1e293b' }}>
-          <td colSpan={9} style={{ padding: '0 10px 10px' }}>
-            <ComparisonCard comparison={comparison} />
-          </td>
-        </tr>
-      )}
-    </>
-  );
-}
-
-const COMPARISON_SOURCES = ['Canonical', 'COGS-LIST', 'PDF', 'April 2025'] as const;
-
-function ComparisonCard({ comparison }: { comparison: BomComparison }) {
-  const sources: { label: string; qty: number | undefined; cost: number | undefined }[] = [
-    { label: 'Canonical', qty: comparison.canonicalQty, cost: comparison.canonicalCost },
-    { label: 'COGS-LIST', qty: comparison.cogsQty, cost: comparison.cogsCost },
-    { label: 'PDF', qty: comparison.pdfQty, cost: comparison.pdfCost },
-    { label: 'April 2025', qty: comparison.april2025Qty, cost: comparison.april2025Cost },
-  ];
-
-  const canonicalCost = comparison.canonicalCost;
-
-  return (
-    <div style={{
-      marginTop: '6px', padding: '10px 12px',
-      background: '#1e293b', border: '1px solid #334155',
-      borderRadius: '6px', fontSize: '11px',
-    }}>
-      <div style={{
-        display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '8px',
-      }}>
-        <span style={{
-          fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px',
-          color: '#64748b', fontWeight: 600,
-        }}>
-          Source comparison
+    <tr
+      onClick={onSelect}
+      style={{
+        cursor: 'pointer',
+        background: isSelected ? '#1e293b' : 'transparent',
+        borderBottom: '1px solid #1e293b',
+        opacity: line.optional ? 0.75 : 1,
+      }}
+    >
+      <td style={tdStyle}>
+        <BoardPill board={line.board} />
+      </td>
+      <td style={tdStyle}>
+        <span style={{ fontFamily: 'monospace', color: '#cbd5e1' }}>
+          {line.refs.join(', ') || '—'}
         </span>
-        {comparison.conflict && <ConflictBadge />}
-      </div>
-
-      <table style={{ width: '100%', borderCollapse: 'collapse', color: '#e2e8f0' }}>
-        <thead>
-          <tr>
-            <th style={compTh} />
-            {COMPARISON_SOURCES.map((s) => (
-              <th key={s} style={{ ...compTh, textAlign: 'right' }}>{s}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td style={compTd}>Qty</td>
-            {sources.map((s) => (
-              <td key={s.label} style={{ ...compTd, textAlign: 'right' }}>
-                {s.qty !== undefined && s.qty !== null ? s.qty : '—'}
-              </td>
-            ))}
-          </tr>
-          <tr>
-            <td style={compTd}>Unit $</td>
-            {sources.map((s) => {
-              const isDiff = canonicalCost !== undefined && canonicalCost !== null
-                && s.cost !== undefined && s.cost !== null
-                && Math.abs(s.cost - canonicalCost) > 0.01;
-              return (
-                <td key={s.label} style={{
-                  ...compTd, textAlign: 'right',
-                  color: isDiff ? '#fbbf24' : '#e2e8f0',
-                }}>
-                  {formatUsd(s.cost)}
-                </td>
-              );
-            })}
-          </tr>
-        </tbody>
-      </table>
-
-      {comparison.note && (
-        <div style={{
-          marginTop: '8px', padding: '6px 10px',
-          background: '#0f172a', borderRadius: '3px',
-          borderLeft: comparison.conflict ? '3px solid #fbbf24' : '3px solid #334155',
-          color: '#94a3b8', fontSize: '11px', lineHeight: 1.4,
-        }}>
-          {comparison.note}
+      </td>
+      <td style={{ ...tdStyle, maxWidth: '260px' }}>
+        <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {line.description}
         </div>
-      )}
-    </div>
+      </td>
+      <td style={{ ...tdStyle, fontFamily: 'monospace', color: '#94a3b8' }}>
+        {line.mpn}
+      </td>
+      <td style={{ ...tdStyle, textAlign: 'right' }}>{line.qty}</td>
+      <td style={{ ...tdStyle, textAlign: 'right', color: '#94a3b8' }}>{totalQty}</td>
+      <td style={{ ...tdStyle, textAlign: 'right' }}>{formatUsd(lineUnit)}</td>
+      <td style={{ ...tdStyle, textAlign: 'right' }}>{formatUsd(lineTotal)}</td>
+      <td style={tdStyle}>
+        {line.optional && <OptionalChip />}
+      </td>
+    </tr>
   );
 }
-
-function ConflictBadge() {
-  return (
-    <span style={{
-      padding: '1px 5px', fontSize: '9px',
-      background: '#78350f', color: '#fbbf24',
-      borderRadius: '3px', letterSpacing: '0.3px',
-      textTransform: 'uppercase', fontWeight: 600,
-    }}>
-      diff
-    </span>
-  );
-}
-
-const compTh: React.CSSProperties = {
-  padding: '4px 8px', fontSize: '10px', fontWeight: 600,
-  color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.4px',
-  borderBottom: '1px solid #334155',
-};
-
-const compTd: React.CSSProperties = {
-  padding: '4px 8px', fontSize: '11px',
-  borderBottom: '1px solid #1e293b',
-};
 
 function Footer({
   perUnitUsd, perTenUnitsUsd, qtyMultiplier, missingLineItems,
@@ -590,7 +451,7 @@ function DetailPlaceholder() {
       padding: '24px 8px', color: '#64748b', fontSize: '12px',
       fontStyle: 'italic', lineHeight: 1.5,
     }}>
-      Click a BOM row to see the part's function, datasheet, and distributor
+      Click a Parts List row to see the part's function, datasheet, and distributor
       part numbers.
     </div>
   );

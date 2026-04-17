@@ -204,8 +204,7 @@ pub fn load_all() -> Result<Vec<BomLine>, DatasetError> {
 /// C2 driver module is priced as a single PCBA (OSO-BOOK-C2-01) and its
 /// internals shouldn't be double-counted. Lines missing a price on C1 are
 /// recorded in `missing_line_items` so the UI can flag the gap; the C2
-/// module's own missing PCBA cost is the canonical example (matches
-/// discrepancy `c2-module-cost-missing`).
+/// module's own missing PCBA cost is the canonical example.
 pub fn summarize_cost(bom: &[BomLine]) -> crate::types::CostSummary {
     let mut per_unit = 0.0_f64;
     let mut missing = Vec::new();

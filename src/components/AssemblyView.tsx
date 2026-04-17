@@ -4,8 +4,7 @@
 // so the user can see at a glance which parts they're placing next.
 //
 // Persistence is localStorage-only via `useAssemblyProgress` (key
-// `obb.assemblyStepProgress`). Follows the same pattern as the Discrepancy
-// view's resolved-toggle state.
+// `obb.assemblyStepProgress`).
 
 import { useEffect, useMemo, useState } from 'react';
 import { useDataset } from '../lib/dataset-context';
