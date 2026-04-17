@@ -498,21 +498,18 @@ export function initScene(
     if (!found) return;
 
     const center = box.getCenter(new THREE.Vector3());
-    const size = box.getSize(new THREE.Vector3());
-    const maxDim = Math.max(size.x, size.y, size.z, 1);
 
-    const fovRad = THREE.MathUtils.degToRad(camera.fov / 2);
-    const dist = Math.min(
-      Math.max((maxDim / (2 * Math.tan(fovRad))) * 1.8, controls.minDistance),
-      controls.maxDistance,
-    );
+    // Gentle zoom: use a fixed distance that keeps most of the board
+    // visible while centering on the target components. Avoids the
+    // jarring tight-crop that a bounding-box-fit produces on small parts.
+    const FOCUS_DISTANCE = 100;
 
     // Position the camera on the correct side of the board based on where
     // the majority of target components sit. +Y = above (top face),
     // -Y = below (bottom face).
     const ySign = bottomCount > topCount ? -1 : 1;
     tweenStartPos.copy(camera.position);
-    tweenEndPos.set(center.x, ySign * dist, center.z);
+    tweenEndPos.set(center.x, ySign * FOCUS_DISTANCE, center.z);
     tweenStartTarget.copy(controls.target);
     tweenEndTarget.copy(center);
     tweenProgress = 0;
