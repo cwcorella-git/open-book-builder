@@ -485,10 +485,14 @@ export function initScene(
 
     const box = new THREE.Box3();
     let found = false;
+    let topCount = 0;
+    let bottomCount = 0;
     for (const entry of componentEntries) {
       if (refs.includes(entry.ref)) {
         box.expandByObject(entry.root);
         found = true;
+        if (entry.side === 'top') topCount++;
+        else bottomCount++;
       }
     }
     if (!found) return;
@@ -503,12 +507,12 @@ export function initScene(
       controls.maxDistance,
     );
 
-    // Preserve current viewing direction so the camera approaches from its
-    // current angle rather than snapping to overhead.
-    const viewDir = camera.position.clone().sub(controls.target).normalize();
-
+    // Position the camera on the correct side of the board based on where
+    // the majority of target components sit. +Y = above (top face),
+    // -Y = below (bottom face).
+    const ySign = bottomCount > topCount ? -1 : 1;
     tweenStartPos.copy(camera.position);
-    tweenEndPos.copy(center).addScaledVector(viewDir, dist);
+    tweenEndPos.set(center.x, ySign * dist, center.z);
     tweenStartTarget.copy(controls.target);
     tweenEndTarget.copy(center);
     tweenProgress = 0;
