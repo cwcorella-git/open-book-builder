@@ -3,10 +3,10 @@
     "id": "display-part-number-relabel",
     "severity": "build-critical",
     "title": "GDEW042T2 (EOL) vs GDEY042T81 — different controller ICs, not a simple relabel",
-    "description": "The original display is GDEW042T2 (UC8176/IL0398 controller). It is now end-of-life at GoodDisplay. The replacement, GDEY042T81, uses the SSD1683 controller — physically pin-compatible but requires a different firmware driver. New builders will almost certainly receive GDEY042T81 panels.",
-    "sources": ["GoodDisplay product pages", "libros firmware source"],
+    "description": "The original display is GDEW042T2 (UC8176/IL0398 controller). It is end-of-life at GoodDisplay — confirmed by GoodDisplay themselves in August 2023. The replacement, GDEY042T81, uses the SSD1683 controller. The panels are physically pin-compatible (same FPC connector, same form factor, confirmed drop-in by community testers), but the pre-built book.uf2 firmware only supports the IL0398 controller. New builders will almost certainly receive GDEY042T81 panels.",
+    "sources": ["GoodDisplay (confirmed EOL Aug 2023)", "The-Open-Book issues #77, #80, #86", "libros PR #11"],
     "affectsComponents": ["Display"],
-    "resolution": "The libros firmware has drivers for both controllers (OpenBook_IL0398 for GDEW042T2, OpenBook_SSD1683 for GDEY042T81), but the pre-built book.uf2 on the project site targets IL0398 only. If you receive a GDEY042T81, you will need to build libros from source or use the branch from PR #11 (joeycastillo/libros#11) which adds auto-detection. Check your display's controller IC before flashing."
+    "resolution": "Build libros from the PR #11 branch (joeycastillo/libros#11), which adds automatic display detection via busy-pin polarity — no configuration needed, works with both displays. The PR has been merge-ready since December 2025 but the upstream repo is inactive. To build: clone the libros repo, check out the PR #11 branch, and compile with the Pico SDK. The pre-built book.uf2 from the project site will NOT work with the GDEY042T81."
   },
   {
     "id": "c2-module-cost-missing",

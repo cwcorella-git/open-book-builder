@@ -105,7 +105,7 @@
     "board": "c1-main",
     "estimatedMinutes": 5,
     "tools": ["tweezers"],
-    "notes": "Don't order the tri-color variant — libros only supports B&W panels. The canonical part is GDEW042T2 (UC8176/IL0398 controller), but it is now EOL at GoodDisplay. If you receive a GDEY042T81 (SSD1683 controller), you'll need to build libros from source with the SSD1683 driver or use the auto-detect branch from PR #11. Both panels use the same FPC connector."
+    "notes": "Don't order the tri-color variant — libros only supports B&W panels. The original GDEW042T2 (IL0398 controller) is EOL; you will most likely receive a GDEY042T81 (SSD1683 controller) instead. Both panels use the same FPC connector and are drop-in compatible. The firmware difference is handled at flash time — see the next step."
   },
   {
     "id": "flash-firmware",
@@ -117,7 +117,7 @@
     "board": "c1-main",
     "estimatedMinutes": 5,
     "tools": ["USB cable"],
-    "notes": "libros is at joeycastillo/libros on GitHub. The pre-built book.uf2 is available at oddlyspecificobjects.com/projects/openbook/. Important: this UF2 targets the IL0398 controller (GDEW042T2). If you have a GDEY042T81 display (SSD1683 controller), you'll need to build from source or use PR #11's branch."
+    "notes": "If you have the original GDEW042T2 display, you can use the pre-built book.uf2 from oddlyspecificobjects.com/projects/openbook/. If you have the newer GDEY042T81 (most likely), use PR #11 instead: clone joeycastillo/libros, check out the PR #11 branch, and build with the Pico SDK. PR #11 auto-detects the display type — no configuration needed, and it works with both panels."
   },
   {
     "id": "flash-babel",

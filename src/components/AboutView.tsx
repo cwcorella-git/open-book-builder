@@ -111,12 +111,19 @@ export function AboutView() {
 
         <h3 style={subheading}>Display</h3>
         <p style={paragraph}>
-          The original display (GoodDisplay GDEW042T2) is now <strong style={strong}>end-of-life</strong>.
-          Its replacement, the GDEY042T81, is physically identical but uses a different controller
-          chip. If you receive the newer panel, you'll need to build the{' '}
-          <Ext href="https://github.com/joeycastillo/libros">libros firmware</Ext> from source
-          instead of using the pre-built UF2 — see the{' '}
-          <em>Discrepancies</em> tab for details.
+          The original display (GoodDisplay GDEW042T2) is <strong style={strong}>end-of-life</strong> —
+          you will most likely receive a GDEY042T81 instead. The panels are physically identical
+          (same FPC connector, confirmed drop-in by community testers), but the newer panel uses a
+          different controller chip (SSD1683 vs IL0398). The pre-built{' '}
+          <code style={code}>book.uf2</code> on the project site <strong style={strong}>will not
+          work</strong> with the GDEY042T81.
+        </p>
+        <p style={paragraph}>
+          Instead, build the firmware from{' '}
+          <Ext href="https://github.com/joeycastillo/libros/pull/11">PR #11</Ext> on the libros
+          repo — it auto-detects which display is connected and works with both panels. No
+          configuration needed. See the <em>Discrepancies</em> tab and the firmware flash step on
+          the <em>Assembly</em> tab for details.
         </p>
       </Section>
 
@@ -143,14 +150,13 @@ export function AboutView() {
 
       <Section title="Project status (April 2026)">
         <p style={paragraph}>
-          The Pico-based "Abridged Edition" covered here is the current DIY build. The{' '}
-          <Ext href="https://github.com/joeycastillo/libros">libros firmware</Ext> has not
-          had a commit since February 2024, and the pre-built <code style={code}>book.uf2</code>{' '}
-          on the project site only supports the original GDEW042T2 display (IL0398 controller).
-          Since that panel is now EOL, builders receiving the replacement GDEY042T81 (SSD1683
-          controller) will need to build from source or apply{' '}
-          <Ext href="https://github.com/joeycastillo/libros/pull/11">PR #11</Ext> for
-          auto-detection.
+          The Pico-based "Abridged Edition" covered here is the current DIY build. The upstream{' '}
+          <Ext href="https://github.com/joeycastillo/libros">libros firmware</Ext> repo has not
+          had a maintainer commit since February 2024 — Joey's focus has shifted to the Open Book
+          Touch. Community contributor{' '}
+          <Ext href="https://github.com/joeycastillo/libros/pull/11">PR #11</Ext> adds
+          auto-detection for the newer GDEY042T81 display and has been merge-ready since December
+          2025. It is the recommended firmware source for new builds.
         </p>
         <p style={paragraph}>
           Separately, Joey has announced the{' '}

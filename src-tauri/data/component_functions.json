@@ -92,6 +92,6 @@
     "datasheetUrl": "https://www.good-display.com/product/206.html",
     "unitCostUsd": 26.90,
     "heroMeshId": "gdew042t2",
-    "notes": "GDEW042T2 uses the UC8176 (IL0398) controller and is now EOL. GDEY042T81 uses the SSD1683 controller — same physical form factor and FPC connector but requires a different firmware driver. The libros codebase has drivers for both (OpenBook_IL0398 and OpenBook_SSD1683), but the pre-built book.uf2 targets IL0398 only. PR #11 on joeycastillo/libros adds auto-detection but is unmerged as of April 2026."
+    "notes": "GDEW042T2 uses the UC8176 (IL0398) controller and is now EOL (confirmed by GoodDisplay Aug 2023). GDEY042T81 uses the SSD1683 controller — same physical form factor and FPC connector, confirmed drop-in compatible by community testers. The pre-built book.uf2 targets IL0398 only and will NOT work with the GDEY042T81. Build libros from the PR #11 branch (joeycastillo/libros#11) instead — it auto-detects the display via busy-pin polarity and supports both panels. The upstream libros repo has been inactive since Feb 2024; PR #11 has been merge-ready since Dec 2025."
   }
 }
