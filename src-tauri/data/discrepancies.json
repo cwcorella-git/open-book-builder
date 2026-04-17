@@ -1,12 +1,12 @@
 [
   {
-    "id": "display-part-number-relabel",
-    "severity": "build-critical",
-    "title": "GDEW042T2 (EOL) vs GDEY042T81 — different controller ICs, not a simple relabel",
-    "description": "The original display is GDEW042T2 (UC8176/IL0398 controller). It is end-of-life at GoodDisplay — confirmed by GoodDisplay themselves in August 2023. The replacement, GDEY042T81, uses the SSD1683 controller. The panels are physically pin-compatible (same FPC connector, same form factor, confirmed drop-in by community testers), but the pre-built book.uf2 firmware only supports the IL0398 controller. New builders will almost certainly receive GDEY042T81 panels.",
+    "id": "display-eol-firmware",
+    "severity": "informational",
+    "title": "The original GDEW042T2 display is EOL — the GDEY042T81 replacement works, but needs PR #11 firmware",
+    "description": "The original GDEW042T2 display (IL0398 controller) is end-of-life at GoodDisplay (confirmed August 2023). The replacement GDEY042T81 (SSD1683 controller) is a physical drop-in — same FPC connector, confirmed compatible by community testers. The panels require different firmware drivers, but this is handled by the assembly instructions: the firmware flash step uses PR #11, which auto-detects the display type.",
     "sources": ["GoodDisplay (confirmed EOL Aug 2023)", "The-Open-Book issues #77, #80, #86", "libros PR #11"],
     "affectsComponents": ["Display"],
-    "resolution": "Build libros from the PR #11 branch (joeycastillo/libros#11), which adds automatic display detection via busy-pin polarity — no configuration needed, works with both displays. The PR has been merge-ready since December 2025 but the upstream repo is inactive. To build: clone the libros repo, check out the PR #11 branch, and compile with the Pico SDK. The pre-built book.uf2 from the project site will NOT work with the GDEY042T81."
+    "resolution": "Handled by the Assembly tab. The firmware flash step builds from the PR #11 branch (joeycastillo/libros#11), which auto-detects the display via busy-pin polarity. No extra steps needed — just follow the assembly guide. Note: the pre-built book.uf2 on the project site does NOT support the GDEY042T81; PR #11 is the recommended firmware source for all new builds."
   },
   {
     "id": "c2-module-cost-missing",

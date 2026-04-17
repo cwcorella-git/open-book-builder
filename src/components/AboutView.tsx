@@ -111,19 +111,13 @@ export function AboutView() {
 
         <h3 style={subheading}>Display</h3>
         <p style={paragraph}>
-          The original display (GoodDisplay GDEW042T2) is <strong style={strong}>end-of-life</strong> —
-          you will most likely receive a GDEY042T81 instead. The panels are physically identical
-          (same FPC connector, confirmed drop-in by community testers), but the newer panel uses a
-          different controller chip (SSD1683 vs IL0398). The pre-built{' '}
-          <code style={code}>book.uf2</code> on the project site <strong style={strong}>will not
-          work</strong> with the GDEY042T81.
-        </p>
-        <p style={paragraph}>
-          Instead, build the firmware from{' '}
-          <Ext href="https://github.com/joeycastillo/libros/pull/11">PR #11</Ext> on the libros
-          repo — it auto-detects which display is connected and works with both panels. No
-          configuration needed. See the <em>Discrepancies</em> tab and the firmware flash step on
-          the <em>Assembly</em> tab for details.
+          Order a 4.2-inch B&W GoodDisplay panel — you will most likely receive a{' '}
+          <strong style={strong}>GDEY042T81</strong> (the original GDEW042T2 is end-of-life).
+          The panels are physically identical (same FPC connector, confirmed drop-in by community
+          testers). The firmware flash step on the <em>Assembly</em> tab handles the controller
+          difference automatically — it builds from{' '}
+          <Ext href="https://github.com/joeycastillo/libros/pull/11">PR #11</Ext>, which
+          auto-detects which display is connected.
         </p>
       </Section>
 

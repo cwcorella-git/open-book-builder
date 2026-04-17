@@ -99,25 +99,25 @@
     "id": "attach-display",
     "order": 90,
     "phase": "mechanical",
-    "title": "Attach the GDEW042T2 e-paper panel via FFC (flat ribbon cable) to the C2 module",
-    "description": "Slide the panel's FPC (flexible printed circuit) tail into the 24-pin 0.5 mm FFC connector (the latching clip) on the C2 module. Make sure the contact side faces the correct way (check the connector's latching direction). Close the connector latch.",
+    "title": "Attach the e-paper panel via FFC (flat ribbon cable) to the C2 module",
+    "description": "Slide the panel's FPC (flexible printed circuit) tail into the 24-pin 0.5 mm FFC connector (the latching clip) on the C2 module. Make sure the contact side faces the correct way (check the connector's latching direction). Close the connector latch. The GDEY042T81 and older GDEW042T2 both use the same connector — either panel works.",
     "componentRefs": [],
     "board": "c1-main",
     "estimatedMinutes": 5,
     "tools": ["tweezers"],
-    "notes": "Don't order the tri-color variant — libros only supports B&W panels. The original GDEW042T2 (IL0398 controller) is EOL; you will most likely receive a GDEY042T81 (SSD1683 controller) instead. Both panels use the same FPC connector and are drop-in compatible. The firmware difference is handled at flash time — see the next step."
+    "notes": "Order a 4.2-inch B&W GoodDisplay panel — you'll almost certainly receive a GDEY042T81. Don't order the tri-color variant; libros only supports B&W."
   },
   {
     "id": "flash-firmware",
     "order": 100,
     "phase": "flash-firmware",
-    "title": "Flash libros onto the Pico",
-    "description": "Hold BOOTSEL (the small button on the Pico board) while plugging it into USB. It appears as a USB mass-storage device. Drag-and-drop the libros .uf2 build. The Pico reboots into libros.",
+    "title": "Build and flash the libros firmware onto the Pico",
+    "description": "Clone joeycastillo/libros from GitHub, check out the PR #11 branch, and build with the Pico SDK. The build produces a .uf2 file. To flash: hold BOOTSEL (the small button on the Pico board) while plugging it into USB — it appears as a USB drive. Drag-and-drop the .uf2 file onto it. The Pico reboots into libros.",
     "componentRefs": ["U1"],
     "board": "c1-main",
-    "estimatedMinutes": 5,
-    "tools": ["USB cable"],
-    "notes": "If you have the original GDEW042T2 display, you can use the pre-built book.uf2 from oddlyspecificobjects.com/projects/openbook/. If you have the newer GDEY042T81 (most likely), use PR #11 instead: clone joeycastillo/libros, check out the PR #11 branch, and build with the Pico SDK. PR #11 auto-detects the display type — no configuration needed, and it works with both panels."
+    "estimatedMinutes": 15,
+    "tools": ["USB cable", "Pico SDK"],
+    "notes": "PR #11 (joeycastillo/libros#11) auto-detects which display you have via the busy-pin polarity — no configuration needed, works with both the older GDEW042T2 and the current GDEY042T81. If you happen to have an original GDEW042T2 and don't want to set up the Pico SDK, the pre-built book.uf2 at oddlyspecificobjects.com/projects/openbook/ will also work — but only with that specific display."
   },
   {
     "id": "flash-babel",

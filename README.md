@@ -373,18 +373,15 @@ in `package.json` to match the fork's repo name.
 
 ## Canonical discrepancies
 
-Authored in `src-tauri/data/discrepancies.json` (5 entries). Most of the
-original 15 discrepancies were outmoded: ordering-related issues are now
-resolved by the About tab's ordering guide (correct gerber files, PCB
-specs); source-document-only issues (COGS-LIST typos, arithmetic errors,
-annotations from the older B1 board) were removed since builders using
-this app never encounter those documents.
+Authored in `src-tauri/data/discrepancies.json` (5 entries, zero
+build-critical). Most of the original 15 discrepancies were outmoded:
+ordering-related issues are resolved by the About tab's ordering guide;
+source-document-only issues were removed; the display EOL situation is
+now handled by the assembly instructions (firmware flash step builds from
+PR #11, which auto-detects the display).
 
-**Build-critical (1):**
-
-- `display-part-number-relabel` — GDEW042T2 (EOL, IL0398 controller) vs
-  GDEY042T81 (current, SSD1683 controller) — different firmware drivers
-  required, not a simple relabel
+**Build-critical: 0** — all resolved by the ordering guide and assembly
+instructions.
 
 **Cost-impact (1):** `c2-module-cost-missing` — no upstream BOM includes
 the C2 PCBA assembly cost ($30–80/unit).
@@ -392,8 +389,9 @@ the C2 PCBA assembly cost ($30–80/unit).
 **Naming (1):** Button actuation force mismatch (BOM: 180WQ / 1.8 N;
 README links: 130WQ / 1.3 N) — either works, builder preference.
 
-**Informational (2):** Upstream README references outdated file versions
-(C1-04, C2-01); upstream vision doc describes ESP32-S3 design, not Pico.
+**Informational (3):** Display EOL handled by assembly guide (PR #11
+firmware); upstream README references outdated file versions (C1-04,
+C2-01); upstream vision doc describes ESP32-S3 design, not Pico.
 
 ## Roadmap
 

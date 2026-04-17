@@ -88,7 +88,7 @@
     "unitCostUsd": 0.86
   },
   "GDEW042T2": {
-    "function": "4.2-inch B&W e-paper panel (GoodDisplay). 400 × 300 px, SPI interface, connects via FFC to the C2 driver module. Don't order the tri-color variant — it'll end in heartbreak (per the README).",
+    "function": "4.2-inch B&W e-paper panel (GoodDisplay), 400 × 300 px, SPI interface, connects via FFC to the C2 driver module. The BOM lists the GDEW042T2 but you'll receive a GDEY042T81 — same connector, drop-in compatible. Don't order the tri-color variant.",
     "datasheetUrl": "https://www.good-display.com/product/206.html",
     "unitCostUsd": 26.90,
     "heroMeshId": "gdew042t2",
