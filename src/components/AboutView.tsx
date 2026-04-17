@@ -137,7 +137,7 @@ export function AboutView() {
         </p>
         <p style={paragraph}>
           This app targets the two-board Pico design in the{' '}
-          <Ext href="https://github.com/joeycastillo/The-Open-Book">upstream GitHub repo</Ext>.
+          <Ext href="https://github.com/joeycastillo/The-Open-Book">project's GitHub repository</Ext>.
           The design files are read-only inputs — nothing in this tool writes back to the
           original project.
         </p>
@@ -145,7 +145,7 @@ export function AboutView() {
 
       <Section title="Project status (April 2026)">
         <p style={paragraph}>
-          The Pico-based "Abridged Edition" covered here is the current DIY build. The upstream{' '}
+          The Pico-based "Abridged Edition" covered here is the current DIY build. The{' '}
           <Ext href="https://github.com/joeycastillo/libros">libros firmware</Ext> repo has not
           had a maintainer commit since February 2024 — Joey's focus has shifted to the Open Book
           Touch. Community contributor{' '}
