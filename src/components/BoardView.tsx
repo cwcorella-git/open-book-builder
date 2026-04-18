@@ -46,26 +46,55 @@ export function BoardView() {
 
   const asideWidth = bp === 'wide' ? '340px' : '260px';
 
-  const detail = selected ? (
-    <DetailPanel component={selected} bom={dataset.bom} />
-  ) : (
-    <DetailPlaceholder />
-  );
-
-  return (
-    <div style={{
-      display: 'flex',
-      flexDirection: compact ? 'column' : 'row',
-      gap: compact ? '12px' : '16px',
-      height: '100%',
-    }}>
-      <section style={{
-        flex: compact ? 'none' : 1,
+  if (compact) {
+    // On mobile the viewport fills available height. When a component is
+    // tapped the detail panel appears below the viewport and the page
+    // becomes scrollable.
+    return (
+      <div style={{
         display: 'flex',
         flexDirection: 'column',
-        minWidth: 0,
-        height: compact ? '50vh' : undefined,
+        height: '100%',
       }}>
+        <Toolbar
+          board={board}
+          setBoard={handleBoardChange}
+          sideFilter={sideFilter}
+          setSideFilter={setSideFilter}
+          colorMode={colorMode}
+          setColorMode={setColorMode}
+          showTraces={showTraces}
+          setShowTraces={setShowTraces}
+          componentCount={boardData.components.length}
+          holeCount={boardData.outline.holes.length}
+          compact={compact}
+        />
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: '200px' }}>
+          {hasGeometry ? (
+            <BoardViewport
+              boardData={boardData}
+              sideFilter={sideFilter}
+              selectedRef={selectedRef}
+              onSelect={selectComponent}
+              colorMode={colorMode}
+              showTraces={showTraces}
+            />
+          ) : (
+            <EmptyBoard board={board} />
+          )}
+        </div>
+        {selected && (
+          <section style={{ borderTop: '1px solid #334155', padding: '12px 0' }}>
+            <DetailPanel component={selected} bom={dataset.bom} />
+          </section>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', gap: '16px', height: '100%' }}>
+      <section style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         <Toolbar
           board={board}
           setBoard={handleBoardChange}
@@ -93,21 +122,19 @@ export function BoardView() {
         )}
       </section>
 
-      {compact ? (
-        <section style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
-          {detail}
-        </section>
-      ) : (
-        <aside style={{
-          width: asideWidth,
-          flexShrink: 0,
-          borderLeft: '1px solid #334155',
-          paddingLeft: '16px',
-          overflow: 'auto',
-        }}>
-          {detail}
-        </aside>
-      )}
+      <aside style={{
+        width: asideWidth,
+        flexShrink: 0,
+        borderLeft: '1px solid #334155',
+        paddingLeft: '16px',
+        overflow: 'auto',
+      }}>
+        {selected ? (
+          <DetailPanel component={selected} bom={dataset.bom} />
+        ) : (
+          <DetailPlaceholder />
+        )}
+      </aside>
     </div>
   );
 }

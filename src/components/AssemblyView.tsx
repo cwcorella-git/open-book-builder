@@ -150,8 +150,10 @@ export function AssemblyView() {
   );
 
   if (compact) {
+    // On mobile, let the entire page scroll naturally instead of constraining
+    // to viewport height with internal scroll regions.
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', height: '100%' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         <ProgressHeader
           completedCount={progress.completedCount}
           totalCount={progress.totalCount}
@@ -165,7 +167,24 @@ export function AssemblyView() {
         />
         {viewportSection}
         {detailSection}
-        {stepList}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {visibleSteps.map((step) => (
+            <StepCard
+              key={step.id}
+              step={step}
+              active={step.id === activeStepId}
+              completed={progress.isCompleted(step.id)}
+              onActivate={() => setActiveStepId(step.id)}
+              onToggleCompleted={(v) => progress.setCompleted(step.id, v)}
+              bp={bp}
+            />
+          ))}
+          {visibleSteps.length === 0 && (
+            <div style={{ color: '#64748b', fontSize: '12px', fontStyle: 'italic', padding: '24px' }}>
+              All steps hidden. Untick "Hide completed" to see them again.
+            </div>
+          )}
+        </div>
       </div>
     );
   }
