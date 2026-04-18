@@ -140,7 +140,7 @@ function Toolbar({
 
   return (
     <div style={{
-      display: 'flex', gap: compact ? '8px' : '16px', alignItems: 'center', flexWrap: 'wrap',
+      display: 'flex', gap: compact ? '6px' : '16px', alignItems: 'center', flexWrap: 'wrap',
       paddingBottom: compact ? '8px' : '12px', borderBottom: '1px solid #334155', marginBottom: '8px',
     }}>
       <div style={{ display: 'flex', gap: '4px' }}>
@@ -149,7 +149,7 @@ function Toolbar({
             key={f.id}
             onClick={() => setFilter(f.id)}
             style={{
-              padding: '4px 10px', fontSize: '11px',
+              padding: compact ? '4px 8px' : '4px 10px', fontSize: compact ? '10px' : '11px',
               background: f.id === filter ? '#334155' : 'transparent',
               color: '#e2e8f0',
               border: '1px solid ' + (f.id === filter ? '#475569' : '#334155'),
@@ -161,7 +161,7 @@ function Toolbar({
         ))}
       </div>
 
-      <label style={{ fontSize: '11px', color: '#94a3b8', display: 'flex', gap: '6px', alignItems: 'center' }}>
+      <label style={{ fontSize: compact ? '10px' : '11px', color: '#94a3b8', display: 'flex', gap: '4px', alignItems: 'center' }}>
         {wide ? 'Build qty' : 'Qty'}
         <input
           type="number" min={1} max={999} value={qtyMultiplier}
@@ -170,19 +170,20 @@ function Toolbar({
             setQtyMultiplier(Number.isFinite(parsed) && parsed > 0 ? parsed : 1);
           }}
           style={{
-            width: '56px', padding: '3px 6px', fontSize: '11px',
+            width: compact ? '44px' : '56px', padding: '3px 6px', fontSize: compact ? '10px' : '11px',
             background: '#0f172a', color: '#e2e8f0',
             border: '1px solid #334155', borderRadius: '3px',
           }}
         />
       </label>
 
-      <label style={{ fontSize: '11px', color: '#94a3b8', display: 'flex', gap: '6px', alignItems: 'center' }}>
+      <label style={{ fontSize: compact ? '10px' : '11px', color: '#94a3b8', display: 'flex', gap: '4px', alignItems: 'center' }}>
         <input
           type="checkbox" checked={includeOptional}
           onChange={(e) => setIncludeOptional(e.target.checked)}
+          style={{ margin: 0 }}
         />
-        {wide ? 'Include optional lines' : 'Optional'}
+        {compact ? 'Opt' : wide ? 'Include optional lines' : 'Optional'}
       </label>
 
       <ExportSlot

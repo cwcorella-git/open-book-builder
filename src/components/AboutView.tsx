@@ -3,9 +3,12 @@
 // does, project status, credits, and developer info.
 
 import { useDataset } from '../lib/dataset-context';
+import { useBreakpoint } from '../lib/use-breakpoint';
 
 export function AboutView() {
   const { bom, assembly } = useDataset();
+  const bp = useBreakpoint();
+  const compact = bp === 'compact';
 
   return (
     <div
@@ -14,23 +17,20 @@ export function AboutView() {
         marginInline: 'auto',
         display: 'flex',
         flexDirection: 'column',
-        gap: '20px',
+        gap: compact ? '14px' : '20px',
         color: '#cbd5e1',
-        fontSize: '13px',
+        fontSize: compact ? '12px' : '13px',
         lineHeight: 1.6,
-        padding: '4px 4px 40px',
+        padding: compact ? '0 0 24px' : '4px 4px 40px',
       }}
     >
-      <header style={{ borderBottom: '1px solid #334155', paddingBottom: '12px' }}>
-        <h1 style={{ margin: 0, fontSize: '18px', color: '#f1f5f9', letterSpacing: '0.3px' }}>
-          Open Book Builder
-        </h1>
-        <p style={{ margin: '6px 0 0', fontSize: '12px', color: '#94a3b8' }}>
+      <header style={{ borderBottom: '1px solid #334155', paddingBottom: compact ? '8px' : '12px' }}>
+        <p style={{ margin: 0, fontSize: '12px', color: '#94a3b8' }}>
           A pre-flight check for building an Open Book e-reader.
         </p>
       </header>
 
-      <Section title="What the Open Book is">
+      <Section title="What the Open Book is" compact={compact}>
         <p style={paragraph}>
           <Ext href="https://www.oddlyspecificobjects.com/projects/openbook/">The Open Book</Ext>{' '}
           is an open-source hardware e-reader designed by{' '}
@@ -52,7 +52,7 @@ export function AboutView() {
         </p>
       </Section>
 
-      <Section title="Ordering the boards">
+      <Section title="Ordering the boards" compact={compact}>
         <p style={paragraph}>
           You need two boards and one display panel. Upload the gerber files from the{' '}
           <Ext href="https://github.com/joeycastillo/The-Open-Book/tree/main/Fabrication%20Files">
@@ -123,7 +123,7 @@ export function AboutView() {
         </p>
       </Section>
 
-      <Section title="What this app does">
+      <Section title="What this app does" compact={compact}>
         <p style={paragraph}>
           Open Book Builder is a pre-flight check for the Open Book build. It combines a unified
           parts list, ordering specs, assembly steps, and interactive 3D views of both boards —
@@ -143,7 +143,7 @@ export function AboutView() {
         </p>
       </Section>
 
-      <Section title="Project status (April 2026)">
+      <Section title="Project status (April 2026)" compact={compact}>
         <p style={paragraph}>
           The Pico-based "Abridged Edition" covered here is the current DIY build. The{' '}
           <Ext href="https://github.com/joeycastillo/libros">libros firmware</Ext> repo has not
@@ -169,7 +169,7 @@ export function AboutView() {
         </p>
       </Section>
 
-      <Section title="Credits &amp; license">
+      <Section title="Credits &amp; license" compact={compact}>
         <p style={paragraph}>
           The Open Book hardware is © Joey Castillo, licensed{' '}
           <Ext href="https://creativecommons.org/licenses/by-sa/4.0/">CC-BY-SA 4.0</Ext>. Upstream
@@ -182,7 +182,7 @@ export function AboutView() {
         </p>
       </Section>
 
-      <Section title="For developers">
+      <Section title="For developers" compact={compact}>
         <p style={paragraph}>
           Tauri v2 + React 19 + Three.js. The same codebase ships as a desktop app (reads the
           design files live via a Rust <code style={code}>invoke</code> command) and as a
@@ -225,7 +225,6 @@ const specTable: React.CSSProperties = {
 const specLabel: React.CSSProperties = {
   padding: '5px 10px 5px 0',
   color: '#94a3b8',
-  whiteSpace: 'nowrap',
   verticalAlign: 'top',
   borderBottom: '1px solid #1e293b',
 };
@@ -236,17 +235,17 @@ const specValue: React.CSSProperties = {
   borderBottom: '1px solid #1e293b',
 };
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, children, compact }: { title: string; children: React.ReactNode; compact?: boolean }) {
   return (
     <section
       style={{
         background: '#1e293b',
         border: '1px solid #334155',
         borderRadius: '8px',
-        padding: '18px 20px',
+        padding: compact ? '12px 14px' : '18px 20px',
         display: 'flex',
         flexDirection: 'column',
-        gap: '10px',
+        gap: compact ? '8px' : '10px',
       }}
     >
       <h2
