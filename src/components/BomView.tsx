@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDataset } from '../lib/dataset-context';
+import { useBreakpoint, type Breakpoint } from '../lib/use-breakpoint';
 import type { BomLine, BoardId } from '../lib/types';
 import { buildDigiKeyCsv, summarizeExport } from '../lib/digikey-csv';
 import { saveTextFile } from '../lib/exporter';
@@ -9,9 +10,14 @@ const TOAST_MS = 3000;
 
 type BoardFilter = 'all' | BoardId;
 
-const BOARD_LABEL: Record<BoardId, string> = {
+const BOARD_LABEL_FULL: Record<BoardId, string> = {
   'c1-main': 'Main Board (C1)',
   'c2-driver': 'E-Paper Driver (C2)',
+};
+
+const BOARD_LABEL_SHORT: Record<BoardId, string> = {
+  'c1-main': 'C1',
+  'c2-driver': 'C2',
 };
 
 const FILTERS: { id: BoardFilter; label: string }[] = [
@@ -35,6 +41,8 @@ export function BomView() {
   const [qtyMultiplier, setQtyMultiplier] = useState<number>(1);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [includeOptional, setIncludeOptional] = useState<boolean>(true);
+  const bp = useBreakpoint();
+  const compact = bp === 'compact';
 
   const rows = useMemo(() => {
     return dataset.bom.filter((line) => {
@@ -50,9 +58,15 @@ export function BomView() {
   );
 
   const { perUnitUsd } = dataset.costSummary;
+  const asideWidth = bp === 'wide' ? '340px' : '260px';
 
   return (
-    <div style={{ display: 'flex', gap: '16px', height: '100%' }}>
+    <div style={{
+      display: 'flex',
+      flexDirection: compact ? 'column' : 'row',
+      gap: compact ? '12px' : '16px',
+      height: '100%',
+    }}>
       <section style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         <Toolbar
           filter={filter}
@@ -63,46 +77,71 @@ export function BomView() {
           setIncludeOptional={setIncludeOptional}
           rowCount={rows.length}
           bom={dataset.bom}
+          bp={bp}
         />
         <BomTable
           rows={rows}
           qtyMultiplier={qtyMultiplier}
           selectedKey={selectedKey}
           onSelect={setSelectedKey}
+          bp={bp}
         />
         <Footer
           perUnitUsd={perUnitUsd}
           qtyMultiplier={qtyMultiplier}
+          bp={bp}
         />
       </section>
 
-      <aside style={{
-        width: '340px',
-        flexShrink: 0,
-        borderLeft: '1px solid #334155',
-        paddingLeft: '16px',
-        overflow: 'auto',
-      }}>
-        {selected ? <DetailPanel line={selected} /> : <DetailPlaceholder />}
-      </aside>
+      {compact ? (
+        selected && (
+          <section style={{
+            borderTop: '1px solid #334155',
+            paddingTop: '12px',
+          }}>
+            <DetailPanel line={selected} />
+          </section>
+        )
+      ) : (
+        <aside style={{
+          width: asideWidth,
+          flexShrink: 0,
+          borderLeft: '1px solid #334155',
+          paddingLeft: '16px',
+          overflow: 'auto',
+        }}>
+          {selected ? <DetailPanel line={selected} /> : <DetailPlaceholder />}
+        </aside>
+      )}
     </div>
   );
 }
 
 function Toolbar({
   filter, setFilter, qtyMultiplier, setQtyMultiplier,
-  includeOptional, setIncludeOptional, rowCount, bom,
+  includeOptional, setIncludeOptional, rowCount, bom, bp,
 }: {
   filter: BoardFilter; setFilter: (f: BoardFilter) => void;
   qtyMultiplier: number; setQtyMultiplier: (n: number) => void;
   includeOptional: boolean; setIncludeOptional: (b: boolean) => void;
   rowCount: number;
   bom: BomLine[];
+  bp: Breakpoint;
 }) {
+  const compact = bp === 'compact';
+  const wide = bp === 'wide';
+
+  function filterLabel(f: typeof FILTERS[number]): string {
+    if (wide) return f.label;
+    if (f.id === 'all') return 'All';
+    if (f.id === 'c1-main') return compact ? 'C1' : 'Main';
+    return compact ? 'C2' : 'Driver';
+  }
+
   return (
     <div style={{
-      display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap',
-      paddingBottom: '12px', borderBottom: '1px solid #334155', marginBottom: '8px',
+      display: 'flex', gap: compact ? '8px' : '16px', alignItems: 'center', flexWrap: 'wrap',
+      paddingBottom: compact ? '8px' : '12px', borderBottom: '1px solid #334155', marginBottom: '8px',
     }}>
       <div style={{ display: 'flex', gap: '4px' }}>
         {FILTERS.map((f) => (
@@ -117,13 +156,13 @@ function Toolbar({
               borderRadius: '4px', cursor: 'pointer',
             }}
           >
-            {f.label}
+            {filterLabel(f)}
           </button>
         ))}
       </div>
 
       <label style={{ fontSize: '11px', color: '#94a3b8', display: 'flex', gap: '6px', alignItems: 'center' }}>
-        Build qty
+        {wide ? 'Build qty' : 'Qty'}
         <input
           type="number" min={1} max={999} value={qtyMultiplier}
           onChange={(e) => {
@@ -143,7 +182,7 @@ function Toolbar({
           type="checkbox" checked={includeOptional}
           onChange={(e) => setIncludeOptional(e.target.checked)}
         />
-        Include optional lines
+        {wide ? 'Include optional lines' : 'Optional'}
       </label>
 
       <ExportSlot
@@ -151,19 +190,22 @@ function Toolbar({
         qtyMultiplier={qtyMultiplier}
         includeOptional={includeOptional}
         rowCount={rowCount}
+        bp={bp}
       />
     </div>
   );
 }
 
 function ExportSlot({
-  bom, qtyMultiplier, includeOptional, rowCount,
+  bom, qtyMultiplier, includeOptional, rowCount, bp,
 }: {
   bom: BomLine[];
   qtyMultiplier: number;
   includeOptional: boolean;
   rowCount: number;
+  bp: Breakpoint;
 }) {
+  const wide = bp === 'wide';
   const [toast, setToast] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const timeoutRef = useRef<number | null>(null);
@@ -216,12 +258,16 @@ function ExportSlot({
       marginLeft: 'auto', display: 'flex', gap: '10px',
       alignItems: 'center', flexWrap: 'wrap',
     }}>
-      <span style={{ fontSize: '11px', color: '#64748b' }}>
-        {rowCount} rows shown
-      </span>
-      <span style={{ fontSize: '11px', color: '#64748b' }}>
-        · {includedCount} included · {skippedCount} skipped (no Digi-Key part number)
-      </span>
+      {wide && (
+        <>
+          <span style={{ fontSize: '11px', color: '#64748b' }}>
+            {rowCount} rows shown
+          </span>
+          <span style={{ fontSize: '11px', color: '#64748b' }}>
+            · {includedCount} included · {skippedCount} skipped (no Digi-Key part number)
+          </span>
+        </>
+      )}
       {toast && (
         <span style={{
           fontSize: '11px',
@@ -255,18 +301,27 @@ function ExportSlot({
 }
 
 function BomTable({
-  rows, qtyMultiplier, selectedKey, onSelect,
+  rows, qtyMultiplier, selectedKey, onSelect, bp,
 }: {
   rows: BomLine[]; qtyMultiplier: number;
   selectedKey: string | null; onSelect: (key: string) => void;
+  bp: Breakpoint;
 }) {
+  const headers = bp === 'compact'
+    ? ['Refs', 'Description', 'Qty', 'Cost']
+    : bp === 'medium'
+    ? ['Board', 'Refs', 'Description', 'Qty', 'Cost']
+    : ['Board', 'Refs', 'Description', 'Part Number', 'Qty', 'Qty × ' + qtyMultiplier,
+       'Unit Cost', 'Line Total', ''];
+
+  const colCount = headers.length;
+
   return (
     <div style={{ flex: 1, overflow: 'auto', border: '1px solid #1e293b', borderRadius: '6px' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', color: '#e2e8f0' }}>
         <thead style={{ position: 'sticky', top: 0, background: '#0f172a', zIndex: 1 }}>
           <tr>
-            {['Board', 'Refs', 'Description', 'Part Number', 'Qty', 'Qty × ' + qtyMultiplier,
-              'Unit Cost', 'Line Total', ''].map((h, i) => (
+            {headers.map((h, i) => (
               <th key={i} style={thStyle}>{h}</th>
             ))}
           </tr>
@@ -289,12 +344,13 @@ function BomTable({
                 lineUnit={lineUnit}
                 lineTotal={lineTotal}
                 onSelect={() => onSelect(key)}
+                bp={bp}
               />
             );
           })}
           {rows.length === 0 && (
             <tr>
-              <td colSpan={9} style={{ ...tdStyle, textAlign: 'center', color: '#64748b', padding: '24px' }}>
+              <td colSpan={colCount} style={{ ...tdStyle, textAlign: 'center', color: '#64748b', padding: '24px' }}>
                 No rows match the current filter.
               </td>
             </tr>
@@ -306,12 +362,13 @@ function BomTable({
 }
 
 function BomRow({
-  line, isSelected, totalQty, lineUnit, lineTotal, onSelect,
+  line, isSelected, totalQty, lineUnit, lineTotal, onSelect, bp,
 }: {
   line: BomLine;
   isSelected: boolean; totalQty: number;
   lineUnit: number | null | undefined; lineTotal: number | null;
   onSelect: () => void;
+  bp: Breakpoint;
 }) {
   return (
     <tr
@@ -323,53 +380,94 @@ function BomRow({
         opacity: line.optional ? 0.75 : 1,
       }}
     >
-      <td style={tdStyle}>
-        <BoardPill board={line.board} />
-      </td>
-      <td style={tdStyle}>
-        <span style={{ fontFamily: 'monospace', color: '#cbd5e1' }}>
-          {line.refs.join(', ') || '—'}
-        </span>
-      </td>
-      <td style={{ ...tdStyle, maxWidth: '260px' }}>
-        <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {line.description}
-        </div>
-      </td>
-      <td style={{ ...tdStyle, fontFamily: 'monospace', color: '#94a3b8' }}>
-        {line.mpn}
-      </td>
-      <td style={{ ...tdStyle, textAlign: 'right' }}>{line.qty}</td>
-      <td style={{ ...tdStyle, textAlign: 'right', color: '#94a3b8' }}>{totalQty}</td>
-      <td style={{ ...tdStyle, textAlign: 'right' }}>{formatUsd(lineUnit)}</td>
-      <td style={{ ...tdStyle, textAlign: 'right' }}>{formatUsd(lineTotal)}</td>
-      <td style={tdStyle}>
-        {line.optional && <OptionalChip />}
-      </td>
+      {bp === 'compact' ? (
+        <>
+          <td style={tdStyle}>
+            <span style={{ fontFamily: 'monospace', color: '#cbd5e1', fontSize: '10px' }}>
+              {line.refs.join(', ') || '—'}
+            </span>
+          </td>
+          <td style={{ ...tdStyle, maxWidth: '140px' }}>
+            <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '10px' }}>
+              {line.description}
+            </div>
+          </td>
+          <td style={{ ...tdStyle, textAlign: 'right', fontSize: '10px' }}>{totalQty}</td>
+          <td style={{ ...tdStyle, textAlign: 'right', fontSize: '10px' }}>{formatUsd(lineUnit)}</td>
+        </>
+      ) : bp === 'medium' ? (
+        <>
+          <td style={tdStyle}>
+            <BoardPill board={line.board} short />
+          </td>
+          <td style={tdStyle}>
+            <span style={{ fontFamily: 'monospace', color: '#cbd5e1' }}>
+              {line.refs.join(', ') || '—'}
+            </span>
+          </td>
+          <td style={{ ...tdStyle, maxWidth: '200px' }}>
+            <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {line.description}
+            </div>
+          </td>
+          <td style={{ ...tdStyle, textAlign: 'right' }}>{totalQty}</td>
+          <td style={{ ...tdStyle, textAlign: 'right' }}>{formatUsd(lineUnit)}</td>
+        </>
+      ) : (
+        <>
+          <td style={tdStyle}>
+            <BoardPill board={line.board} />
+          </td>
+          <td style={tdStyle}>
+            <span style={{ fontFamily: 'monospace', color: '#cbd5e1' }}>
+              {line.refs.join(', ') || '—'}
+            </span>
+          </td>
+          <td style={{ ...tdStyle, maxWidth: '260px' }}>
+            <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {line.description}
+            </div>
+          </td>
+          <td style={{ ...tdStyle, fontFamily: 'monospace', color: '#94a3b8' }}>
+            {line.mpn}
+          </td>
+          <td style={{ ...tdStyle, textAlign: 'right' }}>{line.qty}</td>
+          <td style={{ ...tdStyle, textAlign: 'right', color: '#94a3b8' }}>{totalQty}</td>
+          <td style={{ ...tdStyle, textAlign: 'right' }}>{formatUsd(lineUnit)}</td>
+          <td style={{ ...tdStyle, textAlign: 'right' }}>{formatUsd(lineTotal)}</td>
+          <td style={tdStyle}>
+            {line.optional && <OptionalChip />}
+          </td>
+        </>
+      )}
     </tr>
   );
 }
 
 function Footer({
-  perUnitUsd, qtyMultiplier,
+  perUnitUsd, qtyMultiplier, bp,
 }: {
   perUnitUsd: number;
   qtyMultiplier: number;
+  bp: Breakpoint;
 }) {
+  const compact = bp === 'compact';
   const projected = perUnitUsd * qtyMultiplier;
   return (
     <div style={{
-      marginTop: '8px', padding: '10px 12px', borderTop: '1px solid #334155',
+      marginTop: '8px', padding: compact ? '8px 10px' : '10px 12px', borderTop: '1px solid #334155',
       fontSize: '11px', color: '#cbd5e1',
-      display: 'flex', gap: '24px', flexWrap: 'wrap', alignItems: 'baseline',
+      display: 'flex', gap: compact ? '12px' : '24px', flexWrap: 'wrap', alignItems: 'baseline',
     }}>
       <span><b style={{ color: '#f1f5f9' }}>Per unit:</b> ${perUnitUsd.toFixed(2)}</span>
       {qtyMultiplier > 1 && (
         <span><b style={{ color: '#f1f5f9' }}>× {qtyMultiplier}:</b> ${projected.toFixed(2)}</span>
       )}
-      <span style={{ marginLeft: 'auto', color: '#64748b', fontStyle: 'italic' }}>
-        E-Paper Driver internals excluded — they arrive pre-assembled as a single unit from the fab house.
-      </span>
+      {bp === 'wide' && (
+        <span style={{ marginLeft: 'auto', color: '#64748b', fontStyle: 'italic' }}>
+          E-Paper Driver internals excluded — they arrive pre-assembled as a single unit from the fab house.
+        </span>
+      )}
     </div>
   );
 }
@@ -444,7 +542,7 @@ function DetailPlaceholder() {
   );
 }
 
-function BoardPill({ board }: { board: BoardId }) {
+function BoardPill({ board, short = false }: { board: BoardId; short?: boolean }) {
   return (
     <span style={{
       padding: '2px 6px', fontSize: '10px',
@@ -452,8 +550,9 @@ function BoardPill({ board }: { board: BoardId }) {
       color: '#e0e7ff',
       borderRadius: '3px',
       letterSpacing: '0.3px',
+      whiteSpace: 'nowrap',
     }}>
-      {BOARD_LABEL[board]}
+      {short ? BOARD_LABEL_SHORT[board] : BOARD_LABEL_FULL[board]}
     </span>
   );
 }

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useDataset } from '../lib/dataset-context';
 import { useNavigation } from '../lib/navigation-context';
+import { useBreakpoint } from '../lib/use-breakpoint';
 import { BoardViewport } from './BoardViewport';
 import type { ColorMode } from '../lib/scene-renderer';
 import type { BoardId, BomLine, Component } from '../lib/types';
@@ -23,6 +24,8 @@ export function BoardView() {
   const [sideFilter, setSideFilter] = useState<SideFilter>('both');
   const [colorMode, setColorMode] = useState<ColorMode>('side');
   const [showTraces, setShowTraces] = useState(false);
+  const bp = useBreakpoint();
+  const compact = bp === 'compact';
 
   const boardData = dataset.boards[board];
 
@@ -41,9 +44,28 @@ export function BoardView() {
   const hasGeometry =
     boardData.components.length > 0 || boardData.outline.edgeSegments.length > 0;
 
+  const asideWidth = bp === 'wide' ? '340px' : '260px';
+
+  const detail = selected ? (
+    <DetailPanel component={selected} bom={dataset.bom} />
+  ) : (
+    <DetailPlaceholder />
+  );
+
   return (
-    <div style={{ display: 'flex', gap: '16px', height: '100%' }}>
-      <section style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+    <div style={{
+      display: 'flex',
+      flexDirection: compact ? 'column' : 'row',
+      gap: compact ? '12px' : '16px',
+      height: '100%',
+    }}>
+      <section style={{
+        flex: compact ? 'none' : 1,
+        display: 'flex',
+        flexDirection: 'column',
+        minWidth: 0,
+        height: compact ? '50vh' : undefined,
+      }}>
         <Toolbar
           board={board}
           setBoard={handleBoardChange}
@@ -55,6 +77,7 @@ export function BoardView() {
           setShowTraces={setShowTraces}
           componentCount={boardData.components.length}
           holeCount={boardData.outline.holes.length}
+          compact={compact}
         />
         {hasGeometry ? (
           <BoardViewport
@@ -70,19 +93,21 @@ export function BoardView() {
         )}
       </section>
 
-      <aside style={{
-        width: '340px',
-        flexShrink: 0,
-        borderLeft: '1px solid #334155',
-        paddingLeft: '16px',
-        overflow: 'auto',
-      }}>
-        {selected ? (
-          <DetailPanel component={selected} bom={dataset.bom} />
-        ) : (
-          <DetailPlaceholder />
-        )}
-      </aside>
+      {compact ? (
+        <section style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
+          {detail}
+        </section>
+      ) : (
+        <aside style={{
+          width: asideWidth,
+          flexShrink: 0,
+          borderLeft: '1px solid #334155',
+          paddingLeft: '16px',
+          overflow: 'auto',
+        }}>
+          {detail}
+        </aside>
+      )}
     </div>
   );
 }
@@ -94,7 +119,7 @@ const COLOR_MODES: { id: ColorMode; label: string }[] = [
 
 function Toolbar({
   board, setBoard, sideFilter, setSideFilter, colorMode, setColorMode,
-  showTraces, setShowTraces, componentCount, holeCount,
+  showTraces, setShowTraces, componentCount, holeCount, compact,
 }: {
   board: BoardId;
   setBoard: (b: BoardId) => void;
@@ -106,11 +131,12 @@ function Toolbar({
   setShowTraces: (v: boolean) => void;
   componentCount: number;
   holeCount: number;
+  compact: boolean;
 }) {
   return (
     <div style={{
-      display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap',
-      paddingBottom: '12px', borderBottom: '1px solid #334155', marginBottom: '8px',
+      display: 'flex', gap: compact ? '6px' : '16px', alignItems: 'center', flexWrap: 'wrap',
+      paddingBottom: compact ? '8px' : '12px', borderBottom: '1px solid #334155', marginBottom: '8px',
     }}>
       <div style={{ display: 'flex', gap: '4px' }}>
         {BOARDS.map((b) => (
@@ -119,7 +145,7 @@ function Toolbar({
             onClick={() => setBoard(b.id)}
             style={pillStyle(b.id === board)}
           >
-            {b.label}
+            {compact ? (b.id === 'c1-main' ? 'Main' : 'Driver') : b.label}
           </button>
         ))}
       </div>
@@ -136,18 +162,20 @@ function Toolbar({
         ))}
       </div>
 
-      <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-        <span style={{ fontSize: '10px', color: '#64748b', marginRight: '2px' }}>Color by:</span>
-        {COLOR_MODES.map((m) => (
-          <button
-            key={m.id}
-            onClick={() => setColorMode(m.id)}
-            style={pillStyle(m.id === colorMode)}
-          >
-            {m.label}
-          </button>
-        ))}
-      </div>
+      {!compact && (
+        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+          <span style={{ fontSize: '10px', color: '#64748b', marginRight: '2px' }}>Color by:</span>
+          {COLOR_MODES.map((m) => (
+            <button
+              key={m.id}
+              onClick={() => setColorMode(m.id)}
+              style={pillStyle(m.id === colorMode)}
+            >
+              {m.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       <label style={{ display: 'flex', gap: '4px', alignItems: 'center', fontSize: '10px', color: '#64748b', cursor: 'pointer' }}>
         <input
@@ -156,12 +184,14 @@ function Toolbar({
           onChange={(e) => setShowTraces(e.target.checked)}
           style={{ accentColor: '#f59e0b' }}
         />
-        Copper Traces
+        Traces
       </label>
 
-      <span style={{ marginLeft: 'auto', fontSize: '11px', color: '#64748b' }}>
-        {componentCount} components · {holeCount} mounting holes
-      </span>
+      {!compact && (
+        <span style={{ marginLeft: 'auto', fontSize: '11px', color: '#64748b' }}>
+          {componentCount} components · {holeCount} mounting holes
+        </span>
+      )}
     </div>
   );
 }

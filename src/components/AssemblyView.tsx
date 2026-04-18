@@ -9,6 +9,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useDataset } from '../lib/dataset-context';
 import { useNavigation } from '../lib/navigation-context';
+import { useBreakpoint, type Breakpoint } from '../lib/use-breakpoint';
 import { useAssemblyProgress } from '../lib/use-assembly-progress';
 import { BoardViewport } from './BoardViewport';
 import type { AssemblyPhase, AssemblyStep } from '../lib/types';
@@ -39,6 +40,8 @@ const noop = () => {};
 
 export function AssemblyView() {
   const { assembly, boards } = useDataset();
+  const bp = useBreakpoint();
+  const compact = bp === 'compact';
 
   // Sort defensively — assembly.json is already ordered, but keep the view
   // independent of file-ordering drift.
@@ -89,6 +92,84 @@ export function AssemblyView() {
       ? activeStep.componentRefs
       : null;
 
+  const asideWidth = bp === 'wide' ? '380px' : '300px';
+
+  const viewportSection = (
+    <div style={{ height: compact ? '240px' : '320px', flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
+      <BoardViewport
+        boardData={boards['c1-main']}
+        sideFilter="both"
+        selectedRef={null}
+        onSelect={noop}
+        highlightedRefs={highlightedRefs}
+        focusRefs={highlightedRefs}
+      />
+    </div>
+  );
+
+  const detailSection = (
+    <div style={{ flex: compact ? 'none' : 1, overflow: compact ? undefined : 'auto', minHeight: 0 }}>
+      {activeStep ? (
+        <ActiveStepPanel step={activeStep} />
+      ) : (
+        <EmptyActivePanel
+          allDone={progress.completedCount === progress.totalCount && progress.totalCount > 0}
+        />
+      )}
+    </div>
+  );
+
+  const stepList = (
+    <div
+      style={{
+        flex: 1,
+        overflow: 'auto',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '10px',
+        paddingRight: '4px',
+      }}
+    >
+      {visibleSteps.map((step) => (
+        <StepCard
+          key={step.id}
+          step={step}
+          active={step.id === activeStepId}
+          completed={progress.isCompleted(step.id)}
+          onActivate={() => setActiveStepId(step.id)}
+          onToggleCompleted={(v) => progress.setCompleted(step.id, v)}
+          bp={bp}
+        />
+      ))}
+      {visibleSteps.length === 0 && (
+        <div style={{ color: '#64748b', fontSize: '12px', fontStyle: 'italic', padding: '24px' }}>
+          All steps hidden. Untick "Hide completed" to see them again.
+        </div>
+      )}
+    </div>
+  );
+
+  if (compact) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', height: '100%' }}>
+        <ProgressHeader
+          completedCount={progress.completedCount}
+          totalCount={progress.totalCount}
+          totalMinutesRemaining={progress.totalMinutesRemaining}
+        />
+        <Toolbar
+          hideCompleted={hideCompleted}
+          setHideCompleted={setHideCompleted}
+          visibleCount={visibleSteps.length}
+          totalCount={orderedSteps.length}
+        />
+        {viewportSection}
+        {detailSection}
+        {stepList}
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: 'flex', gap: '16px', height: '100%' }}>
       <section
@@ -112,37 +193,12 @@ export function AssemblyView() {
           visibleCount={visibleSteps.length}
           totalCount={orderedSteps.length}
         />
-        <div
-          style={{
-            flex: 1,
-            overflow: 'auto',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '10px',
-            paddingRight: '4px',
-          }}
-        >
-          {visibleSteps.map((step) => (
-            <StepCard
-              key={step.id}
-              step={step}
-              active={step.id === activeStepId}
-              completed={progress.isCompleted(step.id)}
-              onActivate={() => setActiveStepId(step.id)}
-              onToggleCompleted={(v) => progress.setCompleted(step.id, v)}
-            />
-          ))}
-          {visibleSteps.length === 0 && (
-            <div style={{ color: '#64748b', fontSize: '12px', fontStyle: 'italic', padding: '24px' }}>
-              All steps hidden. Untick "Hide completed" to see them again.
-            </div>
-          )}
-        </div>
+        {stepList}
       </section>
 
       <aside
         style={{
-          width: '380px',
+          width: asideWidth,
           flexShrink: 0,
           borderLeft: '1px solid #334155',
           paddingLeft: '16px',
@@ -152,25 +208,8 @@ export function AssemblyView() {
           minWidth: 0,
         }}
       >
-        <div style={{ height: '320px', flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
-          <BoardViewport
-            boardData={boards['c1-main']}
-            sideFilter="both"
-            selectedRef={null}
-            onSelect={noop}
-            highlightedRefs={highlightedRefs}
-            focusRefs={highlightedRefs}
-          />
-        </div>
-        <div style={{ flex: 1, overflow: 'auto', minHeight: 0 }}>
-          {activeStep ? (
-            <ActiveStepPanel step={activeStep} />
-          ) : (
-            <EmptyActivePanel
-              allDone={progress.completedCount === progress.totalCount && progress.totalCount > 0}
-            />
-          )}
-        </div>
+        {viewportSection}
+        {detailSection}
       </aside>
     </div>
   );
@@ -302,13 +341,18 @@ function StepCard({
   completed,
   onActivate,
   onToggleCompleted,
+  bp = 'wide',
 }: {
   step: AssemblyStep;
   active: boolean;
   completed: boolean;
   onActivate: () => void;
   onToggleCompleted: (v: boolean) => void;
+  bp?: Breakpoint;
 }) {
+  const compact = bp === 'compact';
+  const wide = bp === 'wide';
+
   return (
     <div
       onClick={onActivate}
@@ -322,10 +366,10 @@ function StepCard({
         opacity: completed ? 0.55 : 1,
         display: 'flex',
         flexDirection: 'column',
-        gap: active ? '10px' : '0',
+        gap: active ? '10px' : '4px',
       }}
     >
-      <div style={{ display: 'flex', gap: '10px', alignItems: 'center', minWidth: 0 }}>
+      <div style={{ display: 'flex', gap: compact ? '6px' : '10px', alignItems: 'center', minWidth: 0 }}>
         <input
           type="checkbox"
           checked={completed}
@@ -333,10 +377,10 @@ function StepCard({
           onChange={(e) => onToggleCompleted(e.target.checked)}
           style={{ flexShrink: 0 }}
         />
-        <PhasePill phase={step.phase} />
+        {wide && <PhasePill phase={step.phase} />}
         <span
           style={{
-            fontSize: '12px',
+            fontSize: compact ? '11px' : '12px',
             color: '#e2e8f0',
             flex: 1,
             minWidth: 0,
@@ -359,9 +403,15 @@ function StepCard({
         )}
       </div>
 
+      {!wide && !compact && (
+        <div style={{ paddingLeft: '28px' }}>
+          <PhasePill phase={step.phase} />
+        </div>
+      )}
+
       {active && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingLeft: '28px' }}>
-          <div style={{ fontSize: '12px', color: '#cbd5e1', lineHeight: 1.5 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingLeft: compact ? '22px' : '28px' }}>
+          <div style={{ fontSize: compact ? '11px' : '12px', color: '#cbd5e1', lineHeight: 1.5 }}>
             {step.description}
           </div>
           {step.componentRefs.length > 0 && (
