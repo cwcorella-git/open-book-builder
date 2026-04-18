@@ -1,6 +1,10 @@
-import { DatasetProvider, useDatasetStatus } from './lib/dataset-context';
+import { useCallback } from 'react';
+import { DatasetProvider, useDataset, useDatasetStatus } from './lib/dataset-context';
 import { NavigationProvider, useNavigation, type Tab } from './lib/navigation-context';
+import { ViewportProvider, useViewport } from './lib/viewport-context';
 import { useBreakpoint } from './lib/use-breakpoint';
+import { BoardViewport } from './components/BoardViewport';
+import { ViewportToolbar } from './components/ViewportToolbar';
 import { BoardView } from './components/BoardView';
 import { BomView } from './components/BomView';
 import { AssemblyView } from './components/AssemblyView';
@@ -13,8 +17,48 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'about', label: 'About' },
 ];
 
+const noop = () => {};
+
+function ViewportColumn() {
+  const { config } = useViewport();
+  const { board, selectedRef, selectComponent } = useNavigation();
+  const dataset = useDataset();
+  const boardData = dataset.boards[board];
+
+  const onSelect = useCallback(
+    (ref: string | null) => {
+      if (config.clickSelectEnabled) selectComponent(ref);
+    },
+    [config.clickSelectEnabled, selectComponent],
+  );
+
+  return (
+    <section style={{
+      flex: '0 0 58%',
+      display: 'flex',
+      flexDirection: 'column',
+      minWidth: 0,
+      minHeight: 0,
+      padding: '16px 0 16px 16px',
+    }}>
+      <ViewportToolbar />
+      <BoardViewport
+        boardData={boardData}
+        sideFilter={config.sideFilter}
+        selectedRef={selectedRef}
+        onSelect={config.clickSelectEnabled ? onSelect : noop}
+        highlightedRefs={config.highlightedRefs}
+        colorMode={config.colorMode}
+        showTraces={config.showTraces}
+        focusRefs={config.focusRefs}
+      />
+    </section>
+  );
+}
+
 function Shell() {
   const { tab, setTab } = useNavigation();
+  const { config } = useViewport();
   const status = useDatasetStatus();
   const bp = useBreakpoint();
   const compact = bp === 'compact';
@@ -53,18 +97,31 @@ function Shell() {
         </nav>
         {!compact && (
           <span style={{ marginLeft: 'auto', fontSize: '11px', color: '#64748b' }}>
-            {status.kind === 'loading' && 'Loading dataset…'}
+            {status.kind === 'loading' && 'Loading dataset\u2026'}
             {status.kind === 'error' && `Error: ${status.message}`}
             {status.kind === 'ready' && `${status.dataset.bom.length} parts`}
           </span>
         )}
       </header>
 
-      <main style={{ flex: 1, overflow: 'auto', padding: compact ? '10px' : '16px' }}>
-        {status.kind === 'loading' && <Placeholder text="Loading…" />}
-        {status.kind === 'error' && <Placeholder text={`Error loading dataset: ${status.message}`} />}
-        {status.kind === 'ready' && <TabContent tab={tab} />}
-      </main>
+      {status.kind === 'loading' && (
+        <main style={{ flex: 1, overflow: 'auto', padding: compact ? '10px' : '16px' }}>
+          <Placeholder text="Loading\u2026" />
+        </main>
+      )}
+      {status.kind === 'error' && (
+        <main style={{ flex: 1, overflow: 'auto', padding: compact ? '10px' : '16px' }}>
+          <Placeholder text={`Error loading dataset: ${status.message}`} />
+        </main>
+      )}
+      {status.kind === 'ready' && (
+        <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+          {config.visible && !compact && <ViewportColumn />}
+          <main style={{ flex: 1, overflow: 'auto', padding: compact ? '10px' : '16px' }}>
+            <TabContent tab={tab} />
+          </main>
+        </div>
+      )}
     </div>
   );
 }
@@ -97,7 +154,9 @@ export default function App() {
   return (
     <DatasetProvider>
       <NavigationProvider>
-        <Shell />
+        <ViewportProvider>
+          <Shell />
+        </ViewportProvider>
       </NavigationProvider>
     </DatasetProvider>
   );

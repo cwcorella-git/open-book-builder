@@ -1,19 +1,23 @@
-import { useMemo, useState } from 'react';
+// Board tab — detail panel for the selected component. The 3D viewport and
+// toolbar now live in the persistent ViewportColumn (App.tsx). This component
+// just shows the component info when something is clicked.
+
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useDataset } from '../lib/dataset-context';
 import { useNavigation } from '../lib/navigation-context';
-import { useBreakpoint, type Breakpoint } from '../lib/use-breakpoint';
+import { useViewport } from '../lib/viewport-context';
+import { useBreakpoint } from '../lib/use-breakpoint';
 import { BoardViewport } from './BoardViewport';
-import type { ColorMode } from '../lib/scene-renderer';
 import type { BoardId, BomLine, Component } from '../lib/types';
+import type { SideFilter } from '../lib/scene-renderer';
 
 const BOARDS: { id: BoardId; label: string }[] = [
-  { id: 'c1-main', label: 'Main Board' },
-  { id: 'c2-driver', label: 'E-Paper Driver' },
+  { id: 'c1-main', label: 'Main' },
+  { id: 'c2-driver', label: 'Driver' },
 ];
 
-type SideFilter = 'both' | 'top' | 'bottom';
 const SIDE_FILTERS: { id: SideFilter; label: string }[] = [
-  { id: 'both', label: 'Both sides' },
+  { id: 'both', label: 'All' },
   { id: 'top', label: 'Top' },
   { id: 'bottom', label: 'Bottom' },
 ];
@@ -21,11 +25,12 @@ const SIDE_FILTERS: { id: SideFilter; label: string }[] = [
 export function BoardView() {
   const dataset = useDataset();
   const { board, setBoard, selectedRef, selectComponent } = useNavigation();
-  const [sideFilter, setSideFilter] = useState<SideFilter>('both');
-  const [colorMode, setColorMode] = useState<ColorMode>('side');
-  const [showTraces, setShowTraces] = useState(false);
+  const { setConfig } = useViewport();
   const bp = useBreakpoint();
   const compact = bp === 'compact';
+
+  // Mobile-only local state for the inline viewport.
+  const [sideFilter, setSideFilter] = useState<SideFilter>('both');
 
   const boardData = dataset.boards[board];
 
@@ -34,54 +39,38 @@ export function BoardView() {
     [boardData.components, selectedRef],
   );
 
-  // Reset selection when switching boards so a stale C1 ref doesn't bleed
-  // into the C2 view (and vice versa).
-  const handleBoardChange = (next: BoardId) => {
-    setBoard(next);
-    selectComponent(null);
-  };
+  // Tab activation: enable click-to-select, clear any Assembly highlights.
+  useEffect(() => {
+    setConfig({ clickSelectEnabled: true, highlightedRefs: null, visible: true });
+  }, [setConfig]);
 
-  const hasGeometry =
-    boardData.components.length > 0 || boardData.outline.edgeSegments.length > 0;
-
-  const asideWidth = bp === 'wide' ? '340px' : '260px';
+  // Focus camera on newly selected component (desktop persistent viewport).
+  const prevRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (selectedRef && selectedRef !== prevRef.current) {
+      setConfig({ focusRefs: [selectedRef] });
+    }
+    prevRef.current = selectedRef;
+  }, [selectedRef, setConfig]);
 
   if (compact) {
-    // On mobile the viewport fills available height. When a component is
-    // tapped the detail panel appears below the viewport and the page
-    // becomes scrollable.
+    // On mobile the persistent viewport column is hidden, so we render an
+    // inline viewport here. Tapping a component shows the detail panel below.
     return (
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100%',
-      }}>
-        <Toolbar
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <MobileToolbar
           board={board}
-          setBoard={handleBoardChange}
+          setBoard={setBoard}
           sideFilter={sideFilter}
           setSideFilter={setSideFilter}
-          colorMode={colorMode}
-          setColorMode={setColorMode}
-          showTraces={showTraces}
-          setShowTraces={setShowTraces}
-          componentCount={boardData.components.length}
-          holeCount={boardData.outline.holes.length}
-          bp={bp}
         />
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: '200px' }}>
-          {hasGeometry ? (
-            <BoardViewport
-              boardData={boardData}
-              sideFilter={sideFilter}
-              selectedRef={selectedRef}
-              onSelect={selectComponent}
-              colorMode={colorMode}
-              showTraces={showTraces}
-            />
-          ) : (
-            <EmptyBoard board={board} />
-          )}
+          <BoardViewport
+            boardData={boardData}
+            sideFilter={sideFilter}
+            selectedRef={selectedRef}
+            onSelect={selectComponent}
+          />
         </div>
         {selected && (
           <section style={{ borderTop: '1px solid #334155', padding: '12px 0' }}>
@@ -93,85 +82,32 @@ export function BoardView() {
   }
 
   return (
-    <div style={{ display: 'flex', gap: '16px', height: '100%' }}>
-      <section style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-        <Toolbar
-          board={board}
-          setBoard={handleBoardChange}
-          sideFilter={sideFilter}
-          setSideFilter={setSideFilter}
-          colorMode={colorMode}
-          setColorMode={setColorMode}
-          showTraces={showTraces}
-          setShowTraces={setShowTraces}
-          componentCount={boardData.components.length}
-          holeCount={boardData.outline.holes.length}
-          bp={bp}
-        />
-        {hasGeometry ? (
-          <BoardViewport
-            boardData={boardData}
-            sideFilter={sideFilter}
-            selectedRef={selectedRef}
-            onSelect={selectComponent}
-            colorMode={colorMode}
-            showTraces={showTraces}
-          />
-        ) : (
-          <EmptyBoard board={board} />
-        )}
-      </section>
-
-      <aside style={{
-        width: asideWidth,
-        flexShrink: 0,
-        borderLeft: '1px solid #334155',
-        paddingLeft: '16px',
-        overflow: 'auto',
-      }}>
-        {selected ? (
-          <DetailPanel component={selected} bom={dataset.bom} />
-        ) : (
-          <DetailPlaceholder />
-        )}
-      </aside>
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%',
+    }}>
+      {selected ? (
+        <DetailPanel component={selected} bom={dataset.bom} />
+      ) : (
+        <DetailPlaceholder compact={false} />
+      )}
     </div>
   );
 }
 
-const COLOR_MODES: { id: ColorMode; label: string }[] = [
-  { id: 'side', label: 'Board Side' },
-  { id: 'netCategory', label: 'Signal Type' },
-];
-
-function Toolbar({
-  board, setBoard, sideFilter, setSideFilter, colorMode, setColorMode,
-  showTraces, setShowTraces, componentCount, holeCount, bp,
+function MobileToolbar({
+  board, setBoard, sideFilter, setSideFilter,
 }: {
   board: BoardId;
   setBoard: (b: BoardId) => void;
   sideFilter: SideFilter;
   setSideFilter: (s: SideFilter) => void;
-  colorMode: ColorMode;
-  setColorMode: (m: ColorMode) => void;
-  showTraces: boolean;
-  setShowTraces: (v: boolean) => void;
-  componentCount: number;
-  holeCount: number;
-  bp: Breakpoint;
 }) {
-  const compact = bp === 'compact';
-  const wide = bp === 'wide';
-
-  function boardLabel(id: BoardId): string {
-    if (wide) return id === 'c1-main' ? 'Main Board' : 'E-Paper Driver';
-    return id === 'c1-main' ? 'Main' : 'Driver';
-  }
-
   return (
     <div style={{
-      display: 'flex', gap: compact ? '6px' : wide ? '16px' : '10px', alignItems: 'center', flexWrap: 'wrap',
-      paddingBottom: compact ? '8px' : '12px', borderBottom: '1px solid #334155', marginBottom: '8px',
+      display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap',
+      paddingBottom: '8px', borderBottom: '1px solid #334155', marginBottom: '8px',
     }}>
       <div style={{ display: 'flex', gap: '4px' }}>
         {BOARDS.map((b) => (
@@ -180,11 +116,10 @@ function Toolbar({
             onClick={() => setBoard(b.id)}
             style={pillStyle(b.id === board)}
           >
-            {boardLabel(b.id)}
+            {b.label}
           </button>
         ))}
       </div>
-
       <div style={{ display: 'flex', gap: '4px' }}>
         {SIDE_FILTERS.map((s) => (
           <button
@@ -192,41 +127,10 @@ function Toolbar({
             onClick={() => setSideFilter(s.id)}
             style={pillStyle(s.id === sideFilter)}
           >
-            {compact && s.id === 'both' ? 'All' : s.label}
+            {s.label}
           </button>
         ))}
       </div>
-
-      {!compact && (
-        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-          {wide && <span style={{ fontSize: '10px', color: '#64748b', marginRight: '2px' }}>Color by:</span>}
-          {COLOR_MODES.map((m) => (
-            <button
-              key={m.id}
-              onClick={() => setColorMode(m.id)}
-              style={pillStyle(m.id === colorMode)}
-            >
-              {m.label}
-            </button>
-          ))}
-        </div>
-      )}
-
-      <label style={{ display: 'flex', gap: '4px', alignItems: 'center', fontSize: '10px', color: '#64748b', cursor: 'pointer' }}>
-        <input
-          type="checkbox"
-          checked={showTraces}
-          onChange={(e) => setShowTraces(e.target.checked)}
-          style={{ accentColor: '#f59e0b', margin: 0 }}
-        />
-        {!compact && 'Traces'}
-      </label>
-
-      {wide && (
-        <span style={{ marginLeft: 'auto', fontSize: '11px', color: '#64748b' }}>
-          {componentCount} components · {holeCount} mounting holes
-        </span>
-      )}
     </div>
   );
 }
@@ -290,7 +194,7 @@ function DetailPanel({ component, bom }: { component: Component; bom: BomLine[] 
         <>
           <Field label="Part Number" value={<span style={{ fontFamily: 'monospace' }}>{line.mpn}</span>} />
           {line.manufacturer && <Field label="Manufacturer" value={line.manufacturer} />}
-          <Field label="Unit cost" value={line.unitCostUsd !== undefined ? `$${line.unitCostUsd.toFixed(2)}` : '—'} />
+          <Field label="Unit cost" value={line.unitCostUsd !== undefined ? `$${line.unitCostUsd.toFixed(2)}` : '\u2014'} />
 
           <SourceLinks
             digikeyPn={line.digikeyPn}
@@ -354,10 +258,10 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
-function DetailPlaceholder() {
+function DetailPlaceholder({ compact }: { compact: boolean }) {
   return (
     <div style={{
-      padding: '24px 8px', color: '#64748b', fontSize: '12px',
+      padding: compact ? '16px 8px' : '24px 8px', color: '#64748b', fontSize: '12px',
       fontStyle: 'italic', lineHeight: 1.5,
     }}>
       Click a component in the 3D viewport to see its position, footprint,
@@ -377,22 +281,5 @@ function SidePill({ side }: { side: 'top' | 'bottom' }) {
     }}>
       {side.toUpperCase()}
     </span>
-  );
-}
-
-function EmptyBoard({ board: _board }: { board: BoardId }) {
-  // With both C1 (KiCad) and C2 (EAGLE) parsers wired up, this branch only
-  // fires if a parser misses the outline — the message stays generic rather
-  // than pinning to a specific board.
-  const message = 'No board geometry available yet.';
-  return (
-    <div style={{
-      flex: 1,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      color: '#64748b', fontSize: '13px', fontStyle: 'italic',
-      border: '1px dashed #334155', borderRadius: '8px',
-    }}>
-      {message}
-    </div>
   );
 }

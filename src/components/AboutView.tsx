@@ -2,13 +2,21 @@
 // Six sections: what the Open Book is, ordering the boards, what this app
 // does, project status, credits, and developer info.
 
+import { useEffect } from 'react';
 import { useDataset } from '../lib/dataset-context';
+import { useViewport } from '../lib/viewport-context';
 import { useBreakpoint } from '../lib/use-breakpoint';
 
 export function AboutView() {
   const { bom, assembly } = useDataset();
+  const { setConfig } = useViewport();
   const bp = useBreakpoint();
   const compact = bp === 'compact';
+
+  // Hide viewport — About content fills full width.
+  useEffect(() => {
+    setConfig({ visible: false });
+  }, [setConfig]);
 
   return (
     <div
