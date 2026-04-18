@@ -493,23 +493,12 @@ function DetailPanel({ line }: { line: BomLine }) {
       {line.footprint && <Field label="Footprint" value={line.footprint} />}
       <Field label="Qty per unit" value={String(line.qty)} />
       <Field label="Unit cost" value={formatUsd(line.unitCostUsd)} />
-      {line.digikeyPn && (
-        <Field label="Digi-Key" value={<span style={{ fontFamily: 'monospace' }}>{line.digikeyPn}</span>} />
-      )}
-      {line.mouserPn && (
-        <Field label="Mouser" value={<span style={{ fontFamily: 'monospace' }}>{line.mouserPn}</span>} />
-      )}
-      {line.datasheetUrl && (
-        <Field
-          label="Datasheet"
-          value={
-            <a href={line.datasheetUrl} target="_blank" rel="noreferrer"
-               style={{ color: '#60a5fa', textDecoration: 'none' }}>
-              View Datasheet
-            </a>
-          }
-        />
-      )}
+
+      <SourceLinks
+        digikeyPn={line.digikeyPn}
+        mouserPn={line.mouserPn}
+        datasheetUrl={line.datasheetUrl}
+      />
 
       <div style={{
         marginTop: '4px', padding: '8px', fontSize: '11px',
@@ -519,6 +508,67 @@ function DetailPanel({ line }: { line: BomLine }) {
         Raw CSV description: <span style={{ color: '#94a3b8' }}>{line.description}</span>
       </div>
     </div>
+  );
+}
+
+function SourceLinks({ digikeyPn, mouserPn, datasheetUrl }: {
+  digikeyPn?: string | null;
+  mouserPn?: string | null;
+  datasheetUrl?: string | null;
+}) {
+  const hasAny = digikeyPn || mouserPn || datasheetUrl;
+  if (!hasAny) return null;
+
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', gap: '6px',
+      padding: '8px 10px', background: '#0f172a', border: '1px solid #1e293b',
+      borderRadius: '5px',
+    }}>
+      <span style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+        Sources
+      </span>
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        {digikeyPn && (
+          <DistributorLink
+            name="Digi-Key"
+            pn={digikeyPn}
+            href={`https://www.digikey.com/en/products/detail/-/-/${encodeURIComponent(digikeyPn)}`}
+          />
+        )}
+        {mouserPn && (
+          <DistributorLink
+            name="Mouser"
+            pn={mouserPn}
+            href={`https://www.mouser.com/ProductDetail/${encodeURIComponent(mouserPn)}`}
+          />
+        )}
+        {datasheetUrl && (
+          <a
+            href={datasheetUrl}
+            target="_blank"
+            rel="noreferrer"
+            style={{ fontSize: '11px', color: '#60a5fa', textDecoration: 'none' }}
+          >
+            Datasheet
+          </a>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function DistributorLink({ name, pn, href }: { name: string; pn: string; href: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      title={pn}
+      style={{ fontSize: '11px', color: '#60a5fa', textDecoration: 'none' }}
+    >
+      {name}
+    </a>
   );
 }
 

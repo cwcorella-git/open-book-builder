@@ -291,26 +291,69 @@ function DetailPanel({ component, bom }: { component: Component; bom: BomLine[] 
           <Field label="Part Number" value={<span style={{ fontFamily: 'monospace' }}>{line.mpn}</span>} />
           {line.manufacturer && <Field label="Manufacturer" value={line.manufacturer} />}
           <Field label="Unit cost" value={line.unitCostUsd !== undefined ? `$${line.unitCostUsd.toFixed(2)}` : '—'} />
-          {line.digikeyPn && (
-            <Field label="Digi-Key PN" value={<span style={{ fontFamily: 'monospace' }}>{line.digikeyPn}</span>} />
-          )}
-          {line.datasheetUrl && (
-            <Field
-              label="Datasheet"
-              value={
-                <a
-                  href={line.datasheetUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{ color: '#60a5fa', textDecoration: 'none' }}
-                >
-                  View Datasheet
-                </a>
-              }
-            />
-          )}
+
+          <SourceLinks
+            digikeyPn={line.digikeyPn}
+            mouserPn={line.mouserPn}
+            datasheetUrl={line.datasheetUrl}
+          />
         </>
       )}
+    </div>
+  );
+}
+
+function SourceLinks({ digikeyPn, mouserPn, datasheetUrl }: {
+  digikeyPn?: string | null;
+  mouserPn?: string | null;
+  datasheetUrl?: string | null;
+}) {
+  const hasAny = digikeyPn || mouserPn || datasheetUrl;
+  if (!hasAny) return null;
+
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', gap: '6px',
+      padding: '8px 10px', background: '#0f172a', border: '1px solid #1e293b',
+      borderRadius: '5px',
+    }}>
+      <span style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+        Sources
+      </span>
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        {digikeyPn && (
+          <a
+            href={`https://www.digikey.com/en/products/detail/-/-/${encodeURIComponent(digikeyPn)}`}
+            target="_blank"
+            rel="noreferrer"
+            title={digikeyPn}
+            style={{ fontSize: '11px', color: '#60a5fa', textDecoration: 'none' }}
+          >
+            Digi-Key
+          </a>
+        )}
+        {mouserPn && (
+          <a
+            href={`https://www.mouser.com/ProductDetail/${encodeURIComponent(mouserPn)}`}
+            target="_blank"
+            rel="noreferrer"
+            title={mouserPn}
+            style={{ fontSize: '11px', color: '#60a5fa', textDecoration: 'none' }}
+          >
+            Mouser
+          </a>
+        )}
+        {datasheetUrl && (
+          <a
+            href={datasheetUrl}
+            target="_blank"
+            rel="noreferrer"
+            style={{ fontSize: '11px', color: '#60a5fa', textDecoration: 'none' }}
+          >
+            Datasheet
+          </a>
+        )}
+      </div>
     </div>
   );
 }

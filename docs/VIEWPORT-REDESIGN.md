@@ -1,7 +1,8 @@
 # Viewport Redesign — Proposed Directions
 
-> **Status:** Proposal. None of these directions are implemented yet.
-> Direction C is recommended.
+> **Status:** Partial. The `focusOnRefs` camera animation system from
+> Direction C was implemented in scene-renderer.ts and BoardViewport.tsx.
+> The full persistent-viewport-column layout has not been implemented.
 
 The app currently has four independent tabs. The 3D viewport lives in
 two places: a full-size instance on the Board tab, and a 380x320 px

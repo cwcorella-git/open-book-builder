@@ -115,6 +115,7 @@ No database. No HTTP server.
 open-book-builder/
 ├── index.html                        # Vite entry
 ├── package.json                      # scripts: dev, dev:web, build, build:web, preview, preview:web, tauri, bake-dataset
+├── screenshots.mjs                   # Playwright screenshot automation for responsive testing
 ├── vite.config.ts
 ├── public/                           # baked board-dataset.json lands here (gitignored)
 ├── scripts/
@@ -132,6 +133,7 @@ open-book-builder/
 │   │   ├── use-assembly-progress.ts  # Assembly checkbox state + progress aggregates
 │   │   ├── digikey-csv.ts            # Pure Digi-Key BOM CSV builder + summary
 │   │   ├── exporter.ts              # saveTextFile(): Tauri save-dialog vs web Blob
+│   │   ├── use-breakpoint.ts          # Responsive breakpoint hook (compact / medium / wide)
 │   │   ├── hero-meshes.ts            # Procedural Three.js builders (Pico, C2 module, Keystone 1022, MEM2075, GDEW042T2)
 │   │   └── scene-renderer.ts         # Three.js scene — board extrude + per-component meshes
 │   └── components/
@@ -144,10 +146,11 @@ open-book-builder/
 └── src-tauri/
     ├── Cargo.toml
     ├── tauri.conf.json               # productName "Open Book Builder"
-    ├── capabilities/default.json     # dialog:allow-save, fs:allow-write-text-file
+    ├── capabilities/default.json     # dialog:allow-open, dialog:allow-save, fs:allow-read-text-file, fs:allow-write-text-file
     ├── data/
     │   ├── component_functions.json  # 17 MPNs with function, datasheet, cost, heroMeshId
     │   ├── assembly.json             # 13 ordered build steps
+    │   ├── hero-meshes/              # GLB assets for procedural hero mesh overrides
     │   ├── bom-c1-main.csv           # from upstream OSO-BOOK-C1/1-click-bom.csv
     │   ├── bom-c2-driver.csv         # from upstream OSO-BOOK-C2-02 (PCBWay)
     │   ├── OSO-BOOK-C1.kicad_pcb     # from upstream OSO-BOOK-C1 (1.3 MB, KiCad 6)
@@ -222,11 +225,11 @@ Expected values for the baked dataset:
 - `costSummary.perUnitUsd ≈ 43.27`
 - `costSummary.missingLineItems == ["OSO-BOOK-C2-01"]`
 - 13 assembly steps
-- `boards["c1-main"]`: 27 components, 4 mounting holes, 40 Edge.Cuts
-  segments, outline 85 × 115 mm
+- `boards["c1-main"]`: 27 components, 4 `outline.holes`, 40 Edge.Cuts
+  `outline.edgeSegments`, outline 85 × 115 mm, 296 traces, 76 vias
 - `boards["c2-driver"]`: 18 components (17 EAGLE + 1 synthesized
-  Display), 3 mounting holes, 4 outline wires, outline
-  17.272 × 23.876 mm, 21 nets
+  Display), 3 `outline.holes`, 4 `outline.edgeSegments`, outline
+  17.272 × 23.876 mm, 21 nets, 153 traces
 
 ## Upstream source files
 
