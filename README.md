@@ -46,11 +46,13 @@ optional toggles.
 **Assembly tab** — 13 ordered build steps from bare boards to working
 e-reader. Each step shows the relevant components, tools, and timing.
 Clicking a step highlights its components in a mini 3D viewport while
-dimming everything else. Progress persists via localStorage.
+dimming everything else, and orbits the camera to frame the relevant
+parts (flipping to the correct board side). Progress persists via
+localStorage.
 
-**About tab** — ordering guide (gerber files, PCB specs, display
-sourcing), project status (display EOL, firmware, Open Book Touch),
-community links, credits.
+**About tab** — what the Open Book is, ordering guide (gerber files,
+PCB specs, display sourcing), what this app does, project status
+(display EOL, firmware, Open Book Touch), credits, developer info.
 
 ## Architecture
 
@@ -68,6 +70,7 @@ export async function loadBoardDataset(): Promise<BoardDataset> {
     return invoke<BoardDataset>('load_board_dataset');
   }
   const res = await fetch(`${import.meta.env.BASE_URL}board-dataset.json`);
+  if (!res.ok) throw new Error(`Failed to load board-dataset.json: ${res.status}`);
   return res.json();
 }
 ```
@@ -111,7 +114,7 @@ No database. No HTTP server.
 ```
 open-book-builder/
 ├── index.html                        # Vite entry
-├── package.json                      # scripts: dev, build, tauri, bake-dataset, build:web, preview:web
+├── package.json                      # scripts: dev, dev:web, build, build:web, preview, preview:web, tauri, bake-dataset
 ├── vite.config.ts
 ├── public/                           # baked board-dataset.json lands here (gitignored)
 ├── scripts/
@@ -124,6 +127,7 @@ open-book-builder/
 │   │   ├── types.ts                  # Mirrors src-tauri/src/types.rs
 │   │   ├── dataset-source.ts         # Tauri-vs-web boundary (isTauri())
 │   │   ├── dataset-context.tsx       # React context + useDataset() hook
+│   │   ├── navigation-context.tsx   # Tab / board / selection state + cross-tab navigation
 │   │   ├── use-persisted-state.ts    # Generic localStorage-backed useState
 │   │   ├── use-assembly-progress.ts  # Assembly checkbox state + progress aggregates
 │   │   ├── digikey-csv.ts            # Pure Digi-Key BOM CSV builder + summary
