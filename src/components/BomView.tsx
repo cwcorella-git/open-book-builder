@@ -497,6 +497,7 @@ function DetailPanel({ line }: { line: BomLine }) {
       <SourceLinks
         digikeyPn={line.digikeyPn}
         mouserPn={line.mouserPn}
+        lcscPn={line.lcscPn}
         datasheetUrl={line.datasheetUrl}
       />
 
@@ -511,12 +512,13 @@ function DetailPanel({ line }: { line: BomLine }) {
   );
 }
 
-function SourceLinks({ digikeyPn, mouserPn, datasheetUrl }: {
+function SourceLinks({ digikeyPn, mouserPn, lcscPn, datasheetUrl }: {
   digikeyPn?: string | null;
   mouserPn?: string | null;
+  lcscPn?: string | null;
   datasheetUrl?: string | null;
 }) {
-  const hasAny = digikeyPn || mouserPn || datasheetUrl;
+  const hasAny = digikeyPn || mouserPn || lcscPn || datasheetUrl;
   if (!hasAny) return null;
 
   return (
@@ -533,7 +535,7 @@ function SourceLinks({ digikeyPn, mouserPn, datasheetUrl }: {
           <DistributorLink
             name="Digi-Key"
             pn={digikeyPn}
-            href={`https://www.digikey.com/en/products/detail/-/-/${encodeURIComponent(digikeyPn)}`}
+            href={`https://www.digikey.com/en/products/result?keywords=${encodeURIComponent(digikeyPn)}`}
           />
         )}
         {mouserPn && (
@@ -541,6 +543,13 @@ function SourceLinks({ digikeyPn, mouserPn, datasheetUrl }: {
             name="Mouser"
             pn={mouserPn}
             href={`https://www.mouser.com/ProductDetail/${encodeURIComponent(mouserPn)}`}
+          />
+        )}
+        {lcscPn && (
+          <DistributorLink
+            name="LCSC"
+            pn={lcscPn}
+            href={`https://www.lcsc.com/product-detail/${encodeURIComponent(lcscPn)}.html`}
           />
         )}
         {datasheetUrl && (

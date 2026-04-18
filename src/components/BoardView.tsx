@@ -295,6 +295,7 @@ function DetailPanel({ component, bom }: { component: Component; bom: BomLine[] 
           <SourceLinks
             digikeyPn={line.digikeyPn}
             mouserPn={line.mouserPn}
+            lcscPn={line.lcscPn}
             datasheetUrl={line.datasheetUrl}
           />
         </>
@@ -303,13 +304,16 @@ function DetailPanel({ component, bom }: { component: Component; bom: BomLine[] 
   );
 }
 
-function SourceLinks({ digikeyPn, mouserPn, datasheetUrl }: {
+function SourceLinks({ digikeyPn, mouserPn, lcscPn, datasheetUrl }: {
   digikeyPn?: string | null;
   mouserPn?: string | null;
+  lcscPn?: string | null;
   datasheetUrl?: string | null;
 }) {
-  const hasAny = digikeyPn || mouserPn || datasheetUrl;
+  const hasAny = digikeyPn || mouserPn || lcscPn || datasheetUrl;
   if (!hasAny) return null;
+
+  const linkStyle: React.CSSProperties = { fontSize: '11px', color: '#60a5fa', textDecoration: 'none' };
 
   return (
     <div style={{
@@ -322,36 +326,19 @@ function SourceLinks({ digikeyPn, mouserPn, datasheetUrl }: {
       </span>
       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
         {digikeyPn && (
-          <a
-            href={`https://www.digikey.com/en/products/detail/-/-/${encodeURIComponent(digikeyPn)}`}
-            target="_blank"
-            rel="noreferrer"
-            title={digikeyPn}
-            style={{ fontSize: '11px', color: '#60a5fa', textDecoration: 'none' }}
-          >
-            Digi-Key
-          </a>
+          <a href={`https://www.digikey.com/en/products/result?keywords=${encodeURIComponent(digikeyPn)}`}
+            target="_blank" rel="noreferrer" title={digikeyPn} style={linkStyle}>Digi-Key</a>
         )}
         {mouserPn && (
-          <a
-            href={`https://www.mouser.com/ProductDetail/${encodeURIComponent(mouserPn)}`}
-            target="_blank"
-            rel="noreferrer"
-            title={mouserPn}
-            style={{ fontSize: '11px', color: '#60a5fa', textDecoration: 'none' }}
-          >
-            Mouser
-          </a>
+          <a href={`https://www.mouser.com/ProductDetail/${encodeURIComponent(mouserPn)}`}
+            target="_blank" rel="noreferrer" title={mouserPn} style={linkStyle}>Mouser</a>
+        )}
+        {lcscPn && (
+          <a href={`https://www.lcsc.com/product-detail/${encodeURIComponent(lcscPn)}.html`}
+            target="_blank" rel="noreferrer" title={lcscPn} style={linkStyle}>LCSC</a>
         )}
         {datasheetUrl && (
-          <a
-            href={datasheetUrl}
-            target="_blank"
-            rel="noreferrer"
-            style={{ fontSize: '11px', color: '#60a5fa', textDecoration: 'none' }}
-          >
-            Datasheet
-          </a>
+          <a href={datasheetUrl} target="_blank" rel="noreferrer" style={linkStyle}>Datasheet</a>
         )}
       </div>
     </div>
