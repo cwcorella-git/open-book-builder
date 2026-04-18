@@ -85,6 +85,13 @@ export function AboutView() {
             <tr><td style={specLabel}>Copper weight</td><td style={specValue}>1 oz (standard)</td></tr>
           </tbody>
         </table>
+        <div style={callout}>
+          <strong style={strong}>Settings to change from defaults:</strong> Most fab houses default to
+          1.6 mm thickness and leaded HASL. Change <strong style={strong}>thickness to 1.0 mm</strong> and{' '}
+          <strong style={strong}>surface finish to lead-free HASL</strong>. Everything else (2-layer, FR-4,
+          1 oz copper, green mask) matches defaults on both JLCPCB and PCBWay.
+          Also recommended: enable "Confirm Production File" so the fab reviews your gerbers before cutting.
+        </div>
 
         <h3 style={subheading}>C2 e-paper driver (pre-assembled — the fab house populates it)</h3>
         <p style={paragraph}>
@@ -104,8 +111,25 @@ export function AboutView() {
               <td style={specLabel}>PCBWay</td>
               <td style={specValue}><code style={code}>OSO-BOOK-C2-02</code> files</td>
             </tr>
+            <tr>
+              <td style={specLabel}>Assembly type</td>
+              <td style={specValue}>
+                Turnkey (fab sources parts){' '}
+                <span style={{ color: '#94a3b8' }}>· JLCPCB: "Economic" · PCBWay: "Turnkey"</span>
+              </td>
+            </tr>
+            <tr>
+              <td style={specLabel}>Assembly side</td>
+              <td style={specValue}>Top only</td>
+            </tr>
           </tbody>
         </table>
+        <div style={callout}>
+          <strong style={strong}>Extra settings for C2:</strong> In addition to thickness and surface finish,
+          set <strong style={strong}>castellated holes to Yes</strong> — the C2 module uses half-circle
+          edge pads to connect to the main board. On JLCPCB, toggle "PCB Assembly" on at the bottom
+          of the quote page, select Economic assembly, and upload the BOM + pick-and-place CSVs.
+        </div>
         <p style={paragraph}>
           Budget <strong style={strong}>$30–80 per unit</strong> for the C2 assembly — this cost is
           not included in any upstream BOM total.
@@ -199,6 +223,17 @@ export function AboutView() {
 const paragraph: React.CSSProperties = { margin: 0 };
 
 const strong: React.CSSProperties = { color: '#f1f5f9' };
+
+const callout: React.CSSProperties = {
+  margin: 0,
+  padding: '10px 12px',
+  background: '#0f172a',
+  border: '1px solid #1e293b',
+  borderRadius: '5px',
+  fontSize: '12px',
+  lineHeight: 1.5,
+  color: '#94a3b8',
+};
 
 const code: React.CSSProperties = {
   fontFamily: 'monospace',
