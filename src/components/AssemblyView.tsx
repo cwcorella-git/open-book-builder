@@ -9,7 +9,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useDataset } from '../lib/dataset-context';
 import { useNavigation } from '../lib/navigation-context';
-import { useViewport } from '../lib/viewport-context';
 import { useBreakpoint, type Breakpoint } from '../lib/use-breakpoint';
 import { useAssemblyProgress } from '../lib/use-assembly-progress';
 import { BoardViewport } from './BoardViewport';
@@ -37,10 +36,10 @@ const PHASE_LABEL: Record<AssemblyPhase, string> = {
 
 const ACTIVE_ACCENT = '#60a5fa';
 
+const noop = () => {};
+
 export function AssemblyView() {
   const { assembly, boards } = useDataset();
-  const { setBoard } = useNavigation();
-  const { setConfig } = useViewport();
   const bp = useBreakpoint();
   const compact = bp === 'compact';
 
@@ -85,7 +84,7 @@ export function AssemblyView() {
     }
   }, [hideCompleted, activeStep, progress, visibleSteps]);
 
-  // Pass the active step's refs to the shared viewport. 0-ref steps (e.g.
+  // Pass the active step's refs to the mini-viewport. 0-ref steps (e.g.
   // "Order PCBs", "Assemble enclosure") pass null → viewport renders normally
   // without any dimming.
   const highlightedRefs =
@@ -93,32 +92,20 @@ export function AssemblyView() {
       ? activeStep.componentRefs
       : null;
 
-  // Tab activation: lock board to c1-main, disable click-select.
-  useEffect(() => {
-    setBoard('c1-main');
-    setConfig({ clickSelectEnabled: false, visible: true });
-  }, [setBoard, setConfig]);
-
-  // Drive viewport highlight and camera focus when the active step changes.
-  useEffect(() => {
-    setConfig({ highlightedRefs, focusRefs: highlightedRefs });
-  }, [highlightedRefs, setConfig]);
-
   const asideWidth = bp === 'wide' ? '380px' : '300px';
 
-  // Inline viewport for mobile (persistent column is hidden on compact).
-  const mobileViewport = compact ? (
-    <div style={{ height: '240px', flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
+  const viewportSection = (
+    <div style={{ height: compact ? '240px' : '320px', flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
       <BoardViewport
         boardData={boards['c1-main']}
         sideFilter="both"
         selectedRef={null}
-        onSelect={() => {}}
+        onSelect={noop}
         highlightedRefs={highlightedRefs}
         focusRefs={highlightedRefs}
       />
     </div>
-  ) : null;
+  );
 
   const detailSection = (
     <div style={{ flex: compact ? 'none' : 1, overflow: compact ? undefined : 'auto', minHeight: 0 }}>
@@ -178,7 +165,7 @@ export function AssemblyView() {
           visibleCount={visibleSteps.length}
           totalCount={orderedSteps.length}
         />
-        {mobileViewport}
+        {viewportSection}
         {detailSection}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {visibleSteps.map((step) => (
@@ -238,9 +225,9 @@ export function AssemblyView() {
           flexDirection: 'column',
           gap: '12px',
           minWidth: 0,
-          overflow: 'auto',
         }}
       >
+        {viewportSection}
         {detailSection}
       </aside>
     </div>

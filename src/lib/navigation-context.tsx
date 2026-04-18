@@ -37,13 +37,8 @@ const NavigationCtx = createContext<NavigationApi | null>(null);
 export function NavigationProvider({ children }: { children: ReactNode }) {
   const datasetStatus = useDatasetStatus();
   const [tab, setTab] = useState<Tab>('bom');
-  const [board, setBoardState] = useState<BoardId>('c1-main');
+  const [board, setBoard] = useState<BoardId>('c1-main');
   const [selectedRef, setSelectedRef] = useState<string | null>(null);
-
-  const setBoard = useCallback((next: BoardId) => {
-    setBoardState(next);
-    setSelectedRef(null);
-  }, []);
 
   const selectComponent = useCallback((ref: string | null) => {
     setSelectedRef(ref);
@@ -76,7 +71,7 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
       // 3. Still nothing → silent no-op.
       if (target === null) return;
 
-      setBoardState(target);
+      setBoard(target);
       setTab('board');
       setSelectedRef(ref);
     },

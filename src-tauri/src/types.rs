@@ -57,8 +57,6 @@ pub struct BomLine {
     pub digikey_pn: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub mouser_pn: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub lcsc_pn: Option<String>,
     pub optional: bool,
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub unit_cost_usd: Option<f64>,

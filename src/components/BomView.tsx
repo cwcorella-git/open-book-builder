@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDataset } from '../lib/dataset-context';
-import { useNavigation } from '../lib/navigation-context';
-import { useViewport } from '../lib/viewport-context';
 import { useBreakpoint, type Breakpoint } from '../lib/use-breakpoint';
 import type { BomLine, BoardId } from '../lib/types';
 import { buildDigiKeyCsv, summarizeExport } from '../lib/digikey-csv';
@@ -39,8 +37,6 @@ function formatUsd(value: number | null | undefined): string {
 
 export function BomView() {
   const dataset = useDataset();
-  const { selectComponent, setBoard } = useNavigation();
-  const { setConfig } = useViewport();
   const [filter, setFilter] = useState<BoardFilter>('all');
   const [qtyMultiplier, setQtyMultiplier] = useState<number>(1);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
@@ -60,23 +56,6 @@ export function BomView() {
     () => (selectedKey ? rows.find((r) => lineKey(r) === selectedKey) ?? null : null),
     [rows, selectedKey],
   );
-
-  // Tab activation: disable click-to-select, show viewport.
-  useEffect(() => {
-    setConfig({ clickSelectEnabled: false, highlightedRefs: null, visible: true });
-  }, [setConfig]);
-
-  // Drive viewport when a BOM row is selected.
-  useEffect(() => {
-    if (selected) {
-      setBoard(selected.board);
-      selectComponent(selected.refs[0] ?? null);
-      setConfig({ highlightedRefs: selected.refs, focusRefs: selected.refs });
-    } else {
-      selectComponent(null);
-      setConfig({ highlightedRefs: null, focusRefs: null });
-    }
-  }, [selected, setBoard, selectComponent, setConfig]);
 
   const { perUnitUsd } = dataset.costSummary;
   const asideWidth = bp === 'wide' ? '340px' : '260px';
@@ -518,7 +497,6 @@ function DetailPanel({ line }: { line: BomLine }) {
       <SourceLinks
         digikeyPn={line.digikeyPn}
         mouserPn={line.mouserPn}
-        lcscPn={line.lcscPn}
         datasheetUrl={line.datasheetUrl}
       />
 
@@ -533,13 +511,12 @@ function DetailPanel({ line }: { line: BomLine }) {
   );
 }
 
-function SourceLinks({ digikeyPn, mouserPn, lcscPn, datasheetUrl }: {
+function SourceLinks({ digikeyPn, mouserPn, datasheetUrl }: {
   digikeyPn?: string | null;
   mouserPn?: string | null;
-  lcscPn?: string | null;
   datasheetUrl?: string | null;
 }) {
-  const hasAny = digikeyPn || mouserPn || lcscPn || datasheetUrl;
+  const hasAny = digikeyPn || mouserPn || datasheetUrl;
   if (!hasAny) return null;
 
   return (
@@ -556,7 +533,7 @@ function SourceLinks({ digikeyPn, mouserPn, lcscPn, datasheetUrl }: {
           <DistributorLink
             name="Digi-Key"
             pn={digikeyPn}
-            href={`https://www.digikey.com/en/products/result?keywords=${encodeURIComponent(digikeyPn)}`}
+            href={`https://www.digikey.com/en/products/detail/-/-/${encodeURIComponent(digikeyPn)}`}
           />
         )}
         {mouserPn && (
@@ -564,13 +541,6 @@ function SourceLinks({ digikeyPn, mouserPn, lcscPn, datasheetUrl }: {
             name="Mouser"
             pn={mouserPn}
             href={`https://www.mouser.com/ProductDetail/${encodeURIComponent(mouserPn)}`}
-          />
-        )}
-        {lcscPn && (
-          <DistributorLink
-            name="LCSC"
-            pn={lcscPn}
-            href={`https://www.lcsc.com/product-detail/${encodeURIComponent(lcscPn)}.html`}
           />
         )}
         {datasheetUrl && (
