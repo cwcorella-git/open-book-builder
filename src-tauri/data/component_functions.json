@@ -92,5 +92,51 @@
     "unitCostUsd": 26.90,
     "heroMeshId": "gdew042t2",
     "notes": "GDEW042T2 uses the UC8176 (IL0398) controller and is now EOL (confirmed by GoodDisplay Aug 2023). GDEY042T81 uses the SSD1683 controller — same physical form factor and FPC connector, confirmed drop-in compatible by community testers. The pre-built book.uf2 targets IL0398 only and will NOT work with the GDEY042T81. Build libros from the PR #11 branch (joeycastillo/libros#11) instead — it auto-detects the display via busy-pin polarity and supports both panels. The upstream libros repo has been inactive since Feb 2024; PR #11 has been merge-ready since Dec 2025."
+  },
+
+  "0603WAJ047KT5E": {
+    "function": "0.47 Ω sense resistor, 0603. Current-sense feedback for the boost converter that generates the e-paper high-voltage rails.",
+    "unitCostUsd": 0.34,
+    "datasheetUrl": "https://datasheet.lcsc.com/lcsc/2206010045_UNI-ROYAL-Uniroyal-Elec-0603WAJ047KT5E_C23703.pdf",
+    "notes": "LCSC C270932 (supersedes dead C23703). UNI-ROYAL (Uniroyal Elec). Also on Mouser as Royalohm 0603WAJ047KT5E."
+  },
+  "MGFL2012F100MT-LF": {
+    "function": "10 µH inductor, 0805, 500 mA. Energy storage for the boost converter.",
+    "unitCostUsd": 0.43,
+    "notes": "LCSC C281113. microgate."
+  },
+  "CL21B105KBFNNNE": {
+    "function": "1 µF MLCC, 0805, 50 V, X7R. Bypass and filter capacitors throughout the driver circuit (9 placements).",
+    "unitCostUsd": 0.27,
+    "datasheetUrl": "https://product.samsungsem.com/mlcc/CL21B105KBFNNNE.do",
+    "digikeyPn": "1276-1029-1-ND",
+    "mouserPn": "187-CL21B105KBFNNNE",
+    "notes": "LCSC C28323. Samsung Electro-Mechanics."
+  },
+  "CL21A475KAQNNNE": {
+    "function": "4.7 µF MLCC, 0805, 25 V, X5R. Bulk decoupling on the driver power rails.",
+    "unitCostUsd": 0.30,
+    "datasheetUrl": "https://product.samsungsem.com/mlcc/CL21A475KAQNNNE.do",
+    "digikeyPn": "1276-1244-1-ND",
+    "mouserPn": "187-CL21A475KAQNNNE",
+    "notes": "LCSC C1779. Samsung Electro-Mechanics."
+  },
+  "AFC07-S24ECC-00": {
+    "function": "24-pin 0.5 mm FFC connector. Connects the flat flex cable from the e-paper display panel.",
+    "unitCostUsd": 0.48,
+    "notes": "LCSC C11092. JUSHUO."
+  },
+  "IRLML0100TRPBF": {
+    "function": "N-channel MOSFET, 100 V, 1.6 A, SOT-23. Switches the e-paper gate driver voltage rail.",
+    "unitCostUsd": 0.97,
+    "datasheetUrl": "https://www.infineon.com/dgdl/Infineon-IRLML0100-DataSheet-v01_02-EN.pdf?fileId=5546d462533600a4015356649d9225e8",
+    "digikeyPn": "IRLML0100TRPBFCT-ND",
+    "mouserPn": "942-IRLML0100TRPBF",
+    "notes": "LCSC C53658. Infineon Technologies."
+  },
+  "LMBR0530T1G": {
+    "function": "30 V Schottky diode, SOD-123. Charge-pump rectifiers for the negative voltage rails (3 placements).",
+    "unitCostUsd": 0.86,
+    "notes": "LCSC C18863. LRC."
   }
 }
