@@ -18,6 +18,7 @@ export interface BomLine {
   mpn: string;
   digikeyPn?: string;
   mouserPn?: string;
+  lcscPn?: string;
   optional: boolean;
   unitCostUsd?: number;
   livePrice?: number;

@@ -8,6 +8,7 @@
   },
   "OSO-BOOK-C2-01": {
     "function": "Castellated e-paper driver submodule. Generates the ±22 V and ±15 V rails the e-paper panel needs, converts signal levels between the Pico and the display, and drives the FFC ribbon. Ordered pre-assembled from JLCPCB or PCBWay; soldered to the C1 main board via castellated edge pads.",
+    "datasheetUrl": "https://github.com/joeycastillo/The-Open-Book",
     "unitCostUsd": null,
     "heroMeshId": "c2-module",
     "notes": "Separate PCBA job — cost not included in the C1 BOM totals. Per-unit $30-80 depending on fab house and volume. Three board revisions exist: C2-01 (old JLCPCB, oversized), C2-02 (PCBWay, current), C2-03 (new JLCPCB, replaces C2-01). All share an identical schematic; only R1's package size differs (0402 vs 0603). Use C2-02 for PCBWay orders, C2-03 for JLCPCB."
@@ -98,12 +99,14 @@
     "function": "0.47 Ω sense resistor, 0603. Current-sense feedback for the boost converter that generates the e-paper high-voltage rails.",
     "unitCostUsd": 0.34,
     "datasheetUrl": "https://datasheet.lcsc.com/lcsc/2206010045_UNI-ROYAL-Uniroyal-Elec-0603WAJ047KT5E_C23703.pdf",
+    "lcscPn": "C270932",
     "notes": "LCSC C270932 (supersedes dead C23703). UNI-ROYAL (Uniroyal Elec). Also on Mouser as Royalohm 0603WAJ047KT5E."
   },
   "MGFL2012F100MT-LF": {
     "function": "10 µH inductor, 0805, 500 mA. Energy storage for the boost converter.",
     "unitCostUsd": 0.43,
     "datasheetUrl": "https://www.lcsc.com/datasheet/C281113.pdf",
+    "lcscPn": "C281113",
     "notes": "LCSC C281113. microgate."
   },
   "CL21B105KBFNNNE": {
@@ -112,6 +115,7 @@
     "datasheetUrl": "https://product.samsungsem.com/mlcc/CL21B105KBFNNNE.do",
     "digikeyPn": "1276-1029-1-ND",
     "mouserPn": "187-CL21B105KBFNNNE",
+    "lcscPn": "C28323",
     "notes": "LCSC C28323. Samsung Electro-Mechanics."
   },
   "CL21A475KAQNNNE": {
@@ -120,12 +124,14 @@
     "datasheetUrl": "https://product.samsungsem.com/mlcc/CL21A475KAQNNNE.do",
     "digikeyPn": "1276-1244-1-ND",
     "mouserPn": "187-CL21A475KAQNNNE",
+    "lcscPn": "C1779",
     "notes": "LCSC C1779. Samsung Electro-Mechanics."
   },
   "AFC07-S24ECC-00": {
     "function": "24-pin 0.5 mm FFC connector. Connects the flat flex cable from the e-paper display panel.",
     "unitCostUsd": 0.48,
     "datasheetUrl": "https://www.lcsc.com/datasheet/C11092.pdf",
+    "lcscPn": "C11092",
     "notes": "LCSC C11092. JUSHUO."
   },
   "IRLML0100TRPBF": {
@@ -134,12 +140,14 @@
     "datasheetUrl": "https://www.infineon.com/dgdl/Infineon-IRLML0100-DataSheet-v01_02-EN.pdf?fileId=5546d462533600a4015356649d9225e8",
     "digikeyPn": "IRLML0100TRPBFCT-ND",
     "mouserPn": "942-IRLML0100TRPBF",
+    "lcscPn": "C53658",
     "notes": "LCSC C53658. Infineon Technologies."
   },
   "LMBR0530T1G": {
     "function": "30 V Schottky diode, SOD-123. Charge-pump rectifiers for the negative voltage rails (3 placements).",
     "unitCostUsd": 0.86,
     "datasheetUrl": "https://www.lcsc.com/datasheet/C18863.pdf",
+    "lcscPn": "C18863",
     "notes": "LCSC C18863. LRC."
   }
 }

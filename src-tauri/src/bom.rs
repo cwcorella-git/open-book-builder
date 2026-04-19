@@ -34,6 +34,8 @@ struct ComponentFunction {
     #[serde(default)]
     mouser_pn: Option<String>,
     #[serde(default)]
+    lcsc_pn: Option<String>,
+    #[serde(default)]
     #[allow(dead_code)]
     notes: Option<String>,
 }
@@ -133,6 +135,9 @@ fn apply_lookup(line: &mut BomLine, lookup: &HashMap<String, ComponentFunction>)
         if line.mouser_pn.is_none() {
             line.mouser_pn = cf.mouser_pn.clone();
         }
+        if line.lcsc_pn.is_none() {
+            line.lcsc_pn = cf.lcsc_pn.clone();
+        }
     } else {
         // Fall back to the CSV description so the column is never empty.
         line.function = line.description.clone();
@@ -156,6 +161,7 @@ fn parse_c1(lookup: &HashMap<String, ComponentFunction>) -> Result<Vec<BomLine>,
             mpn: row.mpn,
             digikey_pn: normalize_optional(row.digikey),
             mouser_pn: normalize_optional(row.mouser),
+            lcsc_pn: None,
             optional,
             unit_cost_usd: None,
             live_price: None,
@@ -188,6 +194,7 @@ fn parse_c2(lookup: &HashMap<String, ComponentFunction>) -> Result<Vec<BomLine>,
             mpn: row.mpn,
             digikey_pn: None,
             mouser_pn: None,
+            lcsc_pn: None,
             optional,
             unit_cost_usd: None,
             live_price: None,

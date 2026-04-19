@@ -295,6 +295,7 @@ function DetailPanel({ component, bom }: { component: Component; bom: BomLine[] 
           <SourceLinks
             digikeyPn={line.digikeyPn}
             mouserPn={line.mouserPn}
+            lcscPn={line.lcscPn}
             datasheetUrl={line.datasheetUrl}
           />
         </>
@@ -303,12 +304,13 @@ function DetailPanel({ component, bom }: { component: Component; bom: BomLine[] 
   );
 }
 
-function SourceLinks({ digikeyPn, mouserPn, datasheetUrl }: {
+function SourceLinks({ digikeyPn, mouserPn, lcscPn, datasheetUrl }: {
   digikeyPn?: string | null;
   mouserPn?: string | null;
+  lcscPn?: string | null;
   datasheetUrl?: string | null;
 }) {
-  const hasAny = digikeyPn || mouserPn || datasheetUrl;
+  const hasAny = digikeyPn || mouserPn || lcscPn || datasheetUrl;
   if (!hasAny) return null;
 
   return (
@@ -341,6 +343,17 @@ function SourceLinks({ digikeyPn, mouserPn, datasheetUrl }: {
             style={{ fontSize: '11px', color: '#60a5fa', textDecoration: 'none' }}
           >
             Mouser
+          </a>
+        )}
+        {lcscPn && (
+          <a
+            href={`https://www.lcsc.com/product-detail/${encodeURIComponent(lcscPn)}.html`}
+            target="_blank"
+            rel="noreferrer"
+            title={lcscPn}
+            style={{ fontSize: '11px', color: '#60a5fa', textDecoration: 'none' }}
+          >
+            LCSC
           </a>
         )}
         {datasheetUrl && (
