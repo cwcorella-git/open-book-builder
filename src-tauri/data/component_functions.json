@@ -103,6 +103,7 @@
   "MGFL2012F100MT-LF": {
     "function": "10 µH inductor, 0805, 500 mA. Energy storage for the boost converter.",
     "unitCostUsd": 0.43,
+    "datasheetUrl": "https://www.lcsc.com/datasheet/C281113.pdf",
     "notes": "LCSC C281113. microgate."
   },
   "CL21B105KBFNNNE": {
@@ -124,6 +125,7 @@
   "AFC07-S24ECC-00": {
     "function": "24-pin 0.5 mm FFC connector. Connects the flat flex cable from the e-paper display panel.",
     "unitCostUsd": 0.48,
+    "datasheetUrl": "https://www.lcsc.com/datasheet/C11092.pdf",
     "notes": "LCSC C11092. JUSHUO."
   },
   "IRLML0100TRPBF": {
@@ -137,6 +139,7 @@
   "LMBR0530T1G": {
     "function": "30 V Schottky diode, SOD-123. Charge-pump rectifiers for the negative voltage rails (3 placements).",
     "unitCostUsd": 0.86,
+    "datasheetUrl": "https://www.lcsc.com/datasheet/C18863.pdf",
     "notes": "LCSC C18863. LRC."
   }
 }
