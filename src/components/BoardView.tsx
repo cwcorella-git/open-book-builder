@@ -323,7 +323,7 @@ function SourceLinks({ digikeyPn, mouserPn, datasheetUrl }: {
       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
         {digikeyPn && (
           <a
-            href={`https://www.digikey.com/en/products/detail/-/-/${encodeURIComponent(digikeyPn)}`}
+            href={`https://www.digikey.com/en/products/result?keywords=${encodeURIComponent(digikeyPn)}`}
             target="_blank"
             rel="noreferrer"
             title={digikeyPn}

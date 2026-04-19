@@ -533,7 +533,7 @@ function SourceLinks({ digikeyPn, mouserPn, datasheetUrl }: {
           <DistributorLink
             name="Digi-Key"
             pn={digikeyPn}
-            href={`https://www.digikey.com/en/products/detail/-/-/${encodeURIComponent(digikeyPn)}`}
+            href={`https://www.digikey.com/en/products/result?keywords=${encodeURIComponent(digikeyPn)}`}
           />
         )}
         {mouserPn && (

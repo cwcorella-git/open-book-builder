@@ -30,6 +30,10 @@ struct ComponentFunction {
     #[serde(default)]
     hero_mesh_id: Option<String>,
     #[serde(default)]
+    digikey_pn: Option<String>,
+    #[serde(default)]
+    mouser_pn: Option<String>,
+    #[serde(default)]
     #[allow(dead_code)]
     notes: Option<String>,
 }
@@ -120,6 +124,15 @@ fn apply_lookup(line: &mut BomLine, lookup: &HashMap<String, ComponentFunction>)
         line.datasheet_url = cf.datasheet_url.clone();
         line.unit_cost_usd = cf.unit_cost_usd;
         line.hero_mesh_id = cf.hero_mesh_id.clone();
+        // Fill distributor PNs only if the CSV didn't provide them. The C1
+        // `1-click-bom.csv` already populates digikey/mouser columns; the C2
+        // PCBWay CSV doesn't, so C2 lines depend on this fallback.
+        if line.digikey_pn.is_none() {
+            line.digikey_pn = cf.digikey_pn.clone();
+        }
+        if line.mouser_pn.is_none() {
+            line.mouser_pn = cf.mouser_pn.clone();
+        }
     } else {
         // Fall back to the CSV description so the column is never empty.
         line.function = line.description.clone();
