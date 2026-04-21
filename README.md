@@ -148,7 +148,7 @@ open-book-builder/
     ├── tauri.conf.json               # productName "Open Book Builder"
     ├── capabilities/default.json     # dialog:allow-open, dialog:allow-save, fs:allow-read-text-file, fs:allow-write-text-file
     ├── data/
-    │   ├── component_functions.json  # 17 MPNs with function, datasheet, cost, heroMeshId
+    │   ├── component_functions.json  # 24 MPNs with function, datasheet, cost, heroMeshId, distributor PNs (DK / Mouser / LCSC)
     │   ├── assembly.json             # 13 ordered build steps
     │   ├── hero-meshes/              # GLB assets for procedural hero mesh overrides
     │   ├── bom-c1-main.csv           # from upstream OSO-BOOK-C1/1-click-bom.csv
