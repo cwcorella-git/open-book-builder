@@ -141,9 +141,11 @@ export function AboutView() {
           <strong style={strong}>GDEY042T81</strong> (the original GDEW042T2 is end-of-life).
           The panels are physically identical (same FPC connector, confirmed drop-in by community
           testers). The firmware flash step on the <em>Assembly</em> tab handles the controller
-          difference automatically — it builds from{' '}
-          <Ext href="https://github.com/joeycastillo/libros/pull/11">PR #11</Ext>, which
-          auto-detects which display is connected.
+          difference automatically — it builds from community PRs{' '}
+          <Ext href="https://github.com/joeycastillo/libros/pull/10">#10</Ext> (fixes a broken
+          Pico build by removing a stray <code style={code}>pico/stdlib.h</code> include) and{' '}
+          <Ext href="https://github.com/joeycastillo/libros/pull/11">#11</Ext> (auto-detects
+          which display controller is connected). Both are needed for a clean Pico build today.
         </p>
       </Section>
 
@@ -157,7 +159,9 @@ export function AboutView() {
           It currently tracks <Stat n={bom.length} unit="parts" /> and{' '}
           <Stat n={assembly.length} unit="assembly steps" />, and renders both boards in 3D
           from the original design files (KiCad for the main board, EAGLE for the driver module).
-          The <em>Parts List</em> tab exports a Digi-Key BOM Manager CSV you can upload directly.
+          The <em>Case</em> tab previews the FDM-printable enclosure STL from the upstream repo,
+          and the <em>Parts List</em> tab exports a Digi-Key BOM Manager CSV you can upload
+          directly.
         </p>
         <p style={paragraph}>
           This app targets the two-board Pico design in the{' '}
@@ -172,10 +176,11 @@ export function AboutView() {
           The Pico-based "Abridged Edition" covered here is the current DIY build. The{' '}
           <Ext href="https://github.com/joeycastillo/libros">libros firmware</Ext> repo has not
           had a maintainer commit since February 2024 — Joey's focus has shifted to the Open Book
-          Touch. Community contributor{' '}
-          <Ext href="https://github.com/joeycastillo/libros/pull/11">PR #11</Ext> adds
-          auto-detection for the newer GDEY042T81 display and has been merge-ready since December
-          2025. It is the recommended firmware source for new builds.
+          Touch. Two community PRs from{' '}
+          <Ext href="https://github.com/tahnok">@tahnok</Ext> are needed for a working Pico build:{' '}
+          <Ext href="https://github.com/joeycastillo/libros/pull/10">#10</Ext> (fixes the Pico
+          build) and <Ext href="https://github.com/joeycastillo/libros/pull/11">#11</Ext>{' '}
+          (auto-detects the GDEY042T81 display). Both opened December 2025, both unmerged.
         </p>
         <p style={paragraph}>
           Separately, Joey has announced the{' '}
@@ -189,7 +194,9 @@ export function AboutView() {
           Community resources:{' '}
           <Ext href="https://discord.gg/b6FgeqSZs3">Discord</Ext>{' · '}
           <Ext href="https://www.oddlyspecificobjects.com/projects/openbook/">Project documentation</Ext>{' · '}
-          <Ext href="https://hackaday.io/project/192688-the-open-book">Hackaday.io</Ext>
+          <Ext href="https://hackaday.io/project/192688-the-open-book">Hackaday.io project page</Ext>{' '}
+          (10 build logs covering enclosure design, the sub-$100 cost target,
+          and the four-year lineage from FeatherWing to B1)
         </p>
       </Section>
 

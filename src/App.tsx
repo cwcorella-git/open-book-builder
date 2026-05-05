@@ -4,12 +4,14 @@ import { useBreakpoint } from './lib/use-breakpoint';
 import { BoardView } from './components/BoardView';
 import { BomView } from './components/BomView';
 import { AssemblyView } from './components/AssemblyView';
+import { CaseView } from './components/CaseView';
 import { AboutView } from './components/AboutView';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'board', label: 'Board' },
   { id: 'bom', label: 'Parts List' },
   { id: 'assembly', label: 'Assembly' },
+  { id: 'case', label: 'Case' },
   { id: 'about', label: 'About' },
 ];
 
@@ -74,6 +76,7 @@ function TabContent({ tab }: { tab: Tab }) {
     case 'board': return <BoardView />;
     case 'bom': return <BomView />;
     case 'assembly': return <AssemblyView />;
+    case 'case': return <CaseView />;
     case 'about': return <AboutView />;
   }
 }

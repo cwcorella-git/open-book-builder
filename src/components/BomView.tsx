@@ -466,7 +466,7 @@ function Footer({
       )}
       {bp === 'wide' && (
         <span style={{ marginLeft: 'auto', color: '#64748b', fontStyle: 'italic' }}>
-          E-Paper Driver internals excluded — they arrive pre-assembled as a single unit from the fab house.
+          Excludes C2 driver PCBA assembly (priced separately by the fab house, typically $30–80 for ten boards).
         </span>
       )}
     </div>

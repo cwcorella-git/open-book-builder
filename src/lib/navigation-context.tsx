@@ -17,7 +17,7 @@ import {
 import { useDatasetStatus } from './dataset-context';
 import type { BoardId } from './types';
 
-export type Tab = 'board' | 'bom' | 'assembly' | 'about';
+export type Tab = 'board' | 'bom' | 'assembly' | 'case' | 'about';
 
 interface NavigationApi {
   tab: Tab;

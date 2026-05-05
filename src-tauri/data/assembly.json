@@ -112,12 +112,12 @@
     "order": 100,
     "phase": "flash-firmware",
     "title": "Build and flash the libros firmware onto the Pico",
-    "description": "Clone joeycastillo/libros from GitHub, check out the PR #11 branch, and build with the Pico SDK. The build produces a .uf2 file. To flash: hold BOOTSEL (the small button on the Pico board) while plugging it into USB — it appears as a USB drive. Drag-and-drop the .uf2 file onto it. The Pico reboots into libros.",
+    "description": "Clone joeycastillo/libros from GitHub. The Pico build needs two community PRs from @tahnok: PR #10 (fixes a broken Pico build by removing a stray pico/stdlib.h include) and PR #11 (runtime e-ink driver selection so the firmware works with the newer GDEY042T81 display). Cherry-pick both, then build with the Pico SDK to produce a .uf2 file. To flash: hold BOOTSEL (the small button on the Pico board) while plugging it into USB — it appears as a USB drive. Drag-and-drop the .uf2 file onto it. The Pico reboots into libros.",
     "componentRefs": ["U1"],
     "board": "c1-main",
-    "estimatedMinutes": 15,
+    "estimatedMinutes": 20,
     "tools": ["USB cable", "Pico SDK"],
-    "notes": "PR #11 (https://github.com/joeycastillo/libros/pull/11) auto-detects which display you have via the busy-pin polarity — works with both the GDEY042T81 and the older GDEW042T2. A pre-built book.uf2 is available at https://oddlyspecificobjects.com/projects/openbook/ for the GDEW042T2 specifically; for the GDEY042T81, build from the PR #11 branch."
+    "notes": "PR #10 (https://github.com/joeycastillo/libros/pull/10) and PR #11 (https://github.com/joeycastillo/libros/pull/11) are both unmerged but both required for a clean Pico build today. PR #11 auto-detects display controller via busy-pin polarity — works with the GDEY042T81 and the older GDEW042T2. A pre-built book.uf2 is available at https://oddlyspecificobjects.com/projects/openbook/ but only targets the GDEW042T2; for the GDEY042T81 you must build from source with both PRs applied."
   },
   {
     "id": "flash-babel",
