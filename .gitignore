@@ -21,3 +21,9 @@ Thumbs.db
 
 # Tauri dev artifacts
 src-tauri/gen/
+
+# Playwright test output
+test-results/
+
+# Local-only notes
+*.local.*
