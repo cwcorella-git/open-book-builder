@@ -1,0 +1,89 @@
+GITIGNORE-TO-INGEST/open-book-digikey-bom.csv	reference/the-open-book/open-book-digikey-bom.csv
+GITIGNORE-TO-INGEST/the-open-book/COGS-LIST	reference/the-open-book/COGS-LIST
+GITIGNORE-TO-INGEST/the-open-book/OpenBook_BOM_Clean.pdf	reference/the-open-book/OpenBook_BOM_Clean.pdf
+GITIGNORE-TO-INGEST/the-open-book/OpenBook_BOM_CleanFormatted.pdf	reference/the-open-book/OpenBook_BOM_CleanFormatted.pdf
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main.zip	dropped:dup-of The-Open-Book-main/
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/.gitignore	reference/the-open-book/upstream/.gitignore
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/3D Printed Case/Open Book Abridged - Minimal Case.stl	reference/the-open-book/upstream/3D Printed Case/Open Book Abridged - Minimal Case.stl
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/Fabrication Files/Castellated E-Paper Driver/OSO-BOOK-C2-02 (PCBWay)/OSO-BOOK-C2-02-BOM.csv	reference/the-open-book/upstream/Fabrication Files/Castellated E-Paper Driver/OSO-BOOK-C2-02 (PCBWay)/OSO-BOOK-C2-02-BOM.csv
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/Fabrication Files/Castellated E-Paper Driver/OSO-BOOK-C2-02 (PCBWay)/OSO-BOOK-C2-02-PNP.txt	reference/the-open-book/upstream/Fabrication Files/Castellated E-Paper Driver/OSO-BOOK-C2-02 (PCBWay)/OSO-BOOK-C2-02-PNP.txt
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/Fabrication Files/Castellated E-Paper Driver/OSO-BOOK-C2-02 (PCBWay)/OSO-BOOK-C2-02_2022-07-19.zip	reference/the-open-book/upstream/Fabrication Files/Castellated E-Paper Driver/OSO-BOOK-C2-02 (PCBWay)/OSO-BOOK-C2-02_2022-07-19.zip
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/Fabrication Files/Castellated E-Paper Driver/OSO-BOOK-C2-03 (JLCPCB)/OSO-BOOK-C2-03-BOM.csv	reference/the-open-book/upstream/Fabrication Files/Castellated E-Paper Driver/OSO-BOOK-C2-03 (JLCPCB)/OSO-BOOK-C2-03-BOM.csv
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/Fabrication Files/Castellated E-Paper Driver/OSO-BOOK-C2-03 (JLCPCB)/OSO-BOOK-C2-03-PNP.csv	reference/the-open-book/upstream/Fabrication Files/Castellated E-Paper Driver/OSO-BOOK-C2-03 (JLCPCB)/OSO-BOOK-C2-03-PNP.csv
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/Fabrication Files/Castellated E-Paper Driver/OSO-BOOK-C2-03 (JLCPCB)/OSO-BOOK-C2-03.zip	reference/the-open-book/upstream/Fabrication Files/Castellated E-Paper Driver/OSO-BOOK-C2-03 (JLCPCB)/OSO-BOOK-C2-03.zip
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/Fabrication Files/Open Book Main Board/OSO-BOOK-C1-04-rounded.zip	reference/the-open-book/upstream/Fabrication Files/Open Book Main Board/OSO-BOOK-C1-04-rounded.zip
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/Fabrication Files/Open Book Main Board/OSO-BOOK-C1-05-rounded.zip	reference/the-open-book/upstream/Fabrication Files/Open Book Main Board/OSO-BOOK-C1-05-rounded.zip
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/LICENSE.md	reference/the-open-book/upstream/LICENSE.md
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-B1/.gitignore	reference/the-open-book/upstream/OSO-BOOK-B1/.gitignore
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-B1/434351045816_Download_STP_434351045816_rev1.stp	reference/the-open-book/upstream/OSO-BOOK-B1/434351045816_Download_STP_434351045816_rev1.stp
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-B1/687106183622.stp	reference/the-open-book/upstream/OSO-BOOK-B1/687106183622.stp
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-B1/687124183622.stp	reference/the-open-book/upstream/OSO-BOOK-B1/687124183622.stp
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-B1/Battery_Holder.pretty/AAA_SMT.kicad_mod	reference/the-open-book/upstream/OSO-BOOK-B1/Battery_Holder.pretty/AAA_SMT.kicad_mod
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-B1/Battery_Holder.pretty/BATTERY_BOX_N07.kicad_mod	reference/the-open-book/upstream/OSO-BOOK-B1/Battery_Holder.pretty/BATTERY_BOX_N07.kicad_mod
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-B1/CONB127P-2R-10W_TH.STEP	reference/the-open-book/upstream/OSO-BOOK-B1/CONB127P-2R-10W_TH.STEP
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-B1/DFEG10040D-100M=P3.STEP	reference/the-open-book/upstream/OSO-BOOK-B1/DFEG10040D-100M=P3.STEP
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-B1/GCT_MEM2075-00-140-01-A.kicad_mod	reference/the-open-book/upstream/OSO-BOOK-B1/GCT_MEM2075-00-140-01-A.kicad_mod
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-B1/K1-5202UA.kicad_sym	reference/the-open-book/upstream/OSO-BOOK-B1/K1-5202UA.kicad_sym
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-B1/K1-5202UA.pretty/K1-5202UA.kicad_mod	reference/the-open-book/upstream/OSO-BOOK-B1/K1-5202UA.pretty/K1-5202UA.kicad_mod
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-B1/MCU_RaspberryPi_and_Boards.pretty/Crystal_SMD_HC49-US.kicad_mod	reference/the-open-book/upstream/OSO-BOOK-B1/MCU_RaspberryPi_and_Boards.pretty/Crystal_SMD_HC49-US.kicad_mod
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-B1/MCU_RaspberryPi_and_Boards.pretty/RP2040-QFN-56.kicad_mod	reference/the-open-book/upstream/OSO-BOOK-B1/MCU_RaspberryPi_and_Boards.pretty/RP2040-QFN-56.kicad_mod
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-B1/MCU_RaspberryPi_and_Boards.pretty/RPi_Pico_SMD.kicad_mod	reference/the-open-book/upstream/OSO-BOOK-B1/MCU_RaspberryPi_and_Boards.pretty/RPi_Pico_SMD.kicad_mod
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-B1/MCU_RaspberryPi_and_Boards.pretty/RPi_Pico_SMD_TH.kicad_mod	reference/the-open-book/upstream/OSO-BOOK-B1/MCU_RaspberryPi_and_Boards.pretty/RPi_Pico_SMD_TH.kicad_mod
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-B1/MCU_RaspberryPi_and_Boards.pretty/RPi_Pico_Test_Pins_SMD.kicad_mod	reference/the-open-book/upstream/OSO-BOOK-B1/MCU_RaspberryPi_and_Boards.pretty/RPi_Pico_Test_Pins_SMD.kicad_mod
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-B1/MCU_RaspberryPi_and_Boards.pretty/RPi_Pico_Test_Pins_SMD_TH.kicad_mod	reference/the-open-book/upstream/OSO-BOOK-B1/MCU_RaspberryPi_and_Boards.pretty/RPi_Pico_Test_Pins_SMD_TH.kicad_mod
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-B1/MEM2075-00-140-01-A--3DModel-STEP-56544.STEP	reference/the-open-book/upstream/OSO-BOOK-B1/MEM2075-00-140-01-A--3DModel-STEP-56544.STEP
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-B1/MEM2075-00-140-01-A.kicad_sym	reference/the-open-book/upstream/OSO-BOOK-B1/MEM2075-00-140-01-A.kicad_sym
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-B1/MEM2075-00-140-01-A.pretty/GCT_MEM2075-00-140-01-A.kicad_mod	reference/the-open-book/upstream/OSO-BOOK-B1/MEM2075-00-140-01-A.pretty/GCT_MEM2075-00-140-01-A.kicad_mod
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-B1/OSO-BOOK-B1-00.zip	reference/the-open-book/upstream/OSO-BOOK-B1/OSO-BOOK-B1-00.zip
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-B1/OSO-BOOK-B1.kicad_pcb	dropped:gitignored-large-binary (local copy reference/the-open-book/upstream/OSO-BOOK-B1/OSO-BOOK-B1.kicad_pcb; raw in ws tarball)
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-B1/OSO-BOOK-B1.kicad_prl	reference/the-open-book/upstream/OSO-BOOK-B1/OSO-BOOK-B1.kicad_prl
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-B1/OSO-BOOK-B1.kicad_pro	reference/the-open-book/upstream/OSO-BOOK-B1/OSO-BOOK-B1.kicad_pro
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-B1/OSO-BOOK-B1.kicad_sch	reference/the-open-book/upstream/OSO-BOOK-B1/OSO-BOOK-B1.kicad_sch
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-B1/OSO-BOOK-C2-01.kicad_sym	reference/the-open-book/upstream/OSO-BOOK-B1/OSO-BOOK-C2-01.kicad_sym
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-B1/OSO-BOOK-C2-01.pretty/OSO-BOOK-C2-01.kicad_mod	reference/the-open-book/upstream/OSO-BOOK-B1/OSO-BOOK-C2-01.pretty/OSO-BOOK-C2-01.kicad_mod
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-B1/OSO-MISC-23-001.zip	reference/the-open-book/upstream/OSO-BOOK-B1/OSO-MISC-23-001.zip
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-B1/R1218.kicad_sym	reference/the-open-book/upstream/OSO-BOOK-B1/R1218.kicad_sym
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-B1/SM03B-SRSS-TB(LF)(SN)--3DModel-STEP-56544.STEP	reference/the-open-book/upstream/OSO-BOOK-B1/SM03B-SRSS-TB(LF)(SN)--3DModel-STEP-56544.STEP
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-B1/SM04B-SRSS-TB(LF)(SN)--3DModel-STEP-56544.STEP	reference/the-open-book/upstream/OSO-BOOK-B1/SM04B-SRSS-TB(LF)(SN)--3DModel-STEP-56544.STEP
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-B1/TACT_PANA-EVQ.pretty/TACT_PANA-EVQ-BUTTONPAD.kicad_mod	reference/the-open-book/upstream/OSO-BOOK-B1/TACT_PANA-EVQ.pretty/TACT_PANA-EVQ-BUTTONPAD.kicad_mod
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-B1/TACT_PANA-EVQ.pretty/TACT_PANA-EVQ.kicad_mod	reference/the-open-book/upstream/OSO-BOOK-B1/TACT_PANA-EVQ.pretty/TACT_PANA-EVQ.kicad_mod
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-B1/fp-info-cache	reference/the-open-book/upstream/OSO-BOOK-B1/fp-info-cache
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-B1/fp-lib-table	reference/the-open-book/upstream/OSO-BOOK-B1/fp-lib-table
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-B1/sym-lib-table	reference/the-open-book/upstream/OSO-BOOK-B1/sym-lib-table
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-C1/.gitignore	reference/the-open-book/upstream/OSO-BOOK-C1/.gitignore
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-C1/1-click-bom.csv	reference/the-open-book/upstream/OSO-BOOK-C1/1-click-bom.csv
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-C1/Battery_Holder.pretty/AAA_SMT.kicad_mod	reference/the-open-book/upstream/OSO-BOOK-C1/Battery_Holder.pretty/AAA_SMT.kicad_mod
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-C1/Battery_Holder.pretty/BATTERY_BOX_N07.kicad_mod	reference/the-open-book/upstream/OSO-BOOK-C1/Battery_Holder.pretty/BATTERY_BOX_N07.kicad_mod
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-C1/GCT_MEM2075-00-140-01-A.kicad_mod	reference/the-open-book/upstream/OSO-BOOK-C1/GCT_MEM2075-00-140-01-A.kicad_mod
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-C1/K1-5202UA.kicad_sym	reference/the-open-book/upstream/OSO-BOOK-C1/K1-5202UA.kicad_sym
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-C1/K1-5202UA.pretty/K1-5202UA.kicad_mod	reference/the-open-book/upstream/OSO-BOOK-C1/K1-5202UA.pretty/K1-5202UA.kicad_mod
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-C1/MCU_RaspberryPi_and_Boards.pretty/Crystal_SMD_HC49-US.kicad_mod	reference/the-open-book/upstream/OSO-BOOK-C1/MCU_RaspberryPi_and_Boards.pretty/Crystal_SMD_HC49-US.kicad_mod
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-C1/MCU_RaspberryPi_and_Boards.pretty/RP2040-QFN-56.kicad_mod	reference/the-open-book/upstream/OSO-BOOK-C1/MCU_RaspberryPi_and_Boards.pretty/RP2040-QFN-56.kicad_mod
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-C1/MCU_RaspberryPi_and_Boards.pretty/RPi_Pico_SMD.kicad_mod	reference/the-open-book/upstream/OSO-BOOK-C1/MCU_RaspberryPi_and_Boards.pretty/RPi_Pico_SMD.kicad_mod
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-C1/MCU_RaspberryPi_and_Boards.pretty/RPi_Pico_SMD_TH.kicad_mod	reference/the-open-book/upstream/OSO-BOOK-C1/MCU_RaspberryPi_and_Boards.pretty/RPi_Pico_SMD_TH.kicad_mod
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-C1/MCU_RaspberryPi_and_Boards.pretty/RPi_Pico_Test_Pins_SMD.kicad_mod	reference/the-open-book/upstream/OSO-BOOK-C1/MCU_RaspberryPi_and_Boards.pretty/RPi_Pico_Test_Pins_SMD.kicad_mod
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-C1/MCU_RaspberryPi_and_Boards.pretty/RPi_Pico_Test_Pins_SMD_TH.kicad_mod	reference/the-open-book/upstream/OSO-BOOK-C1/MCU_RaspberryPi_and_Boards.pretty/RPi_Pico_Test_Pins_SMD_TH.kicad_mod
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-C1/MEM2075-00-140-01-A--3DModel-STEP-56544.STEP	reference/the-open-book/upstream/OSO-BOOK-C1/MEM2075-00-140-01-A--3DModel-STEP-56544.STEP
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-C1/MEM2075-00-140-01-A.kicad_sym	reference/the-open-book/upstream/OSO-BOOK-C1/MEM2075-00-140-01-A.kicad_sym
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-C1/MEM2075-00-140-01-A.pretty/GCT_MEM2075-00-140-01-A.kicad_mod	reference/the-open-book/upstream/OSO-BOOK-C1/MEM2075-00-140-01-A.pretty/GCT_MEM2075-00-140-01-A.kicad_mod
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-C1/OSO-BOOK-C1.kicad_pcb	reference/the-open-book/upstream/OSO-BOOK-C1/OSO-BOOK-C1.kicad_pcb
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-C1/OSO-BOOK-C1.kicad_prl	reference/the-open-book/upstream/OSO-BOOK-C1/OSO-BOOK-C1.kicad_prl
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-C1/OSO-BOOK-C1.kicad_pro	reference/the-open-book/upstream/OSO-BOOK-C1/OSO-BOOK-C1.kicad_pro
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-C1/OSO-BOOK-C1.kicad_sch	reference/the-open-book/upstream/OSO-BOOK-C1/OSO-BOOK-C1.kicad_sch
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-C1/OSO-BOOK-C2-01.kicad_sym	reference/the-open-book/upstream/OSO-BOOK-C1/OSO-BOOK-C2-01.kicad_sym
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-C1/OSO-BOOK-C2-01.pretty/OSO-BOOK-C2-01.kicad_mod	reference/the-open-book/upstream/OSO-BOOK-C1/OSO-BOOK-C2-01.pretty/OSO-BOOK-C2-01.kicad_mod
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-C1/TACT_PANA-EVQ.pretty/TACT_PANA-EVQ-BUTTONPAD.kicad_mod	reference/the-open-book/upstream/OSO-BOOK-C1/TACT_PANA-EVQ.pretty/TACT_PANA-EVQ-BUTTONPAD.kicad_mod
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-C1/TACT_PANA-EVQ.pretty/TACT_PANA-EVQ.kicad_mod	reference/the-open-book/upstream/OSO-BOOK-C1/TACT_PANA-EVQ.pretty/TACT_PANA-EVQ.kicad_mod
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-C1/fp-info-cache	reference/the-open-book/upstream/OSO-BOOK-C1/fp-info-cache
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-C1/fp-lib-table	reference/the-open-book/upstream/OSO-BOOK-C1/fp-lib-table
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-C1/sym-lib-table	reference/the-open-book/upstream/OSO-BOOK-C1/sym-lib-table
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-C2/OSO-BOOK-C2-01.brd	reference/the-open-book/upstream/OSO-BOOK-C2/OSO-BOOK-C2-01.brd
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-C2/OSO-BOOK-C2-01.sch	reference/the-open-book/upstream/OSO-BOOK-C2/OSO-BOOK-C2-01.sch
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-C2/OSO-BOOK-C2-02.brd	reference/the-open-book/upstream/OSO-BOOK-C2/OSO-BOOK-C2-02.brd
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-C2/OSO-BOOK-C2-02.sch	reference/the-open-book/upstream/OSO-BOOK-C2/OSO-BOOK-C2-02.sch
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-C2/OSO-BOOK-C2-03.brd	reference/the-open-book/upstream/OSO-BOOK-C2/OSO-BOOK-C2-03.brd
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/OSO-BOOK-C2/OSO-BOOK-C2-03.sch	reference/the-open-book/upstream/OSO-BOOK-C2/OSO-BOOK-C2-03.sch
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/README.md	reference/the-open-book/upstream/README.md
+GITIGNORE-TO-INGEST/the-open-book/The-Open-Book-main/kitspace.yaml	reference/the-open-book/upstream/kitspace.yaml
+GITIGNORE-TO-INGEST/the-open-book/pcbway-selection.png	reference/the-open-book/pcbway-selection.png
+GITIGNORE-TO-INGEST/the-open-book/why-the-open-book	reference/the-open-book/why-the-open-book

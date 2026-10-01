@@ -1,0 +1,31 @@
+The open book is an open hardware e-book reader designed around the ESP32-S3, and a low-cost e-paper screen capable of displaying books in all the languages of the world Designed to be affordable, accessible, and DIY friendly, it aims to demystify the inner workings of consumer technology, and reclaim this essential technogical artifact as a piece of fully open-source hardware. 
+
+Motherboard Tag: 
+
+The Open Book 
+is Open SOurce Hardware! 
+CC-BY-SA 4.0 
+(except the bear!)
+
+Why a Book? 
+
+The physical book is one of the greatest technologies of all time, and yet, adding electronics to books hasn't worked out so well for readers. The most popular and widespread devices we have for reading operate as small moving parts in a system of giant closed platforms owned by corporations whose incentives don't align with those of the readers — or of authors. DRM encumbers e-books, creating barriers to reading and uncertainty about longevity and complex systems of surveillance aim to track every tap, letting platform owners muscle their way between author and reader. But the truth is, an e-book reader doesn't need to be complicated, if the goal is to read books, we can make an e-book reader so simple, that it can do its job and show its work. 
+
+The Circuit Board
+
+The open book is designed to be extremely simple, affordable, and accessible. With just 50 surface mount placements, and no parts smaller than an '0805 passive', its something that can be hand-assembled with basic soldering techniques, or manufactured using an affordable open-source pick and place. The circuit board itself includes detailed instructions for assembling the device, and on the back, components are grouped into functional blocks that match the schematic and describe what each one does. A detailed description of the ESP32's pinout makes this device hackable without reverse engineering, and a trio of common JST-SH ports expose power pins, two general purpose IO's, and an I(2)C bus for extending the board's capabilities. 
+
+The Object
+
+The open book is meant to be portable, which makes form factor a major consideration. The circuit board is designed to work with a very slim, widely available Lithium Polymer battery that fits into a safe area at the bottom of the board. This ensures a low center of gravity for a good weight distribution when held. Its two-part enclosure is designed to be printable on any 3D printer, requiring no supports, and just for standard M2.5 screws to fully assemble the device. When put together, this device is under 9 cm wide and 12 cm tall, with a thickness under 1cm. For a device that you can assemble from scratch, it has an excellent — and reproducible — fit and finish, and it's a joy to carry around and use. 
+
+The Vision
+
+Whether you assemble it on your workbench, 3D print the enclosure, or aim for something even more creative, the Open Book encourages the reader to make the device their own. It aims to show users that this technology isn't complicated or beyond their comprehension. It's something that they can amek and understand, something that can serve them. The Open Book's standard formware, Libros, is capable of displaying books in all the languages in the world, thanks to the open source GNU Unifont project, which gives us a unified bitmap font for every culture's literary works. The JST ports invite readers to make their won add-ons to extend the board's functionality. Whether it's adding a reading light for convenience, or alternative forms of input that are essential for accessibility, the Open Book as designed serves a starting point for building a better book. Finally, in choosing a simple open file format plain UTF-8 text — the Open Book encourages putting important cultural works into a file format that's likely to stand the test of time. 
+
+The Future
+
+At this time, the Open Book is a fully functioning prototype, and I believe, I'm close to being able to manufacture this device here in the united states. But by opening the design files to the world, I believe we can aim higher. From educational institutions leading workshops around the Open Book, to hacker spaces doing small scale manufacturing of the device, the Open Book is a piece of technlogy that's meant to fan out into the broader world. An idea as much as a product, the Open Book imagines a different path for this, essential piece of technology: one that empowers people instead of platforms, and centers sharing and openness over lock-in secrecy. Also you can, y'know, read books on it.
+
+'Oddly Specific Objects' 
+

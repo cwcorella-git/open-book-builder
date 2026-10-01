@@ -1,0 +1,175 @@
+PCB Way
+
+Motherboard (Custom)
+	
+	Aimed to purchase
+	Price: 52.70 for 10 units
+	32.70 to purchase
+	19.98 to ship
+	Quantity Per Reader: 1 unit
+
+
+Temporary Sourcing
+
+4.2 Inch E-paper Display (GDEY042T81)
+
+    Already Purchased
+    Price: $269.00 for 10 units
+    Quantity Per Reader: 1 unit
+
+Sourcing from Digi-Key
+
+    Side-Mount Buttons (Würth Elektronik, 434351045816)
+        Price: $11.60 for 20 units
+        Quantity Per Reader: 2 units
+        Total Needed for 10 Readers: 20 units
+        Digi-Key Part Number: 732-7057-1-ND
+
+    Side-Mount Switches (C&K, JS102011SAQN)
+        Price: $6.85 for 10 units
+        Quantity Per Reader: 1 unit
+        Total Needed for 10 Readers: 10 units
+        Digi-Key Part Number: 401-1999-1-ND
+
+    MicroSD Card Slot (GCT, MEM2075-00-140-01-A)
+        Price: $18.60 for 10 units
+        Quantity Per Reader: 1 unit
+        Total Needed for 10 Readers: 10 units
+        Digi-Key Part Number: 2073-MEM2075-00-140-01-ACT-ND
+
+    Flashchip (GigaDevice, GD25Q16CTIGR)
+        Price: $7.50 for 10 units
+        Quantity Per Reader: 1 unit
+        Total Needed for 10 Readers: 10 units
+        Digi-Key Part Number: 1970-1010-1-ND
+
+    Dual AAA Battery Holder (Keystone, 1022)
+        Price: $44.50 for 10 units
+        Quantity Per Reader: 1 unit
+        Total Needed for 10 Readers: 10 units
+        Digi-Key Part Number: 36-1022-ND
+
+    Retainer for Battery Holder (Keystone, 1022C)
+        Price: $8.60 for 10 units
+        Quantity Per Reader: 1 unit
+        Total Needed for 10 Readers: 10 units
+        Digi-Key Part Number: 36-1022C-ND
+
+    Raspberry Pi Pico Board (Raspberry Pi, SC0915)
+        Price: $40.00 for 10 units
+        Quantity Per Reader: 1 unit
+        Total Needed for 10 Readers: 10 units
+        Digi-Key Part Number: 2648-SC0915CT-ND
+
+    10µF Capacitors (KEMET, C0603C106M9PACTU)
+        Price: $1.74 for 10 units
+        Quantity Per Reader: 2 units
+        Total Needed for 10 Readers: 20 units
+        Digi-Key Part Number: 399-C0603C106M9PACTUCT-ND
+        
+(ARE CAPACITORS RESISTORS?) (R1/R2)
+
+    1µF Capacitors (KEMET, C0805C104K5RAC7800)
+        Price: $1.30 for 10 units
+        Quantity Per Reader: 1 unit
+        Total Needed for 10 Readers: 10 units
+        Digi-Key Part Number: 399-C0805C104K5RAC7800CT-ND
+
+    Slim Tactile Buttons (E-Switch, TL1107AF130WQ)
+        Price: $22.88 for 10 units
+        Quantity Per Reader: 7 units
+        Total Needed for 10 Readers: 70 units
+        Digi-Key Part Number: EG2510-ND
+
+    P-Channel MOSFETS (Diodes Incorporated, DMG3415U-7)
+        Price: $0.32 each
+        Quantity Per Reader: 2 units
+        Total Needed for 10 Readers: 20 units
+        Digi-Key Part Number: DMG3415UDICT-ND
+
+(ARE DIODES RESISTORS?) (R1/R2)
+
+Total Costs for 10 Units
+
+    E-paper Displays: $269.00
+    Side-Mount Buttons: $11.60
+    Side-Mount Switches: $6.85
+    MicroSD Card Slots: $18.60
+    Flashchips: $7.50
+    Battery Holders: $44.50
+    Battery Retainers: $8.60
+    Raspberry Pi Pico Boards: $40.00
+    10µF Capacitors: $1.74
+    1µF Capacitors: $1.30
+    Slim Tactile Buttons: $22.88
+    MOSFETS: $0.32
+
+Estimated Total for 10 Units: $432.89 (Excludes tariffs and shipping).
+
+10K RESISTORS
+
+10 Kilo Ohm Resistors - r3 and r4
+i square c bus?
+r6 and r7 bias the head headphone output 
+
+r10 is the pull up resistor for the babel flash chip
+(makes sure the flash chip remains unselected when you're not trying to talk to it)
+
+r11 pull up for the micro sd card
+
+r12 is our pull-up for the sram chip
+
+r13 is our pull-up for the e-paper screen
+
+10 RESISTORS
+
+r5 is a 0.47 ohm resistor - current sense resistor, e-paper display has a boost curcuit that generates higher voltages for the display. this resistor is part of the feedback circuit that tells it uh what's going on in the boost circuit.
+
+r8 and r9
+100 ohms part of the headphone audio playback circuitry
+
+CAPACITORS 
+
+c1 extra ports block - in case you run any high-powered devices off of one of these ports, it's there to just provide a buffer
+
+c2 lives by the micro sd card and that's to buffer any sudden need for current, especially under the micro sd card, you wouldn't want to cause a voltage drop that leads to instability
+
+(c1/c2 were our microfarad capacitors)
+
+BIG LINE 12 ONE MICROFARAD CAPACITORS
+(boost circuit generates a lot of different voltages to run the e-paper display and each of these capacitors is there to keep that voltage level stable) plus 11 volt rail and a minus 11 volt rail and these capacitors will keep that voltage level stable for the screen
+
+CHUNKY 100 MICROFARAD CAPACITOR RELATED TO HEADPHONE OUTPUT
+
+
+FERRITE BEADS - block high frequency noise: 3 volt rail, ground. parts inject noise and in theory, over by the audio circuits, this is going to isolate three volt and ground. an analog version/less noisy version of those voltages, useful to bias the ouput
+
+DIODES
+Line on the plastic that should match up with the line on the silk screen. The direction matters. 
+
+Q1 - M channel Mosfet
+
+ICs (3)
+IO - All of our buttons
+(SO IC) Small, Integrated Circuit (biggest chip)
+
+SRAM Chip (dot indicating pin on chip and pin on board for all ICs)
+
+FLASH CHIP - chip the holds all of the book's language data
+
+BUTTONS - gullwing buttons, button part facing outwards
+
+HEADPHONE JACK
+
+ENABLE SWITCH
+
+THROUGH HOLE BUTTONS
+
+
+ 
+
+
+
+
+
+
