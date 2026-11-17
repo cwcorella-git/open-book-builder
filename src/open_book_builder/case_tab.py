@@ -56,35 +56,58 @@ DESIGNS = [
 ]
 
 
-def rasterize(sx: np.ndarray, sy: np.ndarray, depth: np.ndarray, shade: np.ndarray, w: int, h: int) -> np.ndarray:
-    """Draw triangles with a per-pixel depth buffer. sx, sy, depth are (n, 3); shade is (n,).
+FRAGMENTS_PER_CHUNK = 1_000_000  # bounds memory: each chunk handles about this many candidate pixels
 
+
+def rasterize(sx: np.ndarray, sy: np.ndarray, depth: np.ndarray, shade: np.ndarray, w: int, h: int) -> np.ndarray:
+    """Draw triangles with a per-pixel depth buffer, with no Python loop over triangles.
+
+    sx, sy, depth are (n, 3); shade is (n,). Depth is the distance away from the viewer, so smaller wins.
     Returns an (h, w) float image: the shade of the nearest triangle at each pixel, 0 where empty.
-    Depth is the distance away from the viewer, so smaller wins."""
-    zbuf = np.full((h, w), np.inf, dtype=np.float32)
-    img = np.zeros((h, w), dtype=np.float32)
+
+    Every pixel inside each triangle's bounding box becomes a candidate, the inside test and depth are worked
+    out for all candidates at once, then np.minimum.at keeps the nearest depth per pixel.
+    A loop over triangles took about 180 ms for the Sprint 5 case, all on one CPU core."""
+    sx, sy, depth = sx.astype(np.float32), sy.astype(np.float32), depth.astype(np.float32)
+    zbuf = np.full(w * h, np.inf, dtype=np.float32)
+    img = np.zeros(w * h, dtype=np.float32)
     if not len(sx):
-        return img
-    x0 = np.floor(sx.min(1)).astype(int).clip(0, w - 1)
-    x1 = np.ceil(sx.max(1)).astype(int).clip(0, w - 1)
-    y0 = np.floor(sy.min(1)).astype(int).clip(0, h - 1)
-    y1 = np.ceil(sy.max(1)).astype(int).clip(0, h - 1)
-    on_screen = (sx.max(1) >= 0) & (sx.min(1) <= w) & (sy.max(1) >= 0) & (sy.min(1) <= h)
+        return img.reshape(h, w)
+    x0 = np.floor(sx.min(1)).clip(0, w - 1).astype(np.int32)
+    x1 = np.ceil(sx.max(1)).clip(0, w - 1).astype(np.int32)
+    y0 = np.floor(sy.min(1)).clip(0, h - 1).astype(np.int32)
+    y1 = np.ceil(sy.max(1)).clip(0, h - 1).astype(np.int32)
     ax, ay, bx, by, cx, cy = sx[:, 0], sy[:, 0], sx[:, 1], sy[:, 1], sx[:, 2], sy[:, 2]
     den = (by - cy) * (ax - cx) + (cx - bx) * (ay - cy)
-    for i in np.flatnonzero(on_screen & (np.abs(den) > 1e-9)):
-        xs = np.arange(x0[i], x1[i] + 1) + 0.5
-        ys = np.arange(y0[i], y1[i] + 1)[:, None] + 0.5
-        l1 = ((by[i] - cy[i]) * (xs - cx[i]) + (cx[i] - bx[i]) * (ys - cy[i])) / den[i]
-        l2 = ((cy[i] - ay[i]) * (xs - cx[i]) + (ax[i] - cx[i]) * (ys - cy[i])) / den[i]
+    on_screen = (sx.max(1) >= 0) & (sx.min(1) <= w) & (sy.max(1) >= 0) & (sy.min(1) <= h) & (np.abs(den) > 1e-9)
+    ids = np.flatnonzero(on_screen)
+    if not len(ids):
+        return img.reshape(h, w)
+    box_w = (x1[ids] - x0[ids] + 1).astype(np.int64)
+    counts = box_w * (y1[ids] - y0[ids] + 1)
+    edges = np.searchsorted(np.cumsum(counts), np.arange(FRAGMENTS_PER_CHUNK, int(counts.sum()) + FRAGMENTS_PER_CHUNK,
+                                                          FRAGMENTS_PER_CHUNK))
+    bounds = np.unique(np.concatenate(([0], edges + 1, [len(ids)])).clip(0, len(ids)))
+    for lo, hi in zip(bounds[:-1], bounds[1:]):
+        g_ids, n = ids[lo:hi], counts[lo:hi]
+        total = int(n.sum())
+        owner = np.repeat(np.arange(len(g_ids)), n)
+        local = np.arange(total) - np.repeat(np.cumsum(n) - n, n)
+        px = x0[g_ids][owner] + local % box_w[lo:hi][owner]
+        py = y0[g_ids][owner] + local // box_w[lo:hi][owner]
+        g = g_ids[owner]
+        fx, fy = px.astype(np.float32) + 0.5, py.astype(np.float32) + 0.5
+        l1 = ((by[g] - cy[g]) * (fx - cx[g]) + (cx[g] - bx[g]) * (fy - cy[g])) / den[g]
+        l2 = ((cy[g] - ay[g]) * (fx - cx[g]) + (ax[g] - cx[g]) * (fy - cy[g])) / den[g]
         l3 = 1 - l1 - l2
         inside = (l1 >= -1e-4) & (l2 >= -1e-4) & (l3 >= -1e-4)
-        z = l1 * depth[i, 0] + l2 * depth[i, 1] + l3 * depth[i, 2]
-        window = zbuf[y0[i]:y1[i] + 1, x0[i]:x1[i] + 1]
-        nearer = inside & (z < window)
-        window[nearer] = z[nearer]
-        img[y0[i]:y1[i] + 1, x0[i]:x1[i] + 1][nearer] = shade[i]
-    return img
+        g, l1, l2, l3 = g[inside], l1[inside], l2[inside], l3[inside]
+        idx = py[inside] * w + px[inside]
+        z = l1 * depth[g, 0] + l2 * depth[g, 1] + l3 * depth[g, 2]
+        np.minimum.at(zbuf, idx, z)
+        nearest = z <= zbuf[idx]
+        img[idx[nearest]] = shade[g[nearest]]
+    return img.reshape(h, w)
 
 
 class MeshWidget(QWidget):
@@ -182,7 +205,7 @@ class MeshWidget(QWidget):
 
     def paintEvent(self, event) -> None:
         if self._dirty or self._image is None:
-            self._image = self._render(0.5 if self._moving else 1.5)
+            self._image = self._render(0.45 if self._moving else 1.0)
             self._dirty = False
         painter = QPainter(self)
         painter.setRenderHint(QPainter.SmoothPixmapTransform)
