@@ -15,7 +15,7 @@ const OUTPUT = path.join(os.homedir(), 'Desktop', 'c1-price-verification.html');
 
 const EXCLUDE = new Set([
   'OSO-BOOK-C2-01',
-  'GDEW042T2',
+  'GDEY042T81',
 ]);
 
 const FLAGS = {
@@ -116,7 +116,7 @@ function buildRows() {
 
 function explainSkip(mpn) {
   if (mpn === 'OSO-BOOK-C2-01') return 'custom PCBA, priced as a single module ($30–80)';
-  if (mpn === 'GDEW042T2') return 'display ordered direct from Good Display; no Western distributor';
+  if (mpn === 'GDEY042T81') return 'display ordered direct from Good Display; no Western distributor';
   return 'excluded';
 }
 

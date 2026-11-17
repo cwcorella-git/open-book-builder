@@ -58,7 +58,7 @@ golden file only for an intended data change, in the same commit.
    offer keeps its undated scalar price and is labelled Estimate. The 32.53 total
    uses a promotional display price with no stock (see `unavailableLineItems`).
 5. **C2 has a synthesized `Display` component.** `build/eagle.py` makes a
-   virtual GDEW042T2 at a fixed position; it isn't in the `.brd`. Removing the
+   virtual GDEY042T81 at a fixed position; it isn't in the `.brd`. Removing the
    `Display` line from the C1 BOM silently drops it from the C2 board.
 6. **Board coordinates are KiCad's: millimetres, y down.** Components on the
    bottom side use rotation negated and no mirror in the board view (checked
@@ -94,7 +94,7 @@ confirms.
 - Don't create new `.md` files unless the user asks. If a topic warrants
   persistent documentation, propose it first.
 - Prefer editing existing tabs over introducing new abstractions.
-- The display (GDEW042T2) is intentionally sourced only via Good Display; no
+- The display (GDEY042T81) is intentionally sourced only via Good Display; no
   Western distributor. Don't flag it as a gap.
 - Parsers in `build/` are ports of the old Rust code. Keep outputs identical to
   the golden file unless a data change is intended.
