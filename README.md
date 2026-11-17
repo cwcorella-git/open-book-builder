@@ -10,6 +10,10 @@ parts list, assembly guide, and 3D board views can be shared with anyone.
 
 **Live:** [cwcorella-git.github.io/open-book-builder](https://cwcorella-git.github.io/open-book-builder/)
 
+## Hardware review and continuation
+
+Before using the app to order parts, read the [2026-11-15 hardware and build review](docs/hardware-build-review-2026-11-15.md). It records confirmed BOM and assembly-instruction errors, requirements for ten US builds, pricing limits, and outstanding validation. Those findings have not yet been applied to the app's data. The [session record](docs/session-2026-11-15.md) summarizes decisions; use the [continuation handoff](docs/handoff-2026-11-15.md) when resuming work.
+
 ## Why this exists
 
 The upstream project's documentation is scattered across several BOMs,
