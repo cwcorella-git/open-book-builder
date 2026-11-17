@@ -5,6 +5,7 @@ from PySide6.QtCore import QSettings
 from PySide6.QtGui import QAction, QKeySequence
 from PySide6.QtWidgets import QLabel, QMainWindow, QMessageBox, QTabWidget
 
+from .about_tab import AboutTab
 from .assembly_tab import AssemblyTab
 from .board_tab import BoardTab
 from .bom_tab import BomTab
@@ -37,6 +38,7 @@ class MainWindow(QMainWindow):
         self.board = BoardTab(dataset)
         self.tabs.addTab(self.board, "Board")
         self.tabs.addTab(CaseTab(), "Case")
+        self.tabs.addTab(AboutTab(), "About")
         self.setCentralWidget(self.tabs)
 
         self.cost_label = QLabel()
@@ -72,7 +74,7 @@ class MainWindow(QMainWindow):
         file_menu.addAction(quit_action)
 
         view_menu = self.menuBar().addMenu("&View")
-        for index, name in enumerate(("&BOM", "C&hecklist", "&Assembly", "Boar&d", "&Case")):
+        for index, name in enumerate(("&BOM", "C&hecklist", "&Assembly", "Boar&d", "&Case", "A&bout")):
             action = view_menu.addAction(name, lambda i=index: self.tabs.setCurrentIndex(i))
             action.setShortcut(f"Ctrl+{index + 1}")
 

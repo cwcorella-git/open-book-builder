@@ -63,7 +63,7 @@ def test_assembly_progress_persists(app, settings):
 def test_window_builds(app, settings, store):
     win = MainWindow(load_dataset(GOLDEN), settings, store)
     assert win.windowTitle() == "Open Book Builder[*]"
-    assert [win.tabs.tabText(i) for i in range(5)] == ["BOM", "Checklist", "Assembly", "Board", "Case"]
+    assert [win.tabs.tabText(i) for i in range(6)] == ["BOM", "Checklist", "Assembly", "Board", "Case", "About"]
     assert "$32.53" in win.cost_label.text()
 
 
@@ -120,3 +120,15 @@ def test_step_without_parts_cannot_be_shown(app, store, settings):
     win.assembly.list.setCurrentRow(row)
     assert not win.assembly.board_button.isEnabled()
     assert "no parts" in win.assembly.board_button.toolTip()
+
+
+def test_about_tab_has_its_sections_and_no_stale_claims(app):
+    from open_book_builder.about_tab import AboutTab, SECTIONS
+
+    tab = AboutTab()
+    text = tab.browser.toPlainText()
+    for title, _ in SECTIONS:
+        assert title in text
+    for stale in ("SC0918", "$30", "per unit for the C2", "confirmed drop-in", "Pages"):
+        assert stale not in text
+    assert "unvalidated" in text and "C2-03" in text and "Gerber and drill files only" in text
