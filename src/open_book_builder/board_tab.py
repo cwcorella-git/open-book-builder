@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (
 )
 
 from . import fabrication
-from .mesh3d import board_mesh
+from .mesh3d import build_board
 from .meshview import MeshWidget
 from .dataset import BOARD_LABELS, BomLine, Dataset
 from .geometry import arc_path, component_rect, polygons_to_path
@@ -93,9 +93,9 @@ class BoardTab(QWidget):
                                    "once they are read.")
         self.silk_box = QCheckBox("Show silkscreen")
         self.silk_box.setChecked(True)
-        self.silk_box.setToolTip("Printed outlines and markings on the viewed side. In 3D this is off at first because it "
-                                 "makes turning the board slower, and it shows the side you are looking at, simplified.")
-        self._silk_state = {"2d": True, "3d": False}  # each view remembers its own choice
+        self.silk_box.setToolTip("Printed outlines and markings. In 3D both sides are drawn, but only when you stop "
+                                 "turning the board, so turning stays smooth.")
+        self._silk_state = {"2d": True, "3d": True}  # each view remembers its own choice
         self._view_key = "2d"
         self.labels_box = QCheckBox("Show labels")
         self.labels_box.setChecked(True)
@@ -405,17 +405,17 @@ class BoardTab(QWidget):
         copper = None
         if self.traces_box.isChecked() and self._fab_ready and fabrication.available(board_id):
             height = board["outline"]["heightMm"]
-            copper = {side: fabrication.copper(board_id, side, height) for side in ("top", "bottom")}
+            copper = {side: fabrication.layer_triangles("copper", board_id, side, height) for side in ("top", "bottom")}
         copper_color = rgb(blend(base, pal.color(QPalette.Highlight), 0.55))
         silk = None
         if self.silk_box.isChecked() and self._fab_ready and fabrication.available(board_id):
-            side = self.side_box.currentData()  # only the side being looked at: both sides are too many triangles
-            silk = {side: fabrication.silkscreen(board_id, side, board["outline"]["heightMm"])}
+            height = board["outline"]["heightMm"]
+            silk = {side: fabrication.layer_triangles("silk", board_id, side, height) for side in ("top", "bottom")}
         silk_color = rgb(blend(base, text, 0.7))
-        tris, colors, groups = board_mesh(board, slab, part, panel, copper, copper_color, silk, silk_color)
+        tris, colors, groups, detail = build_board(board, slab, part, panel, copper, copper_color, silk, silk_color)
         self.components = board["components"]
         self.view3d.home = (0.0, 58.0) if self.side_box.currentData() == "top" else (0.0, -58.0)  # look from that side
-        self.view3d.set_mesh(tris, colors, groups)
+        self.view3d.set_mesh(tris, colors, groups, detail)
         self.detail.clear()
         self.selection_message.emit("")
 

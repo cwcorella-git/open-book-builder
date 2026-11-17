@@ -83,6 +83,8 @@ class MeshWidget(QWidget):
         self.tris = np.zeros((0, 3, 3))
         self.colors: np.ndarray | None = None  # (n, 3) uint8 base color per triangle
         self.groups: np.ndarray | None = None  # (n,) int group per triangle, -1 for none
+        self.detail: np.ndarray | None = None  # (n,) bool: fine detail, drawn only while the view is still
+        self._center, self._radius, self._keep, self._drag_tris = np.zeros(3), 1.0, None, None
         self.highlight_group: int | None = None
         self.home = home
         self.yaw, self.pitch = home
@@ -101,8 +103,16 @@ class MeshWidget(QWidget):
         self.setMinimumSize(320, 240)
         self.setCursor(Qt.OpenHandCursor)
 
-    def set_mesh(self, tris: np.ndarray, colors: np.ndarray | None = None, groups: np.ndarray | None = None) -> None:
-        self.tris, self.colors, self.groups = tris, colors, groups
+    def set_mesh(self, tris: np.ndarray, colors: np.ndarray | None = None, groups: np.ndarray | None = None,
+                 detail: np.ndarray | None = None) -> None:
+        self.tris, self.colors, self.groups, self.detail = tris, colors, groups, detail
+        # worked out once: the framing of the whole mesh, and the triangles a drag frame draws (no fine detail)
+        if len(tris):
+            pts = tris.reshape(-1, 3)
+            self._center = (pts.min(0) + pts.max(0)) / 2
+            self._radius = np.linalg.norm(pts - self._center, axis=1).max() or 1.0
+        self._keep = np.nonzero(~detail)[0] if detail is not None and detail.any() else None
+        self._drag_tris = tris[self._keep] if self._keep is not None else None
         self.highlight_group = None
         self.reset_view()
 
@@ -172,9 +182,9 @@ class MeshWidget(QWidget):
         canvas[:] = (back.red(), back.green(), back.blue())
         self._ids, self._ids_scale = None, scale
         if len(self.tris):
-            pts = self.tris.reshape(-1, 3)
-            pts = pts - (pts.min(0) + pts.max(0)) / 2
-            radius = np.linalg.norm(pts, axis=1).max() or 1.0
+            keep = self._keep if scale < 1.0 else None  # drag frames leave out the fine detail
+            pts = (self._drag_tris if keep is not None else self.tris).reshape(-1, 3) - self._center
+            radius = self._radius
             yaw, pitch = np.radians(self.yaw), np.radians(self.pitch)
             rz = np.array([[np.cos(yaw), -np.sin(yaw), 0], [np.sin(yaw), np.cos(yaw), 0], [0, 0, 1]])
             rx = np.array([[1, 0, 0], [0, np.cos(pitch), -np.sin(pitch)], [0, np.sin(pitch), np.cos(pitch)]])
@@ -190,7 +200,8 @@ class MeshWidget(QWidget):
             light = np.array([-0.4, 0.6 if self.pitch < 0 else -0.6, 0.7])
             light /= np.linalg.norm(light)
             shade = (0.25 + 0.75 * np.abs(normals @ light)).astype(np.float32)
-            ids = rasterize_ids(sx, sy, tri[:, :, 1].astype(np.float32), w, h)
+            drawn = rasterize_ids(sx, sy, tri[:, :, 1].astype(np.float32), w, h)
+            ids = drawn if keep is None else np.where(drawn >= 0, keep[np.maximum(drawn, 0)], -1)
             self._ids = ids
             filled = ids >= 0
             if self.colors is not None:
@@ -200,7 +211,7 @@ class MeshWidget(QWidget):
             if self.highlight_group is not None and self.groups is not None:
                 hi = pal.color(QPalette.Highlight)
                 colours[self.groups == self.highlight_group] = (hi.red(), hi.green(), hi.blue())
-            canvas[filled] = (shade[ids[filled]][:, None] * colours[ids[filled]]).astype(np.uint8)
+            canvas[filled] = (shade[drawn[filled]][:, None] * colours[ids[filled]]).astype(np.uint8)
         image = QImage(canvas.data, w, h, 3 * w, QImage.Format_RGB888)
         return image.copy()
 

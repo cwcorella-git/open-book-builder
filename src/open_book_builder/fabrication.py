@@ -4,6 +4,9 @@ from __future__ import annotations
 import threading
 from pathlib import Path
 
+import numpy as np
+import shapely
+
 from .build.gerber_geometry import read_drills, read_layer
 from .dataset import find_data_dir
 
@@ -25,6 +28,9 @@ FABRICATION = {
 }
 
 _lock = threading.Lock()  # one slow read at a time, so a background warm-up and the window never repeat work
+_triangle_lock = threading.Lock()
+_triangles: dict = {}
+TRIANGLE_TOLERANCE = 0.05  # mm: polygons are simplified this much before the 3D view triangulates them
 
 
 def zip_path(board: str) -> Path:
@@ -55,6 +61,24 @@ def drills(board: str, height_mm: float):
         return read_drills(str(zip_path(board)), FABRICATION[board]["drills"], transform(board, height_mm))
 
 
+def layer_triangles(kind: str, board: str, side: str, height_mm: float) -> np.ndarray:
+    """Triangles (n, 3, 2) of a "copper" or "silk" layer in the dataset's coordinates, simplified for the 3D view.
+    Simplifying about 200,000 silkscreen points takes seconds, so the result is cached (and the warm-up makes it)."""
+    key = (kind, board, side)
+    with _triangle_lock:
+        if key in _triangles:
+            return _triangles[key]
+    geometry = (copper if kind == "copper" else silkscreen)(board, side, height_mm)
+    if geometry is None or geometry.is_empty:
+        triangles = np.zeros((0, 3, 2))
+    else:
+        mesh = shapely.constrained_delaunay_triangles(shapely.simplify(geometry, TRIANGLE_TOLERANCE))
+        triangles = shapely.get_coordinates(mesh).reshape(-1, 4, 2)[:, :3]
+    with _triangle_lock:
+        _triangles[key] = triangles
+    return triangles
+
+
 def warm_up(heights: dict[str, float]) -> threading.Thread:
     """Read every layer on a background thread so the Board tab is ready by the time it is opened."""
     def work() -> None:
@@ -62,8 +86,8 @@ def warm_up(heights: dict[str, float]) -> threading.Thread:
             if not available(board):
                 continue
             for side in ("top", "bottom"):
-                copper(board, side, height)
-                silkscreen(board, side, height)
+                layer_triangles("copper", board, side, height)
+                layer_triangles("silk", board, side, height)
             drills(board, height)
 
     thread = threading.Thread(target=work, name="fabrication-warm-up", daemon=True)

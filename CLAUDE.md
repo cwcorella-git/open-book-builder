@@ -96,8 +96,11 @@ golden file only for an intended data change, in the same commit.
    labels; the battery cells are boxes squeezed to fit). Such a part can be taller than its
    `height3d` (the Pico's USB). Copper from the Gerbers is drawn 0.02 mm proud of each face,
    simplified to 0.05 mm, and picks as the slab; it is about 7,000 triangles on the C1, so keep
-   an eye on drag time. Silkscreen (viewed side only, simplified to 0.2 mm, about 18,000 triangles on the C1)
-   is off by default in 3D; the Show silkscreen box remembers its state separately for 2D and 3D. The light
+   an eye on drag time. Silkscreen (both sides, simplified to 0.05 mm, about 72,000 triangles on the C1) is marked
+   `detail`: `MeshWidget` leaves detail triangles out of drag frames (scale below 1) and draws them when the view
+   settles, so a drag costs the same with it on or off (about 50 ms on the C1) and a settled frame about 250 ms.
+   The simplified layer triangles are cached by `fabrication.layer_triangles` and made by the background warm-up
+   (simplifying the silkscreen takes seconds). The Show silkscreen box remembers its state separately for 2D and 3D. The light
    in `meshview.py` flips its depth part with the pitch sign so top and bottom views are equally bright. The virtual C2 Display is 95 x 110 mm and
    dwarfs the C2 board, which is true to scale.
 11. **`site/` is a localhost mockup of the collections site**, built by `scripts/build_site.py`

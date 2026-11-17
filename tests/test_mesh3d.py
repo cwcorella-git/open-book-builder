@@ -143,7 +143,7 @@ def test_copper_lies_on_each_face_of_the_slab(dataset):
 
     board = dataset.boards["c2-driver"]
     height = board["outline"]["heightMm"]
-    copper = {side: fabrication.copper("c2-driver", side, height) for side in ("top", "bottom")}
+    copper = {side: fabrication.layer_triangles("copper", "c2-driver", side, height) for side in ("top", "bottom")}
     plain, _, _ = board_mesh(board, *COLORS)
     with_copper, colors, groups = board_mesh(board, *COLORS, copper, (200, 120, 40))
     added = with_copper[(colors == (200, 120, 40)).all(axis=1)]
@@ -159,7 +159,7 @@ def test_triangle_budget_with_copper(dataset):
     for key, limit in (("c1-main", 25000), ("c2-driver", 8000)):
         board = dataset.boards[key]
         height = board["outline"]["heightMm"]
-        copper = {side: fabrication.copper(key, side, height) for side in ("top", "bottom")}
+        copper = {side: fabrication.layer_triangles("copper", key, side, height) for side in ("top", "bottom")}
         tris, _, _ = board_mesh(board, *COLORS, copper, (200, 120, 40))
         assert len(tris) < limit, (key, len(tris))
 
@@ -186,7 +186,7 @@ def test_silkscreen_is_a_thin_layer_on_the_slab_and_off_by_default_in_3d(app, da
     from open_book_builder.mesh3d import COPPER_LIFT
 
     board = dataset.boards["c2-driver"]
-    silk = {"bottom": fabrication.silkscreen("c2-driver", "bottom", board["outline"]["heightMm"])}
+    silk = {"bottom": fabrication.layer_triangles("silk", "c2-driver", "bottom", board["outline"]["heightMm"])}
     plain, _, _ = board_mesh(board, *COLORS)
     with_silk, colors, groups = board_mesh(board, *COLORS, silk=silk, silk_color=(10, 20, 30))
     added = with_silk[(colors == (10, 20, 30)).all(axis=1)]
@@ -199,13 +199,14 @@ def test_each_view_remembers_its_own_silkscreen_choice(app, dataset):
     tab = BoardTab(dataset)
     assert tab.silk_box.isChecked()  # 2D: on
     tab.view_box.setCurrentIndex(1)
-    assert not tab.silk_box.isChecked() and tab.silk_box.isEnabled()  # 3D: off at first, and usable
-    tab.silk_box.setChecked(True)
+    assert tab.silk_box.isChecked() and tab.silk_box.isEnabled()  # 3D: on too, and usable
+    tab.silk_box.setChecked(False)
     tab.view_box.setCurrentIndex(0)
-    assert tab.silk_box.isChecked()
+    assert tab.silk_box.isChecked()  # 2D kept its own choice
     tab.silk_box.setChecked(False)
     tab.view_box.setCurrentIndex(1)
-    assert tab.silk_box.isChecked()  # 3D kept its own on
+    assert not tab.silk_box.isChecked()  # 3D kept its own off
+    tab.silk_box.setChecked(True)
     tab.view_box.setCurrentIndex(0)
     assert not tab.silk_box.isChecked()
 
@@ -215,4 +216,44 @@ def test_c1_silkscreen_view_stays_within_the_triangle_budget(app, dataset):
     tab.wait_for_fabrication()
     tab.view_box.setCurrentIndex(1)
     tab.silk_box.setChecked(True)
-    assert len(tab.view3d.tris) < 32000, len(tab.view3d.tris)
+    assert len(tab.view3d.tris) < 95000, len(tab.view3d.tris)  # both sides' silkscreen, about 80,000 in all
+
+
+def test_silkscreen_is_detail_and_skipped_in_drag_frames(app, dataset):
+    tab = BoardTab(dataset)
+    tab.wait_for_fabrication()
+    tab.view_box.setCurrentIndex(1)
+    assert tab.silk_box.isChecked()  # on by default in 3D now: it is not drawn while turning
+    w = tab.view3d
+    assert w.detail is not None and w.detail.sum() > 20000 and len(w.detail) == len(w.tris)
+    silk_triangles = np.nonzero(w.detail)[0]
+    w._render(0.45)  # a drag frame
+    drag = w._ids
+    assert not np.isin(drag[drag >= 0], silk_triangles).any()
+    assert drag.max() < len(w.tris) and (drag >= 0).any()  # ids are full-mesh indices
+    w._render(1.0)  # still
+    assert np.isin(w._ids[w._ids >= 0], silk_triangles).any()
+
+
+def test_detail_mask_leaves_picking_intact(app, dataset):
+    tab = BoardTab(dataset)
+    tab.wait_for_fabrication()
+    tab.view_box.setCurrentIndex(1)
+    tab.resize(1000, 640)
+    tab.show()
+    app.processEvents()
+    w = tab.view3d
+    w._render(0.45)
+    ref_to_index = {c["ref"]: i for i, c in enumerate(tab.components)}
+    target = ref_to_index["B3"]
+    ys, xs = np.nonzero(w.groups[np.maximum(w._ids, 0)] == target)
+    assert len(xs)  # the part is found through the mapped ids even in a drag frame
+
+
+def test_layer_triangles_are_cached_arrays(dataset):
+    from open_book_builder import fabrication
+
+    height = dataset.boards["c2-driver"]["outline"]["heightMm"]
+    a = fabrication.layer_triangles("copper", "c2-driver", "top", height)
+    assert a.shape[1:] == (3, 2) and len(a) > 100
+    assert fabrication.layer_triangles("copper", "c2-driver", "top", height) is a
