@@ -42,3 +42,22 @@ def polygons_to_path(geometry) -> QPainterPath:
             path.addPolygon(QPolygonF([QPointF(x, y) for x, y in ring.coords]))
             path.closeSubpath()
     return path
+
+
+def component_rect(comp: dict) -> tuple[float, float, float, float]:
+    """Body box of a component in its own frame: (left, top, right, bottom). It follows the pads, so it is not
+    centred on the origin for asymmetric parts such as the Pico or the FPC connector. Without pads it falls
+    back to the stored width and height, centred."""
+    pads = comp["pads"]
+    if pads:
+        return (min(p["x"] - p["size"][0] / 2 for p in pads), min(p["y"] - p["size"][1] / 2 for p in pads),
+                max(p["x"] + p["size"][0] / 2 for p in pads), max(p["y"] + p["size"][1] / 2 for p in pads))
+    box = comp["footprintBbox"]
+    return (-box["width"] / 2, -box["height"] / 2, box["width"] / 2, box["height"] / 2)
+
+
+def to_board(comp: dict, local_x: float, local_y: float) -> tuple[float, float]:
+    """A point in a component's frame to board coordinates (y down): the component's rotation, then its position."""
+    theta = math.radians(comp["rotation"])
+    c, s = math.cos(theta), math.sin(theta)
+    return (comp["x"] + local_x * c + local_y * s, comp["y"] - local_x * s + local_y * c)

@@ -54,7 +54,7 @@ driver module) and does not change them.</p>
 <li><b>BOM</b>: parts with dated prices, spares, order quantities and a Digi-Key CSV export.</li>
 <li><b>Checklist</b>: parts, boards, cards, fees and tools for the first batch, with open items kept open.</li>
 <li><b>Assembly</b>: build steps with saved progress. Steps rewritten after the review are marked Untested.</li>
-<li><b>Board</b>: a 2D view of each board, with parts you can select.</li>
+<li><b>Board</b>: a 2D view of each board drawn from the order files, and a 3D view with a box for every part (heights from the footprint tables, not the real part shapes). Parts can be selected in both.</li>
 <li><b>Case</b>: the printable case models. Cases are not part of the first batch.</li>
 </ul>
 <p>The older React and Tauri version, with a 3D board view, lives at the git tag <code>web-tool-final</code>.</p>"""),

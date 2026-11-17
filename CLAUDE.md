@@ -87,7 +87,14 @@ golden file only for an intended data change, in the same commit.
    each) and the tab shows the design file until they are ready. Paths are simplified by
    0.005 mm (copper) and 0.01 mm (silkscreen) because the silkscreen text is about 200,000
    points. Components, selection and nets still come from the KiCad/EAGLE parsers.
-10. **Planning data is edited in the app and saved to `data/configs.json`**
+10. **The 3D board view is the same CPU depth buffer as the Case tab** (`meshview.py`),
+   with no OpenGL: it works over Selkies and under test. `mesh3d.py` extrudes the outline
+   (mounting holes cut out) 1.0 mm and adds a box per component from its pad extents and
+   `footprintBbox.height3d`; parts on the bottom hang below the slab. Boxes are not the real
+   part shapes (the old three.js tool had procedural Pico, C2, holder, microSD and panel
+   meshes; they are in the `web-tool-final` tag). The virtual C2 Display is 95 x 110 mm and
+   dwarfs the C2 board, which is true to scale.
+11. **Planning data is edited in the app and saved to `data/configs.json`**
    (File > Save). `offers.json`, `checklist.json` and `revisions.json` are edited
    by hand. Keep dated offers dated and mark estimates as estimates.
 

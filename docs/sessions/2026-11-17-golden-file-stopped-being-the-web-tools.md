@@ -31,10 +31,11 @@ Started as "review what Codex did", became: retire the web/Tauri tool for a PySi
 | 26 | Quote request drafts | **done** — `docs/quote-requests.md` (C1 PCB, C1 assembly routes A/B/C, C2-03 module, comparison table). Nothing sent; the commit that adds it follows this row |
 | 27 | Author's formatting guide for the site | **proposed** — not written. Rules are in `docs/markdown-profile.md`, which also needs the `type:` tag, `_STATE` and stale-page-map additions if the features go ahead |
 | 28 | Site for collections (preloaded choice, downloads) | **proposed** — the operator's plan; no design yet |
-| 29 | Plan: assembly highlights, About tab, Gerber Board view, 3D view, three documents | **in progress** — phases 1 to 3 done below, 4 and 5 next |
+| 29 | Plan: assembly highlights, About tab, Gerber Board view, 3D view, three documents | **in progress** — phases 1 to 4 done, phase 5 (three documents) next |
 | 30 | Assembly step highlights its parts on the Board tab | **done** — `17124be` |
 | 31 | About tab with the corrected ordering guide | **done** — `49822e4` |
 | 32 | Gerber-based Board view, C2 on the C2-03 route, order zips in `data/fabrication/` | **done** — see section 10 |
+| 33 | 3D board view (CPU depth buffer, no OpenGL) | **done** — see section 11 |
 | 11 | SC0915 Digi-Key part number into `data/bom-c1-main.csv` | **blocked** — on the operator pasting it (Digi-Key returns 403 to the shell) |
 
 ## 1. Codex's review held up, and the cheap checks were enough
@@ -99,6 +100,14 @@ New Gerber and Excellon reader (`build/gerber.py`, tested on synthetic files and
 What the Gerbers show that the design file never did: the real silkscreen text (the C1's top side carries the whole build guide, printed on the board), copper pours, true pad shapes and trace widths, the castellated holes on the C2, and the Pico's pads 0.9 mm further out. Startup stayed fast because layers are read on a background thread (window ready in 0.27 s; reading them synchronously had made it 2 s). A full repaint at fit zoom is about 100 ms after simplifying the polygons; panning repaints less than that. Measured offscreen, never felt by hand.
 
 Silkscreen vertex count was the cost: about 200,000 points on a C1 layer, 1.5 s to merge and 177 ms to paint. Simplifying by 0.01 mm keeps 98.7 percent of the area with a third of the points.
+
+## 11. The 3D view reused the case view's depth buffer
+
+`MeshWidget` and `rasterize` moved to `meshview.py` and gained per-triangle colors, a group number per triangle and click picking (the rasterizer now returns a triangle-index image, which is also what picking reads). `mesh3d.py` builds a board in a few milliseconds: the outline polygon (closed with a 0.001 mm snap, because f32 rounding leaves gaps between segments), constrained Delaunay triangulation from shapely for the faces, walls, and a box per component. About 960 triangles for the C1, 530 for the C2. A frame is about 0.2 s when sharp and cheaper while dragging. Clicking a part highlights it with the palette's highlight color and fills the detail pane, as in 2D.
+
+Not done: real part shapes (the old tool's hero meshes), copper or silkscreen on the 3D slab, and any OpenGL path. The Side choice sets which side the camera starts on.
+
+One unexplained stall: a single command that ran the test suite and a screenshot script together timed out at 120 s. The suite alone (three runs), the screenshot script alone (five runs) and the pieces separately all finished normally, so it was not reproduced. Worth knowing if the app ever hangs on exit: the background layer reader is a daemon thread.
 
 ## Open
 

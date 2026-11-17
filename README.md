@@ -43,8 +43,9 @@ uv run pytest                                  # tests
   computer.
 - **Board**: 2D view of the C1 main board and the C2 driver. By default copper, pads,
   pours, drills and silkscreen come from the order Gerbers (the boards as made); the design
-  file (KiCad, EAGLE) is the other choice. Select a component to see its part. The bottom
-  view is mirrored.
+  file (KiCad, EAGLE) is the other choice. A 3D view shows the board as a slab with a box for each part
+  (drag to turn, scroll to zoom, click a part). Select a component to see its part. The 2D
+  bottom view is mirrored.
 - **Case**: rotatable view of the Sprint 5 and minimal case STL models, with
   a Save Files action.
 
@@ -61,7 +62,8 @@ src/open_book_builder/
   bom_tab.py, assembly_tab.py, board_tab.py, case_tab.py
   dataset.py              Dataset, BomLine, AssemblyStep; builds from data/ at startup
   digikey_csv.py          Digi-Key CSV export
-  geometry.py             arc and polygon helpers for the board view
+  geometry.py             arc, polygon and component-box helpers for the board view
+  meshview.py, mesh3d.py  depth-buffer mesh widget (Case and 3D board) and the board's triangles
   fabrication.py          where each board's order files are, and their coordinate mapping
   build/                  parsers: bom, kicad_pcb (C1), eagle (C2), net_category, footprint_heights,
                           gerber and gerber_geometry (order files)
