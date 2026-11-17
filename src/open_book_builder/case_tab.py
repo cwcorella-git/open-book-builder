@@ -7,8 +7,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
-from PySide6.QtCore import QPointF, Qt
-from PySide6.QtGui import QColor, QPainter, QPalette, QPolygonF
+from PySide6.QtCore import QPointF, Qt, QTimer
+from PySide6.QtGui import QImage, QPainter, QPalette
 from PySide6.QtWidgets import (
     QComboBox, QFileDialog, QHBoxLayout, QLabel, QMessageBox, QPushButton, QSplitter,
     QTextBrowser, QVBoxLayout, QWidget,
@@ -56,12 +56,53 @@ DESIGNS = [
 ]
 
 
+def rasterize(sx: np.ndarray, sy: np.ndarray, depth: np.ndarray, shade: np.ndarray, w: int, h: int) -> np.ndarray:
+    """Draw triangles with a per-pixel depth buffer. sx, sy, depth are (n, 3); shade is (n,).
+
+    Returns an (h, w) float image: the shade of the nearest triangle at each pixel, 0 where empty.
+    Depth is the distance away from the viewer, so smaller wins."""
+    zbuf = np.full((h, w), np.inf, dtype=np.float32)
+    img = np.zeros((h, w), dtype=np.float32)
+    if not len(sx):
+        return img
+    x0 = np.floor(sx.min(1)).astype(int).clip(0, w - 1)
+    x1 = np.ceil(sx.max(1)).astype(int).clip(0, w - 1)
+    y0 = np.floor(sy.min(1)).astype(int).clip(0, h - 1)
+    y1 = np.ceil(sy.max(1)).astype(int).clip(0, h - 1)
+    on_screen = (sx.max(1) >= 0) & (sx.min(1) <= w) & (sy.max(1) >= 0) & (sy.min(1) <= h)
+    ax, ay, bx, by, cx, cy = sx[:, 0], sy[:, 0], sx[:, 1], sy[:, 1], sx[:, 2], sy[:, 2]
+    den = (by - cy) * (ax - cx) + (cx - bx) * (ay - cy)
+    for i in np.flatnonzero(on_screen & (np.abs(den) > 1e-9)):
+        xs = np.arange(x0[i], x1[i] + 1) + 0.5
+        ys = np.arange(y0[i], y1[i] + 1)[:, None] + 0.5
+        l1 = ((by[i] - cy[i]) * (xs - cx[i]) + (cx[i] - bx[i]) * (ys - cy[i])) / den[i]
+        l2 = ((cy[i] - ay[i]) * (xs - cx[i]) + (ax[i] - cx[i]) * (ys - cy[i])) / den[i]
+        l3 = 1 - l1 - l2
+        inside = (l1 >= -1e-4) & (l2 >= -1e-4) & (l3 >= -1e-4)
+        z = l1 * depth[i, 0] + l2 * depth[i, 1] + l3 * depth[i, 2]
+        window = zbuf[y0[i]:y1[i] + 1, x0[i]:x1[i] + 1]
+        nearer = inside & (z < window)
+        window[nearer] = z[nearer]
+        img[y0[i]:y1[i] + 1, x0[i]:x1[i] + 1][nearer] = shade[i]
+    return img
+
+
 class MeshWidget(QWidget):
+    """Rotatable flat-shaded mesh view. Drawn with a depth buffer, so overlapping and thin
+    triangles stay in the right order. Low resolution while you drag, sharp when you stop."""
+
     def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
         self.tris = np.zeros((0, 3, 3))
         self.yaw, self.pitch, self.zoom = 35.0, 25.0, 1.0
         self._last: QPointF | None = None
+        self._image: QImage | None = None
+        self._dirty = True
+        self._moving = False
+        self._settle = QTimer(self)
+        self._settle.setSingleShot(True)
+        self._settle.setInterval(160)
+        self._settle.timeout.connect(self._sharpen)
         self.setMinimumSize(320, 240)
         self.setCursor(Qt.OpenHandCursor)
 
@@ -71,6 +112,18 @@ class MeshWidget(QWidget):
 
     def reset_view(self) -> None:
         self.yaw, self.pitch, self.zoom = 35.0, 25.0, 1.0
+        self._invalidate(moving=False)
+
+    def _invalidate(self, moving: bool) -> None:
+        self._dirty = True
+        self._moving = moving
+        if moving:
+            self._settle.start()
+        self.update()
+
+    def _sharpen(self) -> None:
+        self._moving = False
+        self._dirty = True
         self.update()
 
     def mousePressEvent(self, event) -> None:
@@ -82,47 +135,58 @@ class MeshWidget(QWidget):
             self.yaw += d.x() * 0.5
             self.pitch = max(-89.0, min(89.0, self.pitch + d.y() * 0.5))
             self._last = event.position()
-            self.update()
+            self._invalidate(moving=True)
 
     def mouseReleaseEvent(self, event) -> None:
         self._last = None
+        self._sharpen()
 
     def wheelEvent(self, event) -> None:
         self.zoom = max(0.2, min(8.0, self.zoom * (1.12 if event.angleDelta().y() > 0 else 1 / 1.12)))
-        self.update()
+        self._invalidate(moving=True)
+
+    def resizeEvent(self, event) -> None:
+        self._dirty = True
+        super().resizeEvent(event)
+
+    def _render(self, scale: float) -> QImage:
+        w, h = max(1, int(self.width() * scale)), max(1, int(self.height() * scale))
+        pal = self.palette()
+        base, back = pal.color(QPalette.Button), pal.color(QPalette.Base)
+        canvas = np.empty((h, w, 3), dtype=np.uint8)
+        canvas[:] = (back.red(), back.green(), back.blue())
+        if len(self.tris):
+            pts = self.tris.reshape(-1, 3)
+            pts = pts - (pts.min(0) + pts.max(0)) / 2
+            radius = np.linalg.norm(pts, axis=1).max() or 1.0
+            yaw, pitch = np.radians(self.yaw), np.radians(self.pitch)
+            rz = np.array([[np.cos(yaw), -np.sin(yaw), 0], [np.sin(yaw), np.cos(yaw), 0], [0, 0, 1]])
+            rx = np.array([[1, 0, 0], [0, np.cos(pitch), -np.sin(pitch)], [0, np.sin(pitch), np.cos(pitch)]])
+            tri = (pts @ rz.T @ rx.T).reshape(-1, 3, 3)
+            k = self.zoom * min(w, h) * 0.45 / radius
+            sx = w / 2 + tri[:, :, 0] * k
+            sy = h / 2 - tri[:, :, 2] * k
+            normals = np.cross(tri[:, 1] - tri[:, 0], tri[:, 2] - tri[:, 0])
+            length = np.linalg.norm(normals, axis=1)
+            length[length == 0] = 1.0
+            normals /= length[:, None]
+            light = np.array([-0.4, -0.6, 0.7])
+            light /= np.linalg.norm(light)
+            shade = (0.25 + 0.75 * np.abs(normals @ light)).astype(np.float32)
+            img = rasterize(sx, sy, tri[:, :, 1].astype(np.float32), shade, w, h)
+            filled = img > 0
+            colour = np.array([base.red(), base.green(), base.blue()], dtype=np.float32)
+            canvas[filled] = (img[filled][:, None] * colour).astype(np.uint8)
+        image = QImage(canvas.data, w, h, 3 * w, QImage.Format_RGB888)
+        return image.copy()
 
     def paintEvent(self, event) -> None:
+        if self._dirty or self._image is None:
+            self._image = self._render(0.5 if self._moving else 1.5)
+            self._dirty = False
         painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing)
-        pal = self.palette()
-        painter.fillRect(self.rect(), pal.color(QPalette.Base))
-        if not len(self.tris):
-            return
-        pts = self.tris.reshape(-1, 3)
-        pts = pts - (pts.min(0) + pts.max(0)) / 2
-        radius = np.linalg.norm(pts, axis=1).max() or 1.0
-        yaw, pitch = np.radians(self.yaw), np.radians(self.pitch)
-        rz = np.array([[np.cos(yaw), -np.sin(yaw), 0], [np.sin(yaw), np.cos(yaw), 0], [0, 0, 1]])
-        rx = np.array([[1, 0, 0], [0, np.cos(pitch), -np.sin(pitch)], [0, np.sin(pitch), np.cos(pitch)]])
-        view = pts @ rz.T @ rx.T
-        tri = view.reshape(-1, 3, 3)
-        scale = self.zoom * min(self.width(), self.height()) * 0.45 / radius
-        screen_x = self.width() / 2 + tri[:, :, 0] * scale
-        screen_y = self.height() / 2 - tri[:, :, 2] * scale
-        normals = np.cross(tri[:, 1] - tri[:, 0], tri[:, 2] - tri[:, 0])
-        length = np.linalg.norm(normals, axis=1)
-        length[length == 0] = 1.0
-        normals /= length[:, None]
-        light = np.array([-0.4, -0.6, 0.7])
-        light /= np.linalg.norm(light)
-        shade = 0.25 + 0.75 * np.abs(normals @ light)
-        order = np.argsort(-tri[:, :, 1].mean(axis=1))  # far to near (y points away from the viewer)
-        base = pal.color(QPalette.Button)
-        painter.setPen(Qt.NoPen)
-        for i in order:
-            s = shade[i]
-            painter.setBrush(QColor(int(base.red() * s), int(base.green() * s), int(base.blue() * s)))
-            painter.drawPolygon(QPolygonF([QPointF(screen_x[i, k], screen_y[i, k]) for k in range(3)]))
+        painter.setRenderHint(QPainter.SmoothPixmapTransform)
+        painter.drawImage(self.rect(), self._image)
 
 
 class CaseTab(QWidget):

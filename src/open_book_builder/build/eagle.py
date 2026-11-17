@@ -29,6 +29,14 @@ def _int(el, key, default=0):
         return default
 
 
+def quarter_turn(rot: str | None) -> bool:
+    """True when an element's rot attribute (R90, R270, MR90, SR270 ...) turns it a quarter turn."""
+    if not rot:
+        return False
+    digits = "".join(ch for ch in rot if ch.isdigit())
+    return bool(digits) and int(digits) % 180 == 90
+
+
 def decode_rot(rot: str | None) -> tuple[bool, float]:
     if not rot:
         return False, 0.0
@@ -182,8 +190,11 @@ def load_c2_board(brd_path: Path, bom: list[dict]) -> dict:
             holes.append({"x": f32(_num(node, "x", 0.0)), "y": f32(_num(node, "y", 0.0)),
                           "diameter": f32(_num(node, "drill", 1.0))})
         elif tag == "smd" and package is not None:
+            dx, dy = _num(node, "dx", 0.0), _num(node, "dy", 0.0)
+            if quarter_turn(node.get("rot")):
+                dx, dy = dy, dx  # the pad is turned a quarter turn inside its package
             package.smds.append({"name": node.get("name", ""), "x": _num(node, "x", 0.0), "y": _num(node, "y", 0.0),
-                                 "dx": _num(node, "dx", 0.0), "dy": _num(node, "dy", 0.0)})
+                                 "dx": dx, "dy": dy})
         elif tag == "pad" and package is not None:
             diameter = _num(node, "diameter")
             if diameter is None and _num(node, "drill") is not None:

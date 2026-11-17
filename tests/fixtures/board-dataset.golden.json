@@ -2270,7 +2270,7 @@
      "footprint": "MCU_RaspberryPi_and_Boards:RPi_Pico_SMD",
      "footprintBbox": {
       "width": 21.28,
-      "height": 49.96,
+      "height": 50.63,
       "height3d": 1.5
      },
      "pads": [
@@ -2804,8 +2804,8 @@
        "y": -23.9,
        "shape": "rect",
        "size": [
-        3.5,
-        1.7
+        1.7,
+        3.5
        ],
        "throughHole": false,
        "netName": "/SWCLK"
@@ -2816,8 +2816,8 @@
        "y": -23.9,
        "shape": "rect",
        "size": [
-        3.5,
-        1.7
+        1.7,
+        3.5
        ],
        "throughHole": false,
        "netName": "GND"
@@ -2828,8 +2828,8 @@
        "y": -23.9,
        "shape": "rect",
        "size": [
-        3.5,
-        1.7
+        1.7,
+        3.5
        ],
        "throughHole": false,
        "netName": "/SWDIO"
@@ -11009,8 +11009,8 @@
      "side": "bottom",
      "footprint": "microbuilder:EINK_24PIN",
      "footprintBbox": {
-      "width": 18.11,
-      "height": 4.085,
+      "width": 17.11,
+      "height": 4.585,
       "height3d": 1.5
      },
      "pads": [
@@ -11020,8 +11020,8 @@
        "y": 0.21,
        "shape": "rect",
        "size": [
-        3.0,
-        2.0
+        2.0,
+        3.0
        ],
        "throughHole": false
       },
@@ -11031,8 +11031,8 @@
        "y": 0.21,
        "shape": "rect",
        "size": [
-        3.0,
-        2.0
+        2.0,
+        3.0
        ],
        "throughHole": false
       },

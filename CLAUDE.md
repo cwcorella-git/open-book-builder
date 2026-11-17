@@ -61,9 +61,13 @@ golden file only for an intended data change, in the same commit.
 5. **C2 has a synthesized `Display` component.** `build/eagle.py` makes a
    virtual GDEY042T81 at a fixed position; it isn't in the `.brd`. Removing the
    `Display` line from the C1 BOM silently drops it from the C2 board.
-6. **Board coordinates are KiCad's: millimetres, y down.** Components on the
-   bottom side use rotation negated and no mirror in the board view (checked
-   against trace endpoints). The Bottom view mirrors the whole board.
+6. **Board coordinates are KiCad's: millimetres, y down.** Pad positions use the
+   component's rotation negated and no mirror, bottom side included. This is
+   checked against the C1-05 Gerber flashes (`tests/test_gerber_accuracy.py`):
+   every pad matches within 0.02 mm except the Pico's SMD pads, which the Gerbers
+   place 0.9 mm further out than the source. A pad's angle in the file includes the
+   footprint's, so a quarter-turn relative to the footprint swaps its width and height.
+   The Bottom view mirrors the whole board.
 7. **The app expects a repository checkout.** `data/` is found by walking up
    from the package; a plain `pip install` without the repo has no data.
 8. **Review findings.** `docs/hardware-build-review-2026-11-15.md` lists them.

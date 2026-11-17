@@ -19,8 +19,8 @@
       "outline": "Edge_Cuts gerber matches the viewer outline; only the 4 corner-arc midpoints differ because gerber arcs are encoded differently.",
       "mountingHoles": "4 x 2.5 mm at (3,3), (3,112), (82,3), (82,112): identical.",
       "drills": "126 plated drills match the viewer source by diameter and count (59 x 0.305, 11 x 0.3, 6 x 0.4 vias; 14 x 1.3, 32 x 0.5, 4 x 2.5 pads); 9 non-plated drills match.",
-      "padCopper": "190 of 206 pad centers coincide with copper features in the F_Cu and B_Cu gerbers. The 16 that do not are all Pico (U1) pads, which are probably drawn as regions rather than flashes. Not checked further.",
-      "conclusion": "No difference found in outline, holes or drills. The C1-05 zip and the C1-06-labelled source agree at this level. Copper traces and silkscreen were not compared."
+      "padCopper": "159 pad-copper checks (every pad except the 43 Pico SMD pads; plated pads on both layers) land within 0.02 mm of a flash in the F_Cu and B_Cu gerbers. The 43 Pico SMD pads (U1 pads 1-43) sit exactly 0.9 mm further out in the gerbers: in x for pads 1-40, in y for the debug pads 41-43. The viewer shows the source's Pico pads. This is checked by tests/test_gerber_accuracy.py.",
+      "conclusion": "Outline, mounting holes, drills and 159 pad checks agree. One difference found: the Pico footprint's SMD pads are 0.9 mm further out in the C1-05 gerbers than in the C1-06-labelled source. Copper traces and silkscreen were not compared."
     }
   },
   "c2": {

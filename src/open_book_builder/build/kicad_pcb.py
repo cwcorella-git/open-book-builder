@@ -54,7 +54,7 @@ def _largest_drill(fp) -> float | None:
     return best
 
 
-def _parse_pad(pad):
+def _parse_pad(pad, footprint_rot: float = 0.0):
     a = positional(pad)
     if len(a) < 3:
         return None
@@ -71,9 +71,14 @@ def _parse_pad(pad):
     net = find_tagged(pad, "net")
     na = positional(net) if net else []
     net_name = na[1] if len(na) > 1 and isinstance(na[1], str) else None
+    # A pad's angle in the file is absolute (it includes the footprint's). Relative to the footprint,
+    # a quarter turn swaps its width and height; the component is rotated as a whole when drawn.
+    width, height = sa[0], sa[1]
+    if round((parsed[2] - footprint_rot) % 180) == 90:
+        width, height = height, width
     out = {"number": number, "x": f32(parsed[0]), "y": f32(parsed[1]),
            "shape": shape_sym if shape_sym in ("rect", "roundrect", "circle", "oval") else "rect",
-           "size": [f32(sa[0]), f32(sa[1])], "throughHole": type_sym in ("thru_hole", "np_thru_hole")}
+           "size": [f32(width), f32(height)], "throughHole": type_sym in ("thru_hole", "np_thru_hole")}
     if net_name is not None:
         out["netName"] = net_name
     return out
@@ -236,7 +241,7 @@ def _classify_footprint(fp, bom_by_ref, components, holes, silk):
     if bom_line is None:
         return  # artwork and placeholders (REF**, G***)
     _footprint_silk(fp, (x, y), rotation, side == "bottom", side, silk)
-    pads = [p for p in (_parse_pad(p) for p in find_all_tagged(fp, "pad")) if p]
+    pads = [p for p in (_parse_pad(p, rotation) for p in find_all_tagged(fp, "pad")) if p]
     comp = {"ref": ref, "bomRef": ref, "x": f32(x), "y": f32(y), "rotation": f32(rotation), "side": side,
             "footprint": fp_name, "footprintBbox": _bbox(pads, fp_name), "pads": pads, "board": "c1-main"}
     dominant = pick_dominant(pads)

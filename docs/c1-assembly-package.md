@@ -11,7 +11,7 @@ Regenerate both files with `uv run python scripts/c1_assembly_package.py`.
 
 ## Where the data comes from
 
-The positions come from the C1 board source in `data/`. That file is labelled C1-06 on its back silkscreen, and the order package is the C1-05 zip. The comparison recorded in `data/revisions.json` found the outline, the four mounting holes and every drill diameter and count identical, and 190 of 206 pad centers matching copper in the Gerbers. The 16 that did not match are all Pico pads. Copper traces and silkscreen were not compared. So the placement is consistent with the C1-05 Gerbers at that level, not proven identical.
+The positions come from the C1 board source in `data/`. That file is labelled C1-06 on its back silkscreen, and the order package is the C1-05 zip. The comparison recorded in `data/revisions.json` found the outline, the four mounting holes and every drill diameter and count identical, and 159 pad checks within 0.02 mm of the Gerber copper. One difference was found: the 43 Pico SMD pads sit 0.9 mm further out in the C1-05 Gerbers than in the source (`tests/test_gerber_accuracy.py` pins this). The Pico's placement origin and rotation are unaffected, but the pad geometry a factory builds is the Gerber's. Copper traces and silkscreen were not compared.
 
 ## What a factory can place
 
