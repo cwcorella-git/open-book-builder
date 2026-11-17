@@ -185,8 +185,16 @@ class BoardTab(QWidget):
         for index, comp in enumerate(self.components):
             if comp["side"] != side:
                 continue
-            box = comp["footprintBbox"]
-            item = ComponentItem(index, QRectF(-box["width"] / 2, -box["height"] / 2, box["width"], box["height"]))
+            if comp["pads"]:  # the body box follows the pads: for the Pico or the FPC it is not centred on the origin
+                left = min(p["x"] - p["size"][0] / 2 for p in comp["pads"])
+                right = max(p["x"] + p["size"][0] / 2 for p in comp["pads"])
+                top = min(p["y"] - p["size"][1] / 2 for p in comp["pads"])
+                bottom = max(p["y"] + p["size"][1] / 2 for p in comp["pads"])
+                rect = QRectF(left, top, right - left, bottom - top)
+            else:
+                box = comp["footprintBbox"]
+                rect = QRectF(-box["width"] / 2, -box["height"] / 2, box["width"], box["height"])
+            item = ComponentItem(index, rect)
             item.setParentItem(root)
             item.setPos(comp["x"], comp["y"])
             item.setRotation(-comp["rotation"])

@@ -70,3 +70,30 @@ def test_pico_pads_sit_0_9_mm_further_out_in_the_gerbers():
         else:  # debug pads on the bottom edge, 1.7 x 3.5 mm
             assert pad["size"] == [1.7, 3.5]
             assert near((x, y), bottom, dy=0.9), pad["number"]
+
+
+C2_ZIP = (Path(__file__).parents[1] / "reference" / "the-open-book" / "upstream" / "Fabrication Files"
+          / "Castellated E-Paper Driver" / "OSO-BOOK-C2-02 (PCBWay)" / "OSO-BOOK-C2-02_2022-07-19.zip")
+
+
+@pytest.mark.skipif(not C2_ZIP.is_file(), reason="C2-02 fabrication zip not in reference/")
+def test_c2_pads_match_the_c2_02_gerber_copper():
+    """The viewer draws y down, EAGLE and the Gerbers are y up, so Gerber y is board height minus view y."""
+    with zipfile.ZipFile(C2_ZIP) as z:
+        text = z.read("GerberFiles/copper_bottom.gbr").decode()
+    scale = 10 ** int(re.search(r"%FSLAX\d(\d)Y", text).group(1))
+    flashed = [(int(m.group(1)) / scale, int(m.group(2)) / scale)
+               for line in text.splitlines() if (m := re.match(r"X(-?\d+)Y(-?\d+)D03\*", line))]
+    board = build_dataset()["boards"]["c2-driver"]
+    height = board["outline"]["heightMm"]
+    checked, missed = 0, []
+    for comp in board["components"]:
+        for pad in comp["pads"]:
+            if pad["throughHole"]:
+                continue
+            x, y = pad_points(comp, pad)
+            checked += 1
+            if not near((x, height - y), flashed):
+                missed.append((comp["ref"], pad["number"]))
+    assert checked == 59
+    assert missed == []

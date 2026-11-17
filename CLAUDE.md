@@ -67,6 +67,9 @@ golden file only for an intended data change, in the same commit.
    every pad matches within 0.02 mm except the Pico's SMD pads, which the Gerbers
    place 0.9 mm further out than the source. A pad's angle in the file includes the
    footprint's, so a quarter-turn relative to the footprint swaps its width and height.
+   The C2 comes from EAGLE, which is y up: `build/eagle.py` flips every y to height minus y,
+   and for mirrored (bottom) elements it flips pad x and stores the rotation reversed. That is
+   the only rule that matches all 59 SMD pads against the C2-02 Gerbers (also tested).
    The Bottom view mirrors the whole board.
 7. **The app expects a repository checkout.** `data/` is found by walking up
    from the package; a plain `pip install` without the repo has no data.

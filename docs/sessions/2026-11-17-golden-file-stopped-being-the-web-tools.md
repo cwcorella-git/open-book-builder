@@ -24,6 +24,8 @@ Started as "review what Codex did", became: retire the web/Tauri tool for a PySi
 | 19 | SC0915 Digi-Key number | **blocked** — on the operator, see Open |
 | 20 | Hardware values check, configs 1-3 feature interview, quote drafts | **in progress** — plan approved; values check done (row 21), interview and drafts next |
 | 21 | GDEY042T81 / C2 values check | **done** — `docs/gdey-c2-values-check.md`. Topology matches Good Display's reference; no GDR pulldown or footprint for one, 10 µH 0805 inductor against 47 µH 500 mA, 0.47 Ω against 2.2 Ω. Desk research only; nobody has shown the published values working with this panel |
+| 22 | Case view lag | **done** — `5149b53`. Profiled: the whole frame was a Python loop over triangles on one core (177 of 193 ms, GPU unused, 23 other cores idle). Vectorized: about 40 ms per drag frame for Sprint 5. Measured offscreen; not felt on the real desktop |
+| 23 | C2 board accuracy | **done** — see section 8 |
 | 11 | SC0915 Digi-Key part number into `data/bom-c1-main.csv` | **blocked** — on the operator pasting it (Digi-Key returns 403 to the shell) |
 
 ## 1. Codex's review held up, and the cheap checks were enough
@@ -64,6 +66,16 @@ The pad positions are now measured against the fabrication data, which they were
 3. **Silkscreen text** (reference designators and notes) and fab-layer outlines, which neither parser reads.
 4. **A second check against the order package for C2**, as the C1 test does.
 5. **3D (row 17).**
+
+## 8. The C2 view was drawn wrong in three ways, and now a test says so
+
+The operator said the C2 driver "isn't accurate enough yet". Checked against the pad flashes in the C2-02 order Gerbers (`copper_bottom.gbr`), the viewer's rule for bottom parts put 2 of 59 SMD pads in the wrong place (57 of 59 matched), and the board was drawn upside down:
+
+- EAGLE and the Gerbers are y up; the viewer draws y down, so the whole C2 was vertically mirrored.
+- For mirrored (bottom) elements the pad x must be flipped and the rotation reversed. Without it, asymmetric parts (the FPC connector, the SOT-23, the diodes) had pads on the wrong side. Symmetric 0805 capacitors hid the error.
+- The body box was centred on the component origin, which is wrong for the FPC and the Pico; it now follows the pad extents.
+
+All 59 now land within 0.02 mm (`tests/test_gerber_accuracy.py`). The silkscreen of mirrored C2 parts used the same wrong rotation and now uses the corrected transform, but silkscreen was not compared with the Gerbers. Golden file regenerated on purpose.
 
 ## Open
 
