@@ -9,6 +9,7 @@ from shapely.geometry import LineString, Point, Polygon
 from shapely.ops import polygonize, unary_union
 
 from .geometry import component_rect, to_board
+from .parts3d import body
 
 THICKNESS = 1.0  # mm, both boards are 1.0 mm
 SLAB, WALL = -1, -2  # group numbers for the board body; components use their index in the board's list
@@ -78,11 +79,35 @@ def _box(corners, z0: float, z1: float):
     return tris
 
 
-def board_mesh(board: dict, slab_color, part_color, panel_color):
+COPPER_LIFT = 0.02  # mm, copper sits this far outside each face of the slab
+COPPER_TOLERANCE = 0.05  # mm, polygon simplification for the 3D view only
+
+
+def _mix(a, b, t=0.5):
+    return tuple(int(round(x + (y - x) * t)) for x, y in zip(a, b))
+
+
+def copper_triangles(geometry, z: float):
+    """Flat triangles for a shapely (Multi)Polygon of copper at height z, in the view's coordinates."""
+    if geometry is None or geometry.is_empty:
+        return []
+    return _flat_multi(shapely.simplify(geometry, COPPER_TOLERANCE), z)
+
+
+def _flat_multi(geometry, z: float):
+    tris = []
+    for t in shapely.constrained_delaunay_triangles(geometry).geoms:
+        c = list(t.exterior.coords)[:3]
+        tris.append([(x, -y, z) for x, y in c])
+    return tris
+
+
+def board_mesh(board: dict, slab_color, part_color, panel_color, copper=None, copper_color=None):
     """(triangles (n, 3, 3), colors (n, 3) uint8, groups (n,)) for one board, in millimetres, z up.
 
     The slab sits between z = 0 and the board thickness. Parts on the top stand on it, parts on the bottom hang
-    below it. The virtual display, if the board has one, is drawn in panel_color."""
+    below it. A part with a known body (parts3d) is several boxes sharing its group; any other is one box from its
+    pads. `copper` maps "top" and "bottom" to shapely copper geometry drawn as a thin layer on that face."""
     tris, colors, groups = [], [], []
 
     def add(new, color, group):
@@ -90,15 +115,34 @@ def board_mesh(board: dict, slab_color, part_color, panel_color):
         colors.extend([color] * len(new))
         groups.extend([group] * len(new))
 
+    role_colors = {
+        "body": part_color,
+        "detail": _mix(part_color, slab_color),
+        "panel": panel_color,
+        "screen": panel_color,
+    }
     outline = outline_polygon(board)
     add(_flat(outline, THICKNESS), slab_color, SLAB)
     add(_flat(outline, 0.0), slab_color, SLAB)
     add(_walls(outline), slab_color, WALL)
+    for side, z in (("top", THICKNESS + COPPER_LIFT), ("bottom", -COPPER_LIFT)):
+        if copper and copper.get(side) is not None:
+            add(copper_triangles(copper[side], z), copper_color or _mix(slab_color, part_color, 0.7), SLAB)
     for index, comp in enumerate(board["components"]):
-        left, top, right, bottom = component_rect(comp)
-        corners = [to_board(comp, x, y) for x, y in ((left, top), (right, top), (right, bottom), (left, bottom))]
+        rect = component_rect(comp)
         height = comp["footprintBbox"]["height3d"]
-        virtual = comp["footprint"].startswith("VIRTUAL")
-        z0, z1 = (THICKNESS, THICKNESS + height) if comp["side"] == "top" else (0.0, -height)
-        add(_box(corners, min(z0, z1), max(z0, z1)), panel_color if virtual else part_color, index)
+        top_side = comp["side"] == "top"
+
+        def put(x0, y0, x1, y1, z0, z1, color):
+            corners = [to_board(comp, x, y) for x, y in ((x0, y0), (x1, y0), (x1, y1), (x0, y1))]
+            lo, hi = (THICKNESS + z0, THICKNESS + z1) if top_side else (-z1, -z0)
+            add(_box(corners, lo, hi), color, index)
+
+        parts = body(comp.get("heroMeshId"), rect, height)
+        if parts:
+            for x0, y0, x1, y1, z0, z1, role in parts:
+                put(x0, y0, x1, y1, z0, z1, role_colors[role])
+        else:
+            virtual = comp["footprint"].startswith("VIRTUAL")
+            put(*rect, 0.0, height, panel_color if virtual else part_color)
     return (np.asarray(tris, dtype=np.float64), np.asarray(colors, dtype=np.uint8), np.asarray(groups, dtype=np.int32))

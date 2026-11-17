@@ -78,7 +78,7 @@ class BoardTab(QWidget):
         self.view_box = QComboBox()
         self.view_box.addItem("2D", "2d")
         self.view_box.addItem("3D", "3d")
-        self.view_box.setToolTip("2D is the layer view. 3D is the board as a slab with boxes for the parts: "
+        self.view_box.setToolTip("2D is the layer view. 3D is the board as a slab with simple shapes for the parts: "
                                  "drag to turn it, scroll to zoom, click a part to select it.")
         self.source_box = QComboBox()
         self.source_box.addItem("Fabrication files", "fabrication")
@@ -87,7 +87,10 @@ class BoardTab(QWidget):
             "Fabrication files are the Gerbers and drills the board is made from, so pads, traces, pours and "
             "silkscreen are as ordered. The design file is the KiCad or EAGLE source the parts list comes from.")
         self.traces_box = QCheckBox("Show copper")
-        self.traces_box.setToolTip("Copper on the side you are viewing is bold; the other side is faint. With the design file this is traces and vias.")
+        self.traces_box.setChecked(True)
+        self.traces_box.setToolTip("2D: copper on the side you are viewing is bold; the other side is faint. With the design file "
+                                   "this is traces and vias. 3D: copper from the fabrication files on both faces of the board, "
+                                   "once they are read.")
         self.silk_box = QCheckBox("Show silkscreen")
         self.silk_box.setChecked(True)
         self.silk_box.setToolTip("Printed outlines and markings on the viewed side.")
@@ -147,7 +150,7 @@ class BoardTab(QWidget):
         if not self._warm.is_alive():
             self._poll.stop()
             self._fab_ready = True
-            if self.source_box.currentData() == "fabrication":
+            if self.source_box.currentData() == "fabrication" or self.view_box.currentData() == "3d":
                 self.redraw()
                 self.selection_message.emit("Fabrication files loaded.")
 
@@ -177,7 +180,7 @@ class BoardTab(QWidget):
         width, height = outline["widthMm"], outline["heightMm"]
         board_id = self.board_box.currentData()
         in_3d = self.view_box.currentData() == "3d"
-        for control in (self.source_box, self.traces_box, self.silk_box, self.labels_box):
+        for control in (self.source_box, self.silk_box, self.labels_box):
             control.setEnabled(not in_3d)
         self.stack.setCurrentIndex(1 if in_3d else 0)
         if in_3d:
@@ -387,7 +390,13 @@ class BoardTab(QWidget):
         slab = rgb(blend(base, text, 0.35))
         panel = rgb(blend(base, text, 0.12))
         part = rgb(pal.color(QPalette.Button))
-        tris, colors, groups = board_mesh(board, slab, part, panel)
+        board_id = self.board_box.currentData()
+        copper = None
+        if self.traces_box.isChecked() and self._fab_ready and fabrication.available(board_id):
+            height = board["outline"]["heightMm"]
+            copper = {side: fabrication.copper(board_id, side, height) for side in ("top", "bottom")}
+        copper_color = rgb(blend(base, pal.color(QPalette.Highlight), 0.55))
+        tris, colors, groups = board_mesh(board, slab, part, panel, copper, copper_color)
         self.components = board["components"]
         self.view3d.home = (0.0, 58.0) if self.side_box.currentData() == "top" else (0.0, -58.0)  # look from that side
         self.view3d.set_mesh(tris, colors, groups)

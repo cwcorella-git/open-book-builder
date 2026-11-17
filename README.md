@@ -50,15 +50,14 @@ uv run pytest                                  # tests
   computer.
 - **Board**: 2D view of the C1 main board and the C2 driver. By default copper, pads,
   pours, drills and silkscreen come from the order Gerbers (the boards as made); the design
-  file (KiCad, EAGLE) is the other choice. A 3D view shows the board as a slab with a box for each part
-  (drag to turn, scroll to zoom, click a part). Select a component to see its part. The 2D
+  file (KiCad, EAGLE) is the other choice. A 3D view shows the board as a slab with copper on both faces and simple
+  shapes for the parts (drag to turn, scroll to zoom, click a part). Select a component to see its part. The 2D
   bottom view is mirrored.
 - **Case**: rotatable view of the Sprint 5 and minimal case STL models, with
   a Save Files action.
 
-Not carried over from the web tool: the About tab (ordering guide and project
-status), the 3D board view with hero meshes, and the mini viewport in the
-Assembly tab. They are in the `web-tool-final` tag.
+Not carried over from the web tool: the printed labels and rounded shapes of its
+3D part models, and the mini viewport in the Assembly tab. They are in the `web-tool-final` tag.
 
 ## Layout
 
