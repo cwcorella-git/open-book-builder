@@ -12,7 +12,7 @@ Started as "review what Codex did", became: retire the web/Tauri tool for a PySi
 | 6 | Phase A: data corrections, offers/configs/checklist, Checklist tab, Untested/Deferred steps | **done** — `5958788`, `4274817`, `981c8a6` |
 | 7 | Phase C: C1 placement file + assembly BOM + notes | **done** — `40661e8` |
 | 8 | Phase D: Markdown profile spec | **done** — `71a966b`, fix `a201687` |
-| 9 | Phase B: PlatformIO build of libros with PRs #10 and #11 | **in progress** — clone and merge done, build running when this was written, record doc not written |
+| 9 | Phase B: PlatformIO build of libros with PRs #10 and #11 | **done** — clean compile, record in `docs/firmware-build-2026-11.md` (not hardware validation) |
 | 10 | Take the GitHub Pages site down | **blocked** — on the operator saying the app is good |
 | 11 | SC0915 Digi-Key part number into `data/bom-c1-main.csv` | **blocked** — on the operator pasting it (Digi-Key returns 403 to the shell) |
 
@@ -53,12 +53,11 @@ The operator's calls: when to take Pages down (`gh api -X DELETE repos/cwcorella
 
 ## Resume here
 
-Pick up row 9 (Phase B).
-- Build was started in the background: task id `bsgc7ufla`, log `/tmp/claude-1000/-home-user-Projects-open-book-builder/43b96f7b-b610-4d95-8f83-b78d2695b57a/scratchpad/pio-build.log` (ends with `exit=<code>`; the scratchpad may be cleared by a reboot). Command: `systemd-run --user --scope -p MemoryMax=2500M -p MemorySwapMax=0 timeout -k 10 1500 /data/checkouts/libros-pio/.venv/bin/pio run -e pico` in `/data/checkouts/libros` with `PLATFORMIO_CORE_DIR=/data/checkouts/libros-pio/core`. When it was last read it was still downloading `toolchain-gccarmnoneeabi`; MemAvailable about 3.4 GB.
-- If it exited 0: `sha256sum /data/checkouts/libros/.pio/build/pico/firmware.uf2` (or `.bin`/`.elf`, whichever exists), note PlatformIO 6.2.0, `raspberrypi@1.20.0`, libros branch `obb-pilot` at `5196839` (base `3be5d84`, PR #10 `abc2d5f`, PR #11 `a2f91fb`), then write `docs/firmware-build-2026-11.md` (a new file already proposed in the plan), say plainly it is not hardware validation, commit and push.
-- If it failed or timed out: record the error text in the same doc and leave the assembly steps Untested.
-- Then set the plan file `/home/user/.claude/plans/concurrent-baking-book.md` as done and update the review's "next session" list.
+Phase B finished after the first version of this doc was written (the background build reported success; see `docs/firmware-build-2026-11.md` for hashes, versions and the warnings worth a look). Nothing is running in the background now.
 
-Plain lines: nothing unlanded; `main` is at `a201687` plus this doc. Pages still serves the old site.
+- Every plan phase (A0, A, B, C, D) is written. What remains is the operator's: the Pages takedown (`gh api -X DELETE repos/cwcorella-git/open-book-builder/pages`, not run), the SC0915 Digi-Key number, configurations 1-3, the open decision-register items, the quotes and a pilot.
+- Loose end worth reading first: the `sleep.c` implicit-declaration warnings after PR #10, and the PlatformIO size summary (4.6 KB reported against a 312 KB `.bin`).
 
-HOLDING: Phase B build was still running and nothing about it is verified.
+Plain lines: nothing unlanded; Pages still serves the old site.
+
+CLOSABLE: all planned phases are written and committed; what is left needs the operator or a physical pilot.
