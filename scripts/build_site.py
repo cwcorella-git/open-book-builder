@@ -260,9 +260,7 @@ def build(out: Path, site: Path = SITE, docs: Path = DOCS) -> dict:
     start = guide.index("## Trying a file on a reader")
     end = guide.index("\n## ", start + 5)
     card_body = ("<h1>Preparing a card</h1>\n<p>Format the microSD card as FAT32 with your disk tool first. "
-                 "The card tool does not format.</p>\n" + render_markdown(guide[start:end])
-                 + "\n<p>The script <code>scripts/prepare_card.py</code> checks the card and copies the files. "
-                   "Run it without <code>--write</code> to see what it would do.</p>")
+                 "The card tool does not format.</p>\n" + render_markdown(guide[start:end]))
     (out / "card.html").write_text(page("Preparing a card", card_body), encoding="utf-8")
 
     (out / "index.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
