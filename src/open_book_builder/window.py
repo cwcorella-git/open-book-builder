@@ -47,6 +47,7 @@ class MainWindow(QMainWindow):
             label.setContentsMargins(8, 0, 8, 0)
             self.statusBar().addPermanentWidget(label)
         self.board.selection_message.connect(lambda m: self.statusBar().showMessage(m, 5000) if m else self.statusBar().clearMessage())
+        self.assembly.show_on_board.connect(self.show_step_on_board)
         self.bom.cost_changed.connect(self.cost_label.setText)
         self.assembly.progress_changed.connect(self.progress_label.setText)
         self.bom.update_footer()
@@ -84,6 +85,11 @@ class MainWindow(QMainWindow):
             "Parts list, assembly guide, and board and case views for the Open Book e-reader.\n\n"
             "Hardware designs are by Joey Castillo (The Open Book, Oddly Specific Objects).",
         )
+
+    def show_step_on_board(self, board: str, refs: list) -> None:
+        message = self.board.highlight(board, refs)
+        self.tabs.setCurrentWidget(self.board)
+        self.statusBar().showMessage(message, 8000)
 
     def save(self) -> bool:
         try:

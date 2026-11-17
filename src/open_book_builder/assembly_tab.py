@@ -30,6 +30,7 @@ def load_completed(settings: QSettings) -> set[str]:
 
 class AssemblyTab(QWidget):
     progress_changed = Signal(str)
+    show_on_board = Signal(str, list)  # board id and component refs of the selected step
 
     def __init__(self, dataset: Dataset, settings: QSettings, parent: QWidget | None = None):
         super().__init__(parent)
@@ -44,6 +45,8 @@ class AssemblyTab(QWidget):
         self.detail.setMinimumWidth(260)
         self.toggle_button = QPushButton("Mark as Done")
         self.toggle_button.setToolTip("Record this step as finished. Progress is saved on this computer.")
+        self.board_button = QPushButton("Show on Board")
+        self.board_button.setToolTip("Open the Board tab with this step's parts highlighted.")
         self.reset_button = QPushButton("Reset Progress")
         self.reset_button.setToolTip("Mark every step as not done.")
         self.summary = QLabel()
@@ -51,6 +54,7 @@ class AssemblyTab(QWidget):
         buttons = QHBoxLayout()
         buttons.setContentsMargins(0, 0, 0, 0)
         buttons.addWidget(self.toggle_button)
+        buttons.addWidget(self.board_button)
         buttons.addWidget(self.reset_button)
         buttons.addStretch(1)
         buttons.addWidget(self.summary)
@@ -70,10 +74,13 @@ class AssemblyTab(QWidget):
             self.toggle_button.setEnabled(False)
             self.toggle_button.setToolTip("There are no steps to mark.")
             self.reset_button.setEnabled(False)
+            self.board_button.setEnabled(False)
+            self.board_button.setToolTip("There are no steps to show.")
 
         self.list.currentRowChanged.connect(self.show_step)
         self.toggle_button.clicked.connect(self.toggle_current)
         self.reset_button.clicked.connect(self.reset)
+        self.board_button.clicked.connect(self.emit_show_on_board)
         self.rebuild_list()
         first = next((i for i, s in enumerate(self.steps) if s.id not in self.completed), 0)
         self.list.setCurrentRow(first)
@@ -111,6 +118,11 @@ class AssemblyTab(QWidget):
             return
         step = self.steps[row]
         self.toggle_button.setText("Mark as Not Done" if step.id in self.completed else "Mark as Done")
+        has_parts = bool(step.component_refs) and not step.deferred
+        self.board_button.setEnabled(has_parts)
+        self.board_button.setToolTip(
+            "Open the Board tab with this step's parts highlighted." if has_parts
+            else "This step has no parts on the board to show.")
         self.toggle_button.setEnabled(not step.deferred)
         self.toggle_button.setToolTip("This step is deferred, so it cannot be marked." if step.deferred
                                       else "Record this step as finished. Progress is saved on this computer.")
@@ -125,6 +137,12 @@ class AssemblyTab(QWidget):
         rows = "".join(f"<tr><td><b>{k}:</b>&nbsp;</td><td>{v}</td></tr>" for k, v in facts if v)
         notes = f"<p><b>Note:</b> {step.notes}</p>" if step.notes else ""
         self.detail.setHtml(f"<h3>{step.title}</h3><table>{rows}</table><p>{step.description}</p>{notes}")
+
+    def emit_show_on_board(self) -> None:
+        row = self.list.currentRow()
+        if 0 <= row < len(self.steps) and self.steps[row].component_refs:
+            step = self.steps[row]
+            self.show_on_board.emit(step.board, list(step.component_refs))
 
     def save(self) -> None:
         self.settings.setValue(SETTINGS_KEY, sorted(self.completed))

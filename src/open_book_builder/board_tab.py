@@ -4,7 +4,7 @@ from __future__ import annotations
 from PySide6.QtCore import QPointF, QRectF, Qt, Signal
 from PySide6.QtGui import QBrush, QColor, QPainter, QPainterPath, QPalette, QPen, QTransform
 from PySide6.QtWidgets import (
-    QCheckBox, QComboBox, QGraphicsEllipseItem, QGraphicsItem, QGraphicsPathItem,
+    QStyle, QStyleOptionGraphicsItem, QCheckBox, QComboBox, QGraphicsEllipseItem, QGraphicsItem, QGraphicsPathItem,
     QGraphicsRectItem, QGraphicsScene, QGraphicsSimpleTextItem, QGraphicsView, QHBoxLayout,
     QLabel, QPushButton, QSplitter, QTextBrowser, QVBoxLayout, QWidget,
 )
@@ -37,6 +37,23 @@ class ComponentItem(QGraphicsRectItem):
         self.index = index
         self.setFlag(QGraphicsItem.ItemIsSelectable, True)
         self.setAcceptedMouseButtons(Qt.LeftButton)
+
+    def paint(self, painter, option, widget=None) -> None:
+        """A selected part gets a filled, outlined highlight in the palette's highlight color."""
+        if self.isSelected():
+            color = (widget.palette() if widget else QPalette()).color(QPalette.Highlight)
+            pen = QPen(color)
+            pen.setCosmetic(True)
+            pen.setWidthF(2.5)
+            fill = QColor(color)
+            fill.setAlpha(90)
+            painter.setPen(pen)
+            painter.setBrush(fill)
+            painter.drawRect(self.rect())
+            return
+        plain = QStyleOptionGraphicsItem(option)
+        plain.state &= ~QStyle.State_Selected
+        super().paint(painter, plain, widget)
 
 
 class BoardTab(QWidget):
@@ -247,11 +264,55 @@ class BoardTab(QWidget):
                 return line
         return None
 
+    def highlight(self, board: str, refs: list[str]) -> str:
+        """Show a board with some components selected. Returns a sentence saying what is shown."""
+        data = self.dataset.boards[board]
+        wanted = set(refs)
+        on_side = {"top": 0, "bottom": 0}
+        for comp in data["components"]:
+            if comp["ref"] in wanted:
+                on_side[comp["side"]] += 1
+        side = "bottom" if on_side["bottom"] > on_side["top"] else "top"
+        for box, value in ((self.board_box, board), (self.side_box, side)):
+            box.blockSignals(True)
+            box.setCurrentIndex(box.findData(value))
+            box.blockSignals(False)
+        self.labels_box.setChecked(True)
+        self.redraw()
+        self.scene.blockSignals(True)
+        shown = 0
+        for item in self.scene.items():
+            if isinstance(item, ComponentItem) and self.components[item.index]["ref"] in wanted:
+                item.setSelected(True)
+                shown += 1
+        self.scene.blockSignals(False)
+        self.on_selection()
+        elsewhere = on_side["top" if side == "bottom" else "bottom"]
+        missing = len(wanted) - on_side["top"] - on_side["bottom"]
+        message = f"Showing {shown} part{'s' if shown != 1 else ''} on the {side} of the {BOARD_LABELS[board]} board."
+        if elsewhere:
+            message += f" {elsewhere} more {'are' if elsewhere != 1 else 'is'} on the other side."
+        if missing:
+            message += f" {missing} not on this board."
+        self.selection_message.emit(message)
+        return message
+
     def on_selection(self) -> None:
         picked = [i for i in self.scene.selectedItems() if isinstance(i, ComponentItem)]
         if not picked:
             self.detail.clear()
             self.selection_message.emit("")
+            return
+        if len(picked) > 1:
+            picked.sort(key=lambda i: self.components[i.index]["ref"])
+            rows = []
+            for item in picked:
+                comp = self.components[item.index]
+                line = self.bom_line_for(comp)
+                rows.append(f"<li><b>{comp['ref']}</b>: {line.description if line else 'no entry in the parts list'}"
+                            f"{' (' + line.mpn + ')' if line else ''}</li>")
+            self.detail.setHtml(f"<h3>{len(picked)} parts selected</h3><ul>{''.join(rows)}</ul>")
+            self.selection_message.emit(f"Selected: {', '.join(self.components[i.index]['ref'] for i in picked)}")
             return
         comp = self.components[picked[0].index]
         line = self.bom_line_for(comp)

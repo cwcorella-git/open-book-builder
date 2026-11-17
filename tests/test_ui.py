@@ -98,3 +98,25 @@ def test_save_writes_json(app, store):
     store.set_quantity("batch", 3)
     store.save()
     assert ConfigStore(store.path).quantity("batch") == 3 and not store.dirty
+
+
+def test_assembly_step_highlights_parts_on_the_board(app, store, settings):
+    win = MainWindow(load_dataset(GOLDEN), settings, store)
+    step_row = next(i for i, st in enumerate(win.assembly.steps) if st.id == "tht-buttons-c1")
+    win.assembly.list.setCurrentRow(step_row)
+    assert win.assembly.board_button.isEnabled()
+    win.assembly.board_button.click()
+    assert win.tabs.currentWidget() is win.board
+    assert win.board.side_box.currentData() == "top"  # the seven through-hole buttons are on the top
+    shown = {win.board.components[i.index]["ref"] for i in win.board.scene.selectedItems()
+             if hasattr(i, "index")}
+    assert shown == {"B3", "B4", "B5", "B6", "B7", "B8", "B9"}
+    assert "7 parts" in win.statusBar().currentMessage()
+
+
+def test_step_without_parts_cannot_be_shown(app, store, settings):
+    win = MainWindow(load_dataset(GOLDEN), settings, store)
+    row = next(i for i, st in enumerate(win.assembly.steps) if st.id == "order-pcbs")
+    win.assembly.list.setCurrentRow(row)
+    assert not win.assembly.board_button.isEnabled()
+    assert "no parts" in win.assembly.board_button.toolTip()
