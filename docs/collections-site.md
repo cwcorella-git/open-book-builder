@@ -1,6 +1,6 @@
 # Collections site (design draft)
 
-Prepared 2026-11-17. This is a design only: no site exists; the converter and a card tool do. It says what the site would do, what it depends on, and what only you can decide. Facts about the reader come from `docs/markdown-profile.md` and `docs/reader-features-spec.md`, which were read from the firmware source and not seen on a device.
+Prepared 2026-11-17, answers added the same day. This is a design with a localhost mockup (`scripts/build_site.py`, once built) and nothing public: the converter and a card tool exist. It says what the site would do, what it depends on, and what only you can decide. Facts about the reader come from `docs/markdown-profile.md` and `docs/reader-features-spec.md`, which were read from the firmware source and not seen on a device.
 
 ## What it is for
 
@@ -13,8 +13,8 @@ There are no product configurations. One reader, one firmware line, and the card
 ## The people involved
 
 - **Curator:** decides what is in a collection. At the moment that is you.
-- **Author or submitter:** writes or converts a work to the profile. Whether outsiders can submit is open.
-- **Buyer:** picks collections.
+- **Author or submitter:** writes or converts a work to the profile. Only you, for now: outsiders do not submit (answer 1).
+- **Buyer:** picks collections on Etsy, where the readers are sold for now (answer 2).
 - **Owner preparing a card:** you, for the first ten. You build and flash units and prepare cards on Linux.
 
 ## Content model
@@ -54,19 +54,19 @@ A selection file (a list of collection ids) lets the same tool prepare many card
 
 ## How a buyer's choice travels
 
-The first ten are made by you, so the choice can be a list in a message or a form response. A real ordering flow is a separate decision (see the questions). The design only needs the choice to end up as a list of collection ids that the card tool reads.
+Readers are sold on Etsy for now. The buyer names the collections there (an order note or a message), and you copy the ids by hand into a selection file that the card tool reads (`--select`). There is no ordering flow on the site, and none is planned. The design only needs the choice to end up as a list of collection ids.
 
 ## Hosting
 
 **Recommended: a static site generated from the repository.** Pages for collections and works, downloads as plain files, the formatting guide, no accounts, no database. Git is the version history and the review tool. It is cheap, easy to move, and has almost nothing to attack.
 
-Add a service only if outsiders must upload works through the site. That service would run the converter on each upload and hold results for review. It is a much bigger project than the static site and not needed for the first ten.
+You curate every work, so no upload service is needed. Add one only if that changes. That service would run the converter on each upload and hold results for review. It is a much bigger project than the static site and not needed for the first ten.
 
 ## What it depends on
 
 - The converter and validator (written; the firmware has never loaded its output).
 - The feature firmware for the page-map fix, favorites, tags and filters (not written). The site works without it, but the update note then matters.
-- `babel.bin`, the font file the reader loads on first boot. It currently comes from the original project's page. Whether and how we may redistribute it is not checked.
+- `babel.bin`, the font file the reader loads on first boot (GNU Unifont data packed by the original Open Book project). You chose to rebuild it from Unifont rather than redistribute theirs; that is a spike (row 45) with a go/no-go, and until it passes the card tool takes the original file as a local copy. The license of a rebuilt file is Unifont's own, to be read from the release when the spike finishes.
 - The author guide (written, untested by an author who is not you).
 - Measurements from the pilot: card size, number of works that list well, how long a long work takes to open the first time.
 
@@ -74,14 +74,16 @@ Add a service only if outsiders must upload works through the site. That service
 
 Each work carries its `rights` text, and the site shows it. The old assembly notes mention a tool, `libros-convert`, that turns Standard Ebooks EPUBs into the reader's format; Standard Ebooks publishes public-domain works. This design does not assume what any source allows. Checking each source's terms is a task for every collection.
 
-## Questions for you
+## Answers (2026-11-17)
 
-1. Who curates, and can outsiders submit works? That decides static site or upload service.
-2. Where is the buyer's choice captured, and how are the readers sold? The design has no answer yet.
-3. May we redistribute `babel.bin`, and who asks the original project?
-4. Do you want a domain of your own for this, or a page on an existing site? (The old Pages site for the app is gone.)
-5. Which languages should the guide and the site's own pages be written in first?
-6. Should downloads include a text-only reading copy (plain `.txt` without front matter) for people who want to read on another device?
+1. **Curation:** you curate only, and outsiders do not submit. A static site, no upload service.
+2. **Buyer's choice:** readers are sold on Etsy for now; the buyer picks the collections there and you put them on the card.
+3. **`babel.bin`:** rebuild it from Unifont (row 45). Not redistributing the original.
+4. **Domain:** you own one to use later. Until then, localhost mockups only.
+5. **Language:** English only for the guide and the site's own pages. Works can be in any language the font covers.
+6. **Plain copy:** yes. Each work also gets a text-only reading copy with no header, from the same source.
+
+Still open: the tag vocabulary, and the rights check for every source collection.
 
 ## Not in this design
 
