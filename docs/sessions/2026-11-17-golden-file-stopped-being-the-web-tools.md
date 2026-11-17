@@ -164,22 +164,22 @@ Never verified:
 - C1 copper traces and silkscreen were not compared (pads were, see section 6).
 - Prices are Codex's dated 2026-11-15 figures, not refreshed. The spare defaults in `data/configs.json` are my starting proposals.
 - Ported since: the About tab, Show on Board, a 3D board view with simple part bodies and copper (rows 37 to 39). Not ported: the old tool's labels and rounded shapes. **None of the Board tab work (Gerber layers, 3D shapes and copper, picking, highlights) has been seen on the real desktop.** The Gerber view's first-draw and repaint times (about 100 ms at fit zoom) and the 3D drag times (55 to 63 ms on the C1) were measured offscreen only.
-- **Nothing from rows 37 to 47 has run on a device.** The converter's output, a rebuilt `babel.bin` and the card tool have never touched the firmware or a real card; the localhost site has been fetched with curl and built under test but not looked at in a browser. The 3D silkscreen drag time (95 ms) was measured offscreen.
+- **Nothing from rows 37 to 47 has run on a device.** The converter's output, a rebuilt `babel.bin` and the card tool have never touched the firmware or a real card; the localhost site was checked only in headless Chrome (phone and desktop widths, dark tokens forced), not Firefox, a real phone or print. The 3D silkscreen drag time (95 ms) was measured offscreen.
 - **The converter's output has never been loaded by the firmware, and the card tool has never touched a real card.** Both are checked against fixtures and the source reading in the profile.
 - The depth-buffered Case view was checked by eye on offscreen renders only; it has not been dragged by hand.
 - **SC0915 Digi-Key number:** open https://www.digikey.com/en/products/detail/raspberry-pi/SC0915/13684020 and copy the **Digi-Key Part Number** from the product details table at the top of the page. It should look like `2648-SC0915CT-ND`. Pick the Cut Tape variant (Tape & Reel and Digi-Reel have different numbers), which is the $4.59 listing in the review. Then put it in the `Digikey` column of the U1 row in `data/bom-c1-main.csv`, or tell the next session.
 
-The operator's calls: the SC0915 Digi-Key number; whether and when to send the quote requests; who writes the firmware features; the six questions in `docs/collections-site.md`; the decision register items still open in the review.
+The operator's calls: the SC0915 Digi-Key number; whether and when to send the quote requests; who writes the firmware features; the `babel.bin` license question (row 48); the decision register items still open in the review.
 
 ## Resume here
 
-Everything in the 2026-11-17 plans is written and pushed except the proposed rows above. Nothing is running in the background.
+Everything in the 2026-11-17 plans is written and pushed (last commit `0471ccf` before this edit). Nothing is running in the background.
 
 - **Look at the app first.** It has never been opened on the real Selkies desktop. Open `~/Desktop/open-book-builder.desktop` and try: Assembly > Show on Board, Board with Layers from set both ways, the 2D and 3D views (drag, scroll, click a part), the Case tab (it was laggy before the depth-buffer rewrite), the About tab. Every screenshot so far is offscreen Qt.
-- **The operator's calls:** the SC0915 Digi-Key number (link and what to look for are under Open); whether and when to send the quote requests in `docs/quote-requests.md`; who writes the feature firmware (`docs/reader-features-spec.md`, spec only); the six questions in `docs/collections-site.md`; the decision-register items still open in the review.
+- **The operator's calls:** the SC0915 Digi-Key number (link and what to look for are under Open); whether and when to send the quote requests in `docs/quote-requests.md`; who writes the feature firmware (`docs/reader-features-spec.md`, spec only); the `babel.bin` license question (row 48; the six site questions were answered, see `docs/collections-site.md`); the decision-register items still open in the review.
 - **Next rows if asked:** none are proposed. Row 48 (the `babel.bin` license) is the operator's. Rows 37 to 47 and 49 are done.
 - **Try the site and the font build:** `uv run python scripts/build_site.py` then `python3 -m http.server -d site/_out --bind 127.0.0.1 8000` and open http://127.0.0.1:8000. For `babel.bin` you need Unifont's hex file and the matching Unicode data files (see `docs/collections-site.md`); `/usr/bin/python3` is Unicode 15.0.
-- **Try the new tools:** `uv run python -m open_book_builder.convert tests/fixtures/works -o /tmp/out`, and `python3 scripts/prepare_card.py <mounted card> --works /tmp/out --babel <babel.bin>` (a dry run unless `--write`).
+- **Try the new tools:** `uv run python -m open_book_builder.convert tests/fixtures/works -o /tmp/out`, and `python3 scripts/prepare_card.py <mounted card> --works /tmp/out --babel <babel.bin>`, or `--site site/_out --select order.txt` for collections from the built site (a dry run unless `--write`).
 
 Plain lines: nothing unlanded; `main` is pushed. Pages is off; `./scripts/legacy-web.sh` serves the old tool.
 
