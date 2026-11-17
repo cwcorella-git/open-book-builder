@@ -1,17 +1,18 @@
 {
   "_comment": "Hand-authored function/cost/datasheet lookup keyed by MPN. Merged into each BomLine at load time. Unit costs are USD at single-unit Digi-Key pricing unless noted.",
-  "SC0918": {
-    "function": "The MCU. Raspberry Pi Pico (RP2040 @ 133 MHz, 264 KB SRAM, 2 MB onboard flash). Runs the libros firmware. SC0918 and SC0915 are two RPi distributor SKUs for the same Pico board.",
+  "SC0915": {
+    "function": "The MCU. Raspberry Pi Pico (RP2040 @ 133 MHz, 264 KB SRAM, 2 MB onboard flash). Runs the libros firmware. This is the original Pico (SC0915), the non-wireless board the firmware's `board = pico` setting names.",
     "datasheetUrl": "https://datasheets.raspberrypi.com/pico/pico-datasheet.pdf",
-    "unitCostUsd": 4.00,
-    "heroMeshId": "pi-pico"
+    "unitCostUsd": 4.0,
+    "heroMeshId": "pi-pico",
+    "notes": "The Pico W (SC0918) adds a radio and is a future option only: its fit with this firmware is not established. The Pico 2 uses an RP2350 and would need its own firmware port. Digi-Key part number for SC0915 is not recorded here; add it from the Digi-Key listing."
   },
   "OSO-BOOK-C2-01": {
     "function": "Castellated e-paper driver submodule. Generates the ±22 V and ±15 V rails the e-paper panel needs, converts signal levels between the Pico and the display, and drives the FFC ribbon. Ordered pre-assembled from JLCPCB or PCBWay; soldered to the C1 main board via castellated edge pads.",
     "datasheetUrl": "https://github.com/joeycastillo/The-Open-Book",
     "unitCostUsd": null,
     "heroMeshId": "c2-module",
-    "notes": "Separate PCBA job — cost not included in the C1 BOM totals. Per-unit $30-80 depending on fab house and volume. Three board revisions exist: C2-01 (old JLCPCB, oversized), C2-02 (PCBWay, current), C2-03 (new JLCPCB, replaces C2-01). All share an identical schematic; only R1's package size differs (0402 vs 0603). Use C2-02 for PCBWay orders, C2-03 for JLCPCB."
+    "notes": "Separate PCBA job with no quote yet, so the C1 totals leave it out. The chosen route is the C2-03 package (JLCPCB: BOM, placement file and Gerbers from one folder). The board viewer shows C2-02 data. C2-02 and C2-03 list the same parts and the same nets; C2-03 moves every element by 0.254 mm in x and 5.08 mm in y and uses a 0402 R1 where C2-02 has 0603. Copper was not compared. Both packages carry the 10 µH and 0.47 Ω values; see the GDEY042T81 note."
   },
   "MEM2075-00-140-01-A": {
     "function": "Push/push microSD card slot. Holds the book library on a microSD card — UTF-8 .txt files with support for bold, italic, chapter breaks, and front-matter metadata via inline control codes.",
@@ -26,7 +27,7 @@
     "notes": "The pin-compatible MX25L1606E also works in this footprint."
   },
   "DMG3415U-7": {
-    "function": "P-channel MOSFET. Q1 (gate = EN / GPIO18) switches the +3.3VP rail powering the SD card and flash chip. Q2 (gate = ~EN2 / GPIO15) switches the C2 module's 3.3 V supply.",
+    "function": "P-channel MOSFET, two on the board. Q1 sits in the battery power path (gate VBUS, source VCC, drain +BATT). Q2 switches the +3.3VP rail: gate /~{EN2} (Pico GPIO0), source +3V3, drain +3.3VP. That rail powers the C2 module and the chip-select pull-ups.",
     "datasheetUrl": "https://www.diodes.com/assets/Datasheets/DMG3415U.pdf",
     "unitCostUsd": 0.32
   },
@@ -41,18 +42,18 @@
     "unitCostUsd": 0.13
   },
   "RMCF1206JT10K0": {
-    "function": "10 kΩ, 1206. Pull-ups on the shared SPI bus (SCK and MISO lines) for the flash chip (U4).",
+    "function": "10 kΩ, 1206. R3 pulls the flash chip select (/BABEL_CS) up to +3.3VP. R4 does the same for the microSD chip select (/SD_CS).",
     "datasheetUrl": "https://www.stackpole.com/assets/CatalogPdfs/RMCF.pdf",
     "unitCostUsd": 0.02
   },
   "RC0805JR-071KL": {
-    "function": "1 kΩ, 0805. OPTIONAL pull-ups — install only if the STEMMA / I²C expansion ports are used.",
+    "function": "1 kΩ, 0805. OPTIONAL. R1 and R2 are series resistors between the Pico's GP26 and GP27 and the expansion connector signals. Fit them only if the expansion ports are used.",
     "datasheetUrl": "https://www.yageo.com/upload/media/product/productsearch/datasheet/rchip/PYu-RC_Group_51_RoHS_L_11.pdf",
     "unitCostUsd": 0.02,
-    "notes": "Marked OPTIONAL in 1-click-bom.csv (R1, R2). Skip unless expansion is needed."
+    "notes": "Marked OPTIONAL in 1-click-bom.csv (R1, R2). Series resistors, not I²C pull-ups (checked against the board's nets)."
   },
   "434351045816": {
-    "function": "Right-angle SMD tactile button (Würth). Side-mounted page navigation buttons (left and right of the device body).",
+    "function": "Right-angle SMD tactile button (Würth), one on each side of the board. One is wired to /RESET and the other to /BTN_LOCK, so they are Reset and Lock. Page turning uses the seven front buttons.",
     "datasheetUrl": "https://www.we-online.com/components/products/datasheet/434351045816.pdf",
     "unitCostUsd": 0.58
   },
@@ -67,14 +68,14 @@
     "unitCostUsd": 0.33
   },
   "S3B-PH-SM4-TB(LF)(SN)": {
-    "function": "3-pin JST PH SMD connector (STEMMA). OPTIONAL expansion port: power + I²C / GPIO for add-ons (reading light, accessibility input).",
+    "function": "3-pin JST PH SMD connector (STEMMA style), J1 and J2. OPTIONAL expansion. Each carries one GPIO signal, +3V3 and GND.",
     "datasheetUrl": "https://www.jst.com/wp-content/uploads/2021/01/ePH.pdf",
-    "unitCostUsd": 0.10
+    "unitCostUsd": 0.1
   },
   "BM04B-SRSS-TB(LF)(SN)": {
-    "function": "4-pin JST SH SMD connector (STEMMA QT). OPTIONAL dedicated I²C expansion port.",
+    "function": "4-pin JST SH SMD connector (STEMMA QT style), J3. OPTIONAL expansion. Pins are RX/SCL, TX/SDA, +3V3 and GND, so it can serve as an I²C port.",
     "datasheetUrl": "https://www.jst.com/wp-content/uploads/2021/01/eSH.pdf",
-    "unitCostUsd": 0.10
+    "unitCostUsd": 0.1
   },
   "1022": {
     "function": "Dual AAA battery holder (Keystone). SMD-mounted; the 1022C retainer clip is required separately to keep cells in place.",
@@ -85,16 +86,9 @@
   "1022C": {
     "function": "Retainer clip for the Keystone 1022 battery holder. Snaps over installed AAA cells.",
     "datasheetUrl": "https://www.keyelco.com/product-pdf.cfm?p=782",
-    "unitCostUsd": 0.86
+    "unitCostUsd": 0.86,
+    "notes": "Added to the BOM on 2026-11-17: the retainer was missing from the C1 BOM although the assembly step called for it."
   },
-  "GDEW042T2": {
-    "function": "4.2-inch B&W e-paper panel (GoodDisplay), 400 × 300 px, SPI interface, connects via FFC to the C2 driver module. The BOM lists the GDEW042T2 but you'll receive a GDEY042T81 — same connector, drop-in compatible. Order the B&W variant specifically.",
-    "datasheetUrl": "https://www.good-display.com/product/206.html",
-    "unitCostUsd": 26.90,
-    "heroMeshId": "gdew042t2",
-    "notes": "GDEW042T2 uses the UC8176 (IL0398) controller and is now EOL (confirmed by GoodDisplay Aug 2023). GDEY042T81 uses the SSD1683 controller — same physical form factor and FPC connector, confirmed drop-in compatible by community testers. The pre-built book.uf2 targets IL0398 only and will NOT work with the GDEY042T81. Build libros from the PR #11 branch (joeycastillo/libros#11) instead — it auto-detects the display via busy-pin polarity and supports both panels. The upstream libros repo has been inactive since Feb 2024; PR #11 has been merge-ready since Dec 2025."
-  },
-
   "0603WAJ047KT5E": {
     "function": "0.47 Ω sense resistor, 0603. Current-sense feedback for the boost converter that generates the e-paper high-voltage rails.",
     "unitCostUsd": 0.34,
@@ -120,7 +114,7 @@
   },
   "CL21A475KAQNNNE": {
     "function": "4.7 µF MLCC, 0805, 25 V, X5R. Bulk decoupling on the driver power rails.",
-    "unitCostUsd": 0.30,
+    "unitCostUsd": 0.3,
     "datasheetUrl": "https://product.samsungsem.com/mlcc/CL21A475KAQNNNE.do",
     "digikeyPn": "1276-1244-1-ND",
     "mouserPn": "187-CL21A475KAQNNNE",
@@ -149,5 +143,12 @@
     "datasheetUrl": "https://www.lcsc.com/datasheet/C18863.pdf",
     "lcscPn": "C18863",
     "notes": "LCSC C18863. LRC."
+  },
+  "GDEY042T81": {
+    "function": "4.2-inch B&W e-paper panel (Good Display), 400 × 300 px, SSD1683 controller, 24-pin FFC to the C2 driver module. Unvalidated in this design: see the notes. Order the black and white model, not the tri-colour one.",
+    "datasheetUrl": "https://www.good-display.com/product/386.html",
+    "unitCostUsd": 26.9,
+    "heroMeshId": "gdew042t2",
+    "notes": "Replaces the end-of-life GDEW042T2 (UC8176/IL0398), which Good Display confirmed EOL in 2023; the prebuilt book.uf2 targets that older controller only. Open questions, none settled by a pilot: (1) the creator said in November 2023 (The-Open-Book issue #77) that this panel might need a larger C2 inductor, a signal pulldown and possibly a different current-sense resistor; (2) Good Display's reference circuit shows 47 µH, 2.2 Ω and a 1 MΩ pulldown, while the C2-02 and C2-03 BOMs list 10 µH and 0.47 Ω with no pulldown; (3) firmware support needs libros PR #11, which was unmerged on 2026-11-15; (4) two Good Display storefront listings showed zero stock on 2026-11-15, and no ten-panel source is confirmed."
   }
 }

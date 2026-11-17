@@ -250,7 +250,7 @@ def load_c2_board(brd_path: Path, bom: list[dict]) -> dict:
     display = next((l for l in bom if "Display" in l["refs"]), None)
     if display:
         comp = {"ref": "Display", "bomRef": "Display", "x": 65.0, "y": 11.94, "rotation": 0.0, "side": "top",
-                "footprint": "VIRTUAL_GDEW042T2",
+                "footprint": "VIRTUAL_GDEY042T81",
                 "footprintBbox": {"width": 95.0, "height": 110.0, "height3d": 1.2}, "pads": [], "board": "c2-driver"}
         if display.get("heroMeshId"):
             comp["heroMeshId"] = display["heroMeshId"]

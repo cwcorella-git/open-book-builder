@@ -24,6 +24,10 @@ class BomLine:
     footprint: str | None = None
     function: str = ""
     datasheet_url: str | None = None
+    route_detail: bool = False
+    price_status: str | None = None
+    in_stock: bool | None = None
+    offers: list[dict] = field(default_factory=list)
 
     @property
     def key(self) -> str:
@@ -42,6 +46,8 @@ class AssemblyStep:
     estimated_minutes: int | None = None
     tools: list[str] = field(default_factory=list)
     notes: str | None = None
+    untested: bool = False
+    deferred: bool = False
 
 
 @dataclass
@@ -51,6 +57,7 @@ class Dataset:
     per_unit_usd: float
     missing_line_items: list[str]
     boards: dict
+    unavailable_line_items: list[str] = field(default_factory=list)
 
 
 def find_data_dir() -> Path:
@@ -85,6 +92,10 @@ def load_dataset(path: Path | None = None) -> Dataset:
             footprint=b.get("footprint"),
             function=b.get("function", ""),
             datasheet_url=b.get("datasheetUrl"),
+            route_detail=b.get("routeDetail", False),
+            price_status=b.get("priceStatus"),
+            in_stock=b.get("inStock"),
+            offers=b.get("offers", []),
         )
         for b in raw["bom"]
     ]
@@ -101,6 +112,8 @@ def load_dataset(path: Path | None = None) -> Dataset:
                 estimated_minutes=a.get("estimatedMinutes"),
                 tools=a.get("tools", []),
                 notes=a.get("notes"),
+                untested=a.get("untested", False),
+                deferred=a.get("deferred", False),
             )
             for a in raw["assembly"]
         ),
@@ -113,4 +126,5 @@ def load_dataset(path: Path | None = None) -> Dataset:
         per_unit_usd=round(cost["perUnitUsd"], 2),
         missing_line_items=cost["missingLineItems"],
         boards=raw["boards"],
+        unavailable_line_items=cost.get("unavailableLineItems", []),
     )

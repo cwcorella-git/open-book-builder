@@ -3,13 +3,14 @@
     "id": "order-pcbs",
     "order": 10,
     "phase": "modules",
-    "title": "Order the C1 main board (bare PCB) and the C2 e-paper driver (pre-assembled board)",
-    "description": "Before you solder anything, get both boards fabricated. The C1 main board ships as a bare PCB; the C2 castellated (half-circle edge pads) e-paper driver arrives pre-assembled. See the ordering guide on the About tab for exact gerber files and PCB specs (1.0 mm thickness, lead-free HASL).",
+    "title": "Order the C1 main board (bare PCB) and the C2 e-paper driver (pre-assembled module)",
+    "description": "Order two things. C1: upload OSO-BOOK-C1-05-rounded.zip to a PCB maker (two layers, 1.0 mm thick, lead-free HASL or ENIG). C2: order the driver as a finished module from the C2-03 package for JLCPCB (BOM, placement file and Gerbers from the same folder; castellated edges, 1.0 mm, lead-free HASL). Order the display, the Pico (original SC0915) and the other parts from the Parts list. See the Checklist tab for the full list.",
     "componentRefs": [],
     "board": "c1-main",
     "estimatedMinutes": 20,
     "tools": [],
-    "notes": "Upload OSO-BOOK-C1-05-rounded.zip to your PCB fab for C1. For the C2 driver: use OSO-BOOK-C2-02 files for PCBWay assembly (PCBA) or OSO-BOOK-C2-03 for JLCPCB PCBA."
+    "notes": "The C1 zip holds Gerbers and drill files only. It has no placement file or assembly-ready BOM, so a factory cannot assemble C1 from it alone. Ask each maker for a quote that names the exact package, quantity, finish and which parts they place. Nothing has been ordered or quoted yet.",
+    "untested": true
   },
   {
     "id": "smd-passives-c1",
@@ -17,10 +18,23 @@
     "phase": "smd-passives",
     "title": "Solder surface-mount (SMD) passives on C1: 10 µF, 1 µF, 10 kΩ (and optionally 1 kΩ)",
     "description": "Start with the smallest surface-mount passives. C1 and C2 are 10 µF 1206 caps. C3 is a 1 µF 0805 cap. R3 and R4 are 10 kΩ 1206 resistors. If you want the STEMMA expansion, also install R1 and R2 (1 kΩ 0805). These take flux and a fine tip but don't require hot air.",
-    "componentRefs": ["C1", "C2", "C3", "R3", "R4", "R1", "R2"],
+    "componentRefs": [
+      "C1",
+      "C2",
+      "C3",
+      "R3",
+      "R4",
+      "R1",
+      "R2"
+    ],
     "board": "c1-main",
     "estimatedMinutes": 15,
-    "tools": ["soldering iron", "fine-tip", "flux", "tweezers"],
+    "tools": [
+      "soldering iron",
+      "fine-tip",
+      "flux",
+      "tweezers"
+    ],
     "notes": "R1/R2 are OPTIONAL — install them if you plan to use the STEMMA/I²C expansion ports."
   },
   {
@@ -29,10 +43,19 @@
     "phase": "smd-ics",
     "title": "Solder surface-mount chips on C1: flash chip and MOSFETs",
     "description": "U4 is the GD25Q16C 16 Mb flash chip (SOIC-8, an 8-pin chip package). Q1 and Q2 are P-channel DMG3415U-7 MOSFETs (SOT-23, a 3-pin chip package). Use flux and drag-solder technique (run the iron tip slowly across all pins at once) for U4; Q1/Q2 are 3-pin, easy one-pin-at-a-time.",
-    "componentRefs": ["U4", "Q1", "Q2"],
+    "componentRefs": [
+      "U4",
+      "Q1",
+      "Q2"
+    ],
     "board": "c1-main",
     "estimatedMinutes": 10,
-    "tools": ["soldering iron", "flux", "solder wick", "tweezers"],
+    "tools": [
+      "soldering iron",
+      "flux",
+      "solder wick",
+      "tweezers"
+    ],
     "notes": "Watch Q1/Q2 orientation — the DMG3415U-7 is P-channel."
   },
   {
@@ -41,10 +64,22 @@
     "phase": "smd-mechanical",
     "title": "Solder surface-mount connectors and switches on C1: µSD slot, side buttons, slide switch",
     "description": "U3 is the GCT MEM2075 microSD push/push slot (fine-pitch metal shell — solder the shell tabs first for alignment). B1 and B2 are Würth right-angle tactile buttons. SW1 is the C&K power slide switch. Install the optional J1/J2/J3 JST connectors in this step too if you're using expansion.",
-    "componentRefs": ["U3", "B1", "B2", "SW1", "J1", "J2", "J3"],
+    "componentRefs": [
+      "U3",
+      "B1",
+      "B2",
+      "SW1",
+      "J1",
+      "J2",
+      "J3"
+    ],
     "board": "c1-main",
     "estimatedMinutes": 25,
-    "tools": ["soldering iron", "flux", "tweezers"],
+    "tools": [
+      "soldering iron",
+      "flux",
+      "tweezers"
+    ],
     "notes": "The SD slot has both signal pins and shell tabs — tack the shell tabs first to prevent the slot from shifting while you solder the signal pins."
   },
   {
@@ -53,10 +88,16 @@
     "phase": "smd-mechanical",
     "title": "Solder the Keystone 1022 battery holder + 1022C retainer clip on C1",
     "description": "BT1 is the dual-AAA battery holder (surface-mount through-pad). These pads draw heat — use a larger tip and extra flux. Install the 1022C retainer clip, which physically retains the AAA cells.",
-    "componentRefs": ["BT1"],
+    "componentRefs": [
+      "BT1"
+    ],
     "board": "c1-main",
     "estimatedMinutes": 10,
-    "tools": ["soldering iron", "larger tip", "flux"],
+    "tools": [
+      "soldering iron",
+      "larger tip",
+      "flux"
+    ],
     "notes": "The 1022C retainer clip is easy to miss — make sure you've ordered it (Digi-Key 36-1022C-ND)."
   },
   {
@@ -65,10 +106,15 @@
     "phase": "modules",
     "title": "Solder the C2 e-paper driver module onto C1 via castellated edges (the row of half-circle pads along the board edge)",
     "description": "U2 is the pre-assembled Castellated E-Paper Driver. Drop it into its footprint on the main board and solder the castellated pads. The module generates the ±22 V and ±15 V rails the e-paper needs.",
-    "componentRefs": ["U2"],
+    "componentRefs": [
+      "U2"
+    ],
     "board": "c1-main",
     "estimatedMinutes": 15,
-    "tools": ["soldering iron", "flux"],
+    "tools": [
+      "soldering iron",
+      "flux"
+    ],
     "notes": "The C2 internals were assembled at the fab house. Solder the castellated edge pads to the matching C1 pads beneath."
   },
   {
@@ -77,10 +123,20 @@
     "phase": "tht",
     "title": "Solder the 7 through-hole tactile buttons on C1 (B3–B9)",
     "description": "The menu / directional / select cluster under the screen: 7× TL1107AF180WQ. Install from the front of the board; solder on the back. Push buttons face outwards (away from the PCB).",
-    "componentRefs": ["B3", "B4", "B5", "B6", "B7", "B8", "B9"],
+    "componentRefs": [
+      "B3",
+      "B4",
+      "B5",
+      "B6",
+      "B7",
+      "B8",
+      "B9"
+    ],
     "board": "c1-main",
     "estimatedMinutes": 15,
-    "tools": ["soldering iron"],
+    "tools": [
+      "soldering iron"
+    ],
     "notes": "These are gullwing-style — make sure the tactile switch body seats flat against the board before soldering. Note: the BOM specifies TL1107AF180WQ (1.8 N, firmer click) but the README links to 130WQ (1.3 N, lighter touch). Either fits the same footprint."
   },
   {
@@ -89,10 +145,15 @@
     "phase": "tht",
     "title": "Solder the Raspberry Pi Pico (U1) onto C1",
     "description": "The Pico can be installed in two ways: through-hole pin headers (if you want it removable for reflashing) or reflowed via its castellated edge pads (flush, permanent). The castellated method gives the slimmest profile.",
-    "componentRefs": ["U1"],
+    "componentRefs": [
+      "U1"
+    ],
     "board": "c1-main",
     "estimatedMinutes": 10,
-    "tools": ["soldering iron", "flux"],
+    "tools": [
+      "soldering iron",
+      "flux"
+    ],
     "notes": "Pin headers make reflashing easy if you plan to iterate on firmware. Castellated gives the slimmest profile for a finished device."
   },
   {
@@ -100,59 +161,85 @@
     "order": 90,
     "phase": "mechanical",
     "title": "Attach the e-paper panel via FFC (flat ribbon cable) to the C2 module",
-    "description": "Slide the panel's FPC (flexible printed circuit) tail into the 24-pin 0.5 mm FFC connector (the latching clip) on the C2 module. Make sure the contact side faces the correct way (check the connector's latching direction). Close the connector latch.",
+    "description": "Slide the panel's flexible tail into the 24-pin 0.5 mm FFC connector on the C2 module with the contacts facing the right way, then close the latch. Handle the panel by its edges and keep it supported while the board is on the bench.",
     "componentRefs": [],
     "board": "c1-main",
     "estimatedMinutes": 5,
-    "tools": ["tweezers"],
-    "notes": "Order a 4.2-inch B&W GoodDisplay panel — you'll receive a GDEY042T81. The firmware auto-detects it via PR #11. Order the B&W variant specifically."
-  },
-  {
-    "id": "flash-firmware",
-    "order": 100,
-    "phase": "flash-firmware",
-    "title": "Build and flash the libros firmware onto the Pico",
-    "description": "Clone joeycastillo/libros from GitHub. The Pico build needs two community PRs from @tahnok: PR #10 (fixes a broken Pico build by removing a stray pico/stdlib.h include) and PR #11 (runtime e-ink driver selection so the firmware works with the newer GDEY042T81 display). Cherry-pick both, then build with the Pico SDK to produce a .uf2 file. To flash: hold BOOTSEL (the small button on the Pico board) while plugging it into USB — it appears as a USB drive. Drag-and-drop the .uf2 file onto it. The Pico reboots into libros.",
-    "componentRefs": ["U1"],
-    "board": "c1-main",
-    "estimatedMinutes": 20,
-    "tools": ["USB cable", "Pico SDK"],
-    "notes": "PR #10 (https://github.com/joeycastillo/libros/pull/10) and PR #11 (https://github.com/joeycastillo/libros/pull/11) are both unmerged but both required for a clean Pico build today. PR #11 auto-detects display controller via busy-pin polarity — works with the GDEY042T81 and the older GDEW042T2. A pre-built book.uf2 is available at https://oddlyspecificobjects.com/projects/openbook/ but only targets the GDEW042T2; for the GDEY042T81 you must build from source with both PRs applied."
-  },
-  {
-    "id": "flash-babel",
-    "order": 105,
-    "phase": "flash-firmware",
-    "title": "Flash babel.bin (font/glyph data) to the SPI flash chip",
-    "description": "On first boot after flashing libros, the firmware needs GNU Unifont bitmap data on the external GD25Q16C flash chip (U4) to render text. Download babel.bin from the project page and flash it to the SPI flash using the libros bootloader's built-in flash utility. This takes about a minute.",
-    "componentRefs": ["U4"],
-    "board": "c1-main",
-    "estimatedMinutes": 5,
-    "tools": ["USB cable"],
-    "notes": "babel.bin is available at https://oddlyspecificobjects.com/projects/openbook/. It contains GNU Unifont bitmap data covering the entire Unicode Basic Multilingual Plane — Latin, Cyrillic, CJK, Arabic, Hebrew, and more, with automatic right-to-left text detection."
+    "tools": [
+      "tweezers"
+    ],
+    "notes": "The panel is the GDEY042T81. Pair it only with firmware that supports its SSD1683 controller (libros PR #11). The C2 inductor, current-sense resistor and pulldown values for this panel are unconfirmed, so treat the first unit as a pilot.",
+    "untested": true
   },
   {
     "id": "prepare-sd-card",
-    "order": 110,
+    "order": 100,
     "phase": "flash-firmware",
-    "title": "Prepare a microSD card with books",
-    "description": "Format a microSD card as FAT (the standard SD card format — most cards ship this way). Copy UTF-8 .txt files onto it — first line of each file is the book title. The firmware supports bold, italic, chapter title pages, and front-matter metadata (title, author, description, genre, language) via inline control codes.",
-    "componentRefs": ["U3"],
+    "title": "Prepare the microSD card (fonts first, then a short book)",
+    "description": "Format a microSD card as FAT32 on your Linux computer. Copy babel.bin (the font data) to the card root, then add one short UTF-8 .txt book: the first line is the title. Do this before the first boot so the firmware can load the fonts.",
+    "componentRefs": [
+      "U3"
+    ],
     "board": "c1-main",
     "estimatedMinutes": 15,
-    "tools": ["microSD card", "computer with SD adapter"],
-    "notes": "Any capacity works — even 256 MB is enough for hundreds of books. Formatting reference: Shift In (U+000F) toggles italic → bold+italic, Shift Out (U+000E) reverts; Record Separator (U+001E) at the start of a line creates a chapter title page at 2× size. Front matter goes between --- delimiters with TITL/AUTH/DESC/GNRE/LANG keys. Full details at https://oddlyspecificobjects.com/projects/openbook/. The libros-convert tool (https://github.com/joeycastillo/libros-convert) converts Standard Ebooks EPUBs into this format automatically."
+    "tools": [
+      "microSD card",
+      "microSD reader",
+      "Linux computer"
+    ],
+    "notes": "Use one known card and filesystem for the pilot and write down which. The old note that any capacity works was not verified. Formatting codes, front matter and the libros-convert tool are described at https://oddlyspecificobjects.com/projects/openbook/ (a 2022 page).",
+    "untested": true
+  },
+  {
+    "id": "flash-firmware",
+    "order": 105,
+    "phase": "flash-firmware",
+    "title": "Build the libros firmware with PlatformIO and flash the Pico",
+    "description": "On Linux, install PlatformIO, clone joeycastillo/libros, apply the two community fixes (PR #10 removes a stray pico/stdlib.h include; PR #11 selects the display driver at runtime), and run `platformio run -e pico`. To flash, hold BOOTSEL on the Pico while plugging in USB; it appears as a drive. Copy the .uf2 onto it and the Pico restarts into libros.",
+    "componentRefs": [
+      "U1"
+    ],
+    "board": "c1-main",
+    "estimatedMinutes": 20,
+    "tools": [
+      "USB data cable",
+      "Linux computer",
+      "PlatformIO"
+    ],
+    "notes": "The libros PlatformIO environment is `pico` (platform raspberrypi, board pico, Arduino framework, picotool upload). PR #10 and PR #11 were open and unmerged on 2026-11-15, and nobody has built or run the two together yet. The prebuilt book.uf2 targets the older GDEW042T2 display only.",
+    "untested": true
+  },
+  {
+    "id": "flash-babel",
+    "order": 110,
+    "phase": "flash-firmware",
+    "title": "First boot: the firmware copies the fonts into the flash chip",
+    "description": "Put the prepared microSD card in the slot and power the reader. On first boot the firmware copies babel.bin from the card into the external GD25Q16C flash chip (U4). Wait for it to finish, then check that text renders.",
+    "componentRefs": [
+      "U4"
+    ],
+    "board": "c1-main",
+    "estimatedMinutes": 5,
+    "tools": [
+      "microSD card"
+    ],
+    "notes": "babel.bin holds GNU Unifont data for the Unicode Basic Multilingual Plane. The old instruction to flash it with a bootloader utility is not how the Pico build works.",
+    "untested": true
   },
   {
     "id": "assemble-enclosure",
     "order": 120,
     "phase": "mechanical",
-    "title": "3D-print the case and assemble",
+    "title": "3D-print the case and assemble (deferred)",
     "description": "Print 'Open Book Abridged - Minimal Case.stl' from the upstream repo's 3D Printed Case directory (https://github.com/joeycastillo/The-Open-Book/tree/main/3D%20Printed%20Case). The STL prints support-free on any FDM printer. Fit the completed board, insert 2× AAA batteries, and close the case.",
     "componentRefs": [],
     "board": "c1-main",
     "estimatedMinutes": 30,
-    "tools": ["3D printer", "screwdriver"],
-    "notes": "The case is designed for a 1.0 mm thick PCB — match this when ordering your C1 board."
+    "tools": [
+      "3D printer",
+      "screwdriver"
+    ],
+    "notes": "Cases are out of scope for the first ten readers. The case is designed for a 1.0 mm board.",
+    "deferred": true
   }
 ]

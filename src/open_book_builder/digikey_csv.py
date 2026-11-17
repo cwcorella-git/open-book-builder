@@ -1,7 +1,8 @@
 """Digi-Key BOM Manager CSV export (port of the web tool's digikey-csv.ts).
 
-A line is skipped when it has no Digi-Key part number, or when it is optional
-and optional parts are excluded. The board filter is ignored on purpose.
+A line is skipped when it is inside the pre-assembled C2 module, has no Digi-Key
+part number, or is optional while optional parts are excluded. The board filter
+is ignored on purpose.
 """
 from __future__ import annotations
 
@@ -18,7 +19,7 @@ HEADER = ["Digi-Key Part Number", "Manufacturer Part Number", "Customer Referenc
 class SkippedLine:
     mpn: str
     refs: list[str]
-    reason: str  # "no-digikey-pn" or "optional-excluded"
+    reason: str  # "inside-module", "no-digikey-pn" or "optional-excluded"
 
 
 @dataclass
@@ -36,6 +37,9 @@ def build_digikey_csv(bom: list[BomLine], qty_multiplier: int, include_optional:
     skipped: list[SkippedLine] = []
     included = 0
     for line in bom:
+        if line.route_detail:
+            skipped.append(SkippedLine(line.mpn, line.refs, "inside-module"))
+            continue
         if not line.digikey_pn:
             skipped.append(SkippedLine(line.mpn, line.refs, "no-digikey-pn"))
             continue

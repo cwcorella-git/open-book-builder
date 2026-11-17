@@ -1,0 +1,83 @@
+{
+  "_comment": "Dated supplier offers, used for unit prices. Source: the 2026-11-15 hardware review (docs/hardware-build-review-2026-11-15.md). status is listed (a supplier page), estimate or quote. Prices are before shipping, tax and tariffs. unitPriceUsd is the price at the given quantity tier.",
+  "offers": [
+    {
+      "mpn": "SC0915",
+      "supplier": "Digi-Key",
+      "unitPriceUsd": 4.59,
+      "quantity": 1,
+      "basis": "cut tape",
+      "observed": "2026-11-15",
+      "stock": "about 39,000",
+      "inStock": true,
+      "status": "listed",
+      "url": "https://www.digikey.com/en/products/detail/raspberry-pi/SC0915/13684020",
+      "note": "Original Pico."
+    },
+    {
+      "mpn": "SC0918",
+      "supplier": "Digi-Key",
+      "unitPriceUsd": 7.65,
+      "quantity": 1,
+      "basis": "cut tape",
+      "observed": "2026-11-15",
+      "stock": "6,268",
+      "inStock": true,
+      "status": "listed",
+      "url": "https://www.digikey.com/en/products/detail/raspberry-pi/SC0918/16627943",
+      "note": "Pico W. A future option; not in the BOM."
+    },
+    {
+      "mpn": "1022",
+      "supplier": "Digi-Key",
+      "unitPriceUsd": 4.757,
+      "quantity": 10,
+      "basis": "price at 10",
+      "observed": "2026-11-15",
+      "stock": "in stock",
+      "inStock": true,
+      "status": "listed",
+      "url": "https://www.digikey.com/en/products/detail/keystone-electronics/1022/2137859",
+      "note": ""
+    },
+    {
+      "mpn": "1022C",
+      "supplier": "Digi-Key",
+      "unitPriceUsd": 0.75,
+      "quantity": 10,
+      "basis": "price at 10",
+      "observed": "2026-11-15",
+      "stock": "in stock",
+      "inStock": true,
+      "status": "listed",
+      "url": "https://www.digikey.com/en/products/detail/keystone-electronics/1022C/2746324",
+      "note": ""
+    },
+    {
+      "mpn": "GD25Q16CTIGR",
+      "supplier": "Digi-Key",
+      "unitPriceUsd": 0.825,
+      "quantity": 10,
+      "basis": "price at 10",
+      "observed": "2026-11-15",
+      "stock": "in stock",
+      "inStock": true,
+      "status": "listed",
+      "url": "https://www.digikey.com/en/products/detail/gigadevice-electronics-singapore-pte-ltd/GD25Q16CTIGR/9484675",
+      "note": "Listed as Not For New Designs. Do not swap in a similar chip without checking package, electrical behavior and firmware support."
+    },
+    {
+      "mpn": "GDEY042T81",
+      "supplier": "Good Display storefront",
+      "unitPriceUsd": 14.44,
+      "quantity": 1,
+      "basis": "promotional price",
+      "observed": "2026-11-15",
+      "stock": "zero",
+      "inStock": false,
+      "status": "listed",
+      "url": "https://buy-lcd.com/products/42inch-e-inkanel-spi-interface-buy-eaper-display",
+      "note": "Two Good Display listings showed zero stock. An earlier search excerpt showed $14.96. Not a confirmed basket for ten panels."
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "_comment": "Pinned upstream sources and what the app's viewer data matches. Compared 2026-11-17 against the copies under reference/the-open-book/upstream.",
+  "upstream": {
+    "repo": "https://github.com/joeycastillo/The-Open-Book",
+    "commit": "6bb483f92e58f4b75d8fcfc72c7c8022f19fe40b"
+  },
+  "c1": {
+    "orderPackage": "Fabrication Files/Open Book Main Board/OSO-BOOK-C1-05-rounded.zip",
+    "orderPackageSha256": "a28af22e4787ca4e311a2fb1c486f7d9353da0bae237a103583acbfc15e749bb",
+    "gerberJobRevision": "05",
+    "gerberSizeMm": [
+      85.1,
+      115.1
+    ],
+    "viewerSource": "data/OSO-BOOK-C1.kicad_pcb",
+    "viewerSourceSha256": "80dec7a7583cfb74f51a9ef902d9807af1e911fa421184966129d64479538ffd",
+    "viewerSourceLabel": "OSO-BOOK-C1-06 (back silkscreen text)",
+    "comparison": {
+      "outline": "Edge_Cuts gerber matches the viewer outline; only the 4 corner-arc midpoints differ because gerber arcs are encoded differently.",
+      "mountingHoles": "4 x 2.5 mm at (3,3), (3,112), (82,3), (82,112): identical.",
+      "drills": "126 plated drills match the viewer source by diameter and count (59 x 0.305, 11 x 0.3, 6 x 0.4 vias; 14 x 1.3, 32 x 0.5, 4 x 2.5 pads); 9 non-plated drills match.",
+      "padCopper": "190 of 206 pad centers coincide with copper features in the F_Cu and B_Cu gerbers. The 16 that do not are all Pico (U1) pads, which are probably drawn as regions rather than flashes. Not checked further.",
+      "conclusion": "No difference found in outline, holes or drills. The C1-05 zip and the C1-06-labelled source agree at this level. Copper traces and silkscreen were not compared."
+    }
+  },
+  "c2": {
+    "chosenRoute": "OSO-BOOK-C2-03 (JLCPCB)",
+    "viewerSource": "data/OSO-BOOK-C2-02.brd",
+    "viewerSourceSha256": "02e77391c0d89649dc420d8ac796432ab91bf4b9a417d711247fb13828c18c45",
+    "c2_03BrdSha256": "07d39d77aa9dcf5f785c3ca39f6a68d3204bcc16d86e61668450a5c7ca84cd14",
+    "comparison": {
+      "elements": "Same 20 elements, libraries and packages except R1 (0603 in C2-02, 0402 in C2-03).",
+      "nets": "Identical signals and contact references.",
+      "layout": "Every element and the outline are shifted by (0.254, 5.08) mm; the board size is the same, 17.272 x 23.876 mm.",
+      "notChecked": "Copper traces, polygons and any pulldown footprint."
+    }
+  }
+}
