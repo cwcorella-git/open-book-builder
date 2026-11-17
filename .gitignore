@@ -30,3 +30,9 @@ test-results/
 
 # Upstream B1 board (18 MB); raw copy in ws /data/archives/temp-help-2026-09-30/
 reference/the-open-book/upstream/OSO-BOOK-B1/OSO-BOOK-B1.kicad_pcb
+
+# Python (desktop app)
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
