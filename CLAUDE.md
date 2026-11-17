@@ -100,7 +100,12 @@ golden file only for an intended data change, in the same commit.
    is off by default in 3D; the Show silkscreen box remembers its state separately for 2D and 3D. The light
    in `meshview.py` flips its depth part with the pitch sign so top and bottom views are equally bright. The virtual C2 Display is 95 x 110 mm and
    dwarfs the C2 board, which is true to scale.
-11. **Planning data is edited in the app and saved to `data/configs.json`**
+11. **`site/` is a localhost mockup of the collections site**, built by `scripts/build_site.py`
+   (`site/works/*.md`, `site/collections/*.json`, output in the gitignored `site/_out/`). Every download
+   goes through the converter, so a rejected work, a work without `rights`, or a collection naming an
+   unknown work fails the build. The seed works are invented samples with no third-party text. It is
+   not published and has no ordering flow (readers are sold on Etsy).
+12. **Planning data is edited in the app and saved to `data/configs.json`**
    (File > Save). `offers.json`, `checklist.json` and `revisions.json` are edited
    by hand. Keep dated offers dated and mark estimates as estimates.
 

@@ -1,6 +1,6 @@
 # Collections site (design draft)
 
-Prepared 2026-11-17, answers added the same day. This is a design with a localhost mockup (`scripts/build_site.py`, once built) and nothing public: the converter and a card tool exist. It says what the site would do, what it depends on, and what only you can decide. Facts about the reader come from `docs/markdown-profile.md` and `docs/reader-features-spec.md`, which were read from the firmware source and not seen on a device.
+Prepared 2026-11-17, answers added the same day. This is a design with a localhost mockup (`scripts/build_site.py`, output in `site/_out/`, run with `python3 -m http.server`) and nothing public: the converter and a card tool exist. It says what the site would do, what it depends on, and what only you can decide. Facts about the reader come from `docs/markdown-profile.md` and `docs/reader-features-spec.md`, which were read from the firmware source and not seen on a device.
 
 ## What it is for
 
