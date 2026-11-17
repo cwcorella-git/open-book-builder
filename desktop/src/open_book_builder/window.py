@@ -6,6 +6,7 @@ from PySide6.QtGui import QAction, QKeySequence
 from PySide6.QtWidgets import QLabel, QMainWindow, QMessageBox, QTabWidget
 
 from .assembly_tab import AssemblyTab
+from .board_tab import BoardTab
 from .bom_tab import BomTab
 from .dataset import Dataset
 from .placeholder_tab import EmptyTab
@@ -28,7 +29,8 @@ class MainWindow(QMainWindow):
         self.tabs.setDocumentMode(True)
         self.tabs.addTab(self.bom, "BOM")
         self.tabs.addTab(self.assembly, "Assembly")
-        self.tabs.addTab(EmptyTab("The board view is not built yet."), "Board")
+        self.board = BoardTab(dataset)
+        self.tabs.addTab(self.board, "Board")
         self.tabs.addTab(EmptyTab("The case view is not built yet."), "Case")
         self.setCentralWidget(self.tabs)
 
@@ -39,6 +41,7 @@ class MainWindow(QMainWindow):
         for label in (self.cost_label, self.progress_label):
             label.setContentsMargins(8, 0, 8, 0)
             self.statusBar().addPermanentWidget(label)
+        self.board.selection_message.connect(lambda m: self.statusBar().showMessage(m, 5000) if m else self.statusBar().clearMessage())
         self.bom.cost_changed.connect(self.cost_label.setText)
         self.assembly.progress_changed.connect(self.progress_label.setText)
         self.bom.update_footer()
