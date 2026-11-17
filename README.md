@@ -41,9 +41,10 @@ uv run pytest                                  # tests
 - **Assembly**: 13 build steps (12 active, the case step is deferred). Steps
   rewritten after the review are marked Untested. Progress is saved on this
   computer.
-- **Board**: 2D view of the C1 main board (from KiCad) and the C2 driver
-  (from EAGLE): outline, holes, copper traces, vias, silkscreen and
-  components. Select a component to see its part. The bottom view is mirrored.
+- **Board**: 2D view of the C1 main board and the C2 driver. By default copper, pads,
+  pours, drills and silkscreen come from the order Gerbers (the boards as made); the design
+  file (KiCad, EAGLE) is the other choice. Select a component to see its part. The bottom
+  view is mirrored.
 - **Case**: rotatable view of the Sprint 5 and minimal case STL models, with
   a Save Files action.
 
@@ -60,8 +61,10 @@ src/open_book_builder/
   bom_tab.py, assembly_tab.py, board_tab.py, case_tab.py
   dataset.py              Dataset, BomLine, AssemblyStep; builds from data/ at startup
   digikey_csv.py          Digi-Key CSV export
-  geometry.py             arc helper for the board view
-  build/                  parsers: bom, kicad_pcb (C1), eagle (C2), net_category, footprint_heights
+  geometry.py             arc and polygon helpers for the board view
+  fabrication.py          where each board's order files are, and their coordinate mapping
+  build/                  parsers: bom, kicad_pcb (C1), eagle (C2), net_category, footprint_heights,
+                          gerber and gerber_geometry (order files)
 data/                     source files: BOM CSVs, component_functions.json, assembly.json,
                           OSO-BOOK-C1.kicad_pcb, OSO-BOOK-C2-03.brd, case/ (STL, SCAD),
                           fabrication/ (the C1-05 and C2-03 order zips: Gerbers and drills)

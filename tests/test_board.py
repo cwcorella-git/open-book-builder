@@ -39,6 +39,22 @@ def test_board_draws_both_boards_and_sides(app):
             assert len(drawn) == expected
 
 
+def test_fabrication_files_replace_the_design_pads_when_ready(app):
+    tab = BoardTab(load_dataset(GOLDEN))
+    tab.wait_for_fabrication()
+    tab.traces_box.setChecked(True)
+    for board in range(2):
+        for side in range(2):
+            tab.board_box.setCurrentIndex(board)
+            tab.side_box.setCurrentIndex(side)
+            kinds = [type(i).__name__ for i in tab.scene.items()]
+            assert kinds.count("QGraphicsPathItem") >= 3  # edge, copper (two layers), drills, silkscreen
+            pads = [i for i in tab.scene.items() if i.parentItem() is not None and isinstance(i.parentItem(), ComponentItem)]
+            assert pads == []  # the Gerber copper already contains every pad
+    tab.source_box.setCurrentIndex(1)  # design file
+    assert any(isinstance(i.parentItem(), ComponentItem) for i in tab.scene.items() if i.parentItem() is not None)
+
+
 def test_selecting_component_shows_bom_detail(app):
     tab = BoardTab(load_dataset(GOLDEN))
     tab.side_box.setCurrentIndex(1)

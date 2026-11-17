@@ -3,7 +3,8 @@ from __future__ import annotations
 
 import math
 
-from PySide6.QtGui import QPainterPath
+from PySide6.QtCore import QPointF, Qt
+from PySide6.QtGui import QPainterPath, QPolygonF
 
 
 def arc_path(start, mid, end) -> QPainterPath:
@@ -27,4 +28,17 @@ def arc_path(start, mid, end) -> QPainterPath:
     if mid_off > sweep:  # the mid point lies on the other way round
         sweep -= 360
     path.arcTo(ux - r, uy - r, 2 * r, 2 * r, a1, sweep)
+    return path
+
+
+def polygons_to_path(geometry) -> QPainterPath:
+    """A shapely (Multi)Polygon as one painter path. Holes are inner rings; odd-even fill keeps them empty."""
+    from .build.gerber_geometry import polygons_of
+
+    path = QPainterPath()
+    path.setFillRule(Qt.OddEvenFill)
+    for polygon in polygons_of(geometry):
+        for ring in (polygon.exterior, *polygon.interiors):
+            path.addPolygon(QPolygonF([QPointF(x, y) for x, y in ring.coords]))
+            path.closeSubpath()
     return path

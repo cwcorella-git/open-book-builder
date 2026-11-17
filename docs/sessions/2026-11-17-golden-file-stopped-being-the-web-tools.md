@@ -31,6 +31,10 @@ Started as "review what Codex did", became: retire the web/Tauri tool for a PySi
 | 26 | Quote request drafts | **done** — `docs/quote-requests.md` (C1 PCB, C1 assembly routes A/B/C, C2-03 module, comparison table). Nothing sent; the commit that adds it follows this row |
 | 27 | Author's formatting guide for the site | **proposed** — not written. Rules are in `docs/markdown-profile.md`, which also needs the `type:` tag, `_STATE` and stale-page-map additions if the features go ahead |
 | 28 | Site for collections (preloaded choice, downloads) | **proposed** — the operator's plan; no design yet |
+| 29 | Plan: assembly highlights, About tab, Gerber Board view, 3D view, three documents | **in progress** — phases 1 to 3 done below, 4 and 5 next |
+| 30 | Assembly step highlights its parts on the Board tab | **done** — `17124be` |
+| 31 | About tab with the corrected ordering guide | **done** — `49822e4` |
+| 32 | Gerber-based Board view, C2 on the C2-03 route, order zips in `data/fabrication/` | **done** — see section 10 |
 | 11 | SC0915 Digi-Key part number into `data/bom-c1-main.csv` | **blocked** — on the operator pasting it (Digi-Key returns 403 to the shell) |
 
 ## 1. Codex's review held up, and the cheap checks were enough
@@ -87,6 +91,14 @@ All 59 now land within 0.02 mm (`tests/test_gerber_accuracy.py`). The silkscreen
 The plan assumed three product configurations sharing one PCB, and the interview was about what made them differ. Round 1 answers (all four of hardware, firmware, books and box could differ) and round 2 answers (identical hardware, full firmware on all three, same box) left nothing to tell them apart except books, and the operator then dropped the idea: one build, buyers choose preloaded collections, more downloads from the official site, guides for formatting text. The 2026-11-15 "versions 1, 2, 3" rulings are superseded by a dated block in the review, not edited. The app's three placeholder configurations became one `First batch` plan (10 readers, no expansion), the Checklist's combo box still exists but has one entry.
 
 Two things the interview surfaced that were not obvious from the review: the pilot must run stock firmware while the nine run the new feature set, so the new firmware is a project in its own right (`docs/reader-features-spec.md`); and with no J1-J3 fitted anywhere, hardware population no longer varies at all.
+
+## 10. The Board tab now draws the boards as made
+
+New Gerber and Excellon reader (`build/gerber.py`, tested on synthetic files and on every C1 and C2 layer: nothing unsupported), shapely to merge each layer into polygons, and a **Layers from** choice on the Board tab (Fabrication files by default, Design file as the alternative). The C2 viewer data moved from C2-02 to C2-03 so it follows the chosen route (same parts and nets, shifted by 0.254 mm in x and 5.08 mm in y, 0402 R1, 152 traces against 153); the virtual display kept its place relative to the board corner.
+
+What the Gerbers show that the design file never did: the real silkscreen text (the C1's top side carries the whole build guide, printed on the board), copper pours, true pad shapes and trace widths, the castellated holes on the C2, and the Pico's pads 0.9 mm further out. Startup stayed fast because layers are read on a background thread (window ready in 0.27 s; reading them synchronously had made it 2 s). A full repaint at fit zoom is about 100 ms after simplifying the polygons; panning repaints less than that. Measured offscreen, never felt by hand.
+
+Silkscreen vertex count was the cost: about 200,000 points on a C1 layer, 1.5 s to merge and 177 ms to paint. Simplifying by 0.01 mm keeps 98.7 percent of the area with a third of the points.
 
 ## Open
 

@@ -79,7 +79,15 @@ golden file only for an intended data change, in the same commit.
    the export, display now GDEY042T81 (unvalidated), cost wording. Still open: the
    SC0915 Digi-Key number, C2 inductor/current-sense/pulldown values for the new
    display, a firmware build, the C1 copper comparison, quotes and the pilot.
-9. **Planning data is edited in the app and saved to `data/configs.json`**
+9. **The Board tab draws from the order files by default.** `data/fabrication/` holds
+   the C1-05 and C2-03 zips. `build/gerber.py` reads the RS-274X/Excellon subset they use
+   (it counts, never guesses, anything else), `build/gerber_geometry.py` merges layers into
+   polygons with shapely, and `fabrication.py` maps each board's files and coordinates. The
+   layers are read on a background thread at startup (silkscreen is the slow one, about 1.5 s
+   each) and the tab shows the design file until they are ready. Paths are simplified by
+   0.005 mm (copper) and 0.01 mm (silkscreen) because the silkscreen text is about 200,000
+   points. Components, selection and nets still come from the KiCad/EAGLE parsers.
+10. **Planning data is edited in the app and saved to `data/configs.json`**
    (File > Save). `offers.json`, `checklist.json` and `revisions.json` are edited
    by hand. Keep dated offers dated and mark estimates as estimates.
 

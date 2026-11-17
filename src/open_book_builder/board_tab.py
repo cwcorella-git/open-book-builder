@@ -1,7 +1,7 @@
 """Board tab: 2D view of a board's outline, copper, pads and components."""
 from __future__ import annotations
 
-from PySide6.QtCore import QPointF, QRectF, Qt, Signal
+from PySide6.QtCore import QPointF, QRectF, Qt, QTimer, Signal
 from PySide6.QtGui import QBrush, QColor, QPainter, QPainterPath, QPalette, QPen, QTransform
 from PySide6.QtWidgets import (
     QStyle, QStyleOptionGraphicsItem, QCheckBox, QComboBox, QGraphicsEllipseItem, QGraphicsItem, QGraphicsPathItem,
@@ -9,8 +9,9 @@ from PySide6.QtWidgets import (
     QLabel, QPushButton, QSplitter, QTextBrowser, QVBoxLayout, QWidget,
 )
 
+from . import fabrication
 from .dataset import BOARD_LABELS, BomLine, Dataset
-from .geometry import arc_path
+from .geometry import arc_path, polygons_to_path
 
 
 def blend(a: QColor, b: QColor, t: float) -> QColor:
@@ -72,8 +73,14 @@ class BoardTab(QWidget):
         self.side_box.addItem("Top", "top")
         self.side_box.addItem("Bottom", "bottom")
         self.side_box.setToolTip("Look at the board from this side. The bottom view is mirrored, as if you turned the board over.")
-        self.traces_box = QCheckBox("Show traces")
-        self.traces_box.setToolTip("Copper traces and vias. Traces on the side you are viewing are bold; the other side is faint.")
+        self.source_box = QComboBox()
+        self.source_box.addItem("Fabrication files", "fabrication")
+        self.source_box.addItem("Design file", "design")
+        self.source_box.setToolTip(
+            "Fabrication files are the Gerbers and drills the board is made from, so pads, traces, pours and "
+            "silkscreen are as ordered. The design file is the KiCad or EAGLE source the parts list comes from.")
+        self.traces_box = QCheckBox("Show copper")
+        self.traces_box.setToolTip("Copper on the side you are viewing is bold; the other side is faint. With the design file this is traces and vias.")
         self.silk_box = QCheckBox("Show silkscreen")
         self.silk_box.setChecked(True)
         self.silk_box.setToolTip("Printed outlines and markings on the viewed side.")
@@ -85,7 +92,7 @@ class BoardTab(QWidget):
 
         controls = QHBoxLayout()
         controls.setContentsMargins(0, 0, 0, 0)
-        for text, widget in (("Board:", self.board_box), ("Side:", self.side_box)):
+        for text, widget in (("Board:", self.board_box), ("Side:", self.side_box), ("Layers from:", self.source_box)):
             controls.addWidget(QLabel(text))
             controls.addWidget(widget)
         for box in (self.traces_box, self.silk_box, self.labels_box):
@@ -109,11 +116,32 @@ class BoardTab(QWidget):
         layout.addWidget(splitter, 1)
 
         for signal in (self.board_box.currentIndexChanged, self.side_box.currentIndexChanged,
+                       self.source_box.currentIndexChanged,
                        self.traces_box.toggled, self.silk_box.toggled, self.labels_box.toggled):
             signal.connect(self.redraw)
+        self._paths: dict = {}
+        self._fab_ready = False
+        self._warm = fabrication.warm_up({bid: data["outline"]["heightMm"] for bid, data in dataset.boards.items()})
+        self._poll = QTimer(self)  # the order files are read in the background; switch to them when they are ready
+        self._poll.setInterval(250)
+        self._poll.timeout.connect(self._check_fabrication)
+        self._poll.start()
         self.fit_button.clicked.connect(self.fit)
         self.scene.selectionChanged.connect(self.on_selection)
         self.redraw()
+
+    def _check_fabrication(self) -> None:
+        if not self._warm.is_alive():
+            self._poll.stop()
+            self._fab_ready = True
+            if self.source_box.currentData() == "fabrication":
+                self.redraw()
+                self.selection_message.emit("Fabrication files loaded.")
+
+    def wait_for_fabrication(self) -> None:
+        """Block until the order files are read. For tests and scripts."""
+        self._warm.join()
+        self._check_fabrication()
 
     # -- drawing ------------------------------------------------------------
     def palette_colors(self) -> dict[str, QColor]:
@@ -134,6 +162,13 @@ class BoardTab(QWidget):
         col = self.palette_colors()
         outline = board["outline"]
         width, height = outline["widthMm"], outline["heightMm"]
+        board_id = self.board_box.currentData()
+        wants_fab = self.source_box.currentData() == "fabrication"
+        fab = wants_fab and fabrication.available(board_id) and self._fab_ready
+        if wants_fab and not fabrication.available(board_id):
+            self.selection_message.emit("No fabrication files for this board, so the design file is shown.")
+        elif wants_fab and not self._fab_ready:
+            self.selection_message.emit("Reading the fabrication files. The design file is shown until they are ready.")
 
         self.scene.blockSignals(True)
         self.scene.clear()
@@ -166,7 +201,9 @@ class BoardTab(QWidget):
             item.setBrush(QBrush(self.palette().color(QPalette.Base)))
             item.setZValue(1)
 
-        if self.traces_box.isChecked():
+        if fab:
+            self.draw_fabrication(root, board_id, side, height, col)
+        if self.traces_box.isChecked() and not fab:
             near, far = ("f-cu", "b-cu") if side == "top" else ("b-cu", "f-cu")
             for seg in board["traces"]:
                 line = QPainterPath(QPointF(*seg["start"]))
@@ -184,7 +221,7 @@ class BoardTab(QWidget):
                 item.setBrush(QBrush(self.palette().color(QPalette.Base)))
                 item.setZValue(2.5)
 
-        if self.silk_box.isChecked():
+        if self.silk_box.isChecked() and not fab:
             silk = outline["silkscreenTop" if side == "top" else "silkscreenBottom"]
             silk_path = QPainterPath()
             for ln in silk["lines"]:
@@ -218,7 +255,7 @@ class BoardTab(QWidget):
             item.setPen(cosmetic(col["silk"], 1))
             item.setZValue(4)
             item.setToolTip(f"{comp['ref']}: {comp['footprint']}")
-            for pad in comp["pads"]:
+            for pad in ([] if fab else comp["pads"]):
                 w, h = pad["size"]
                 shape = QPainterPath()
                 rect = QRectF(pad["x"] - w / 2, pad["y"] - h / 2, w, h)
@@ -237,9 +274,39 @@ class BoardTab(QWidget):
                 label.setPos(comp["x"], comp["y"])
                 label.setZValue(5)
 
-        self.scene.setSceneRect(QRectF(-4, -4, width + 8, height + 8))
+        self.scene.setSceneRect(edge.boundingRect().adjusted(-4, -4, 4, 4))
         self.fit()
         self.detail.clear()
+
+    def cached_path(self, kind: str, board: str, side: str, height: float):
+        key = (kind, board, side)
+        if key not in self._paths:
+            geometry = (fabrication.copper if kind == "copper" else fabrication.silkscreen)(board, side, height)
+            self._paths[key] = polygons_to_path(geometry)
+        return self._paths[key]
+
+    def draw_fabrication(self, root, board: str, side: str, height: float, col: dict) -> None:
+        """Copper, silkscreen and drills as they are in the order files."""
+        far_side = "bottom" if side == "top" else "top"
+        base = self.palette().color(QPalette.Base)
+        if self.traces_box.isChecked():
+            for layer_side, color, z in ((far_side, col["copper_far"], 1.5), (side, col["copper"], 2)):
+                item = QGraphicsPathItem(self.cached_path("copper", board, layer_side, height), root)
+                item.setPen(QPen(Qt.NoPen))
+                item.setBrush(QBrush(color))
+                item.setZValue(z)
+            holes = QPainterPath()
+            for x, y, d in fabrication.drills(board, height):
+                holes.addEllipse(QPointF(x, y), d / 2, d / 2)
+            item = QGraphicsPathItem(holes, root)
+            item.setPen(QPen(Qt.NoPen))
+            item.setBrush(QBrush(base))
+            item.setZValue(2.6)
+        if self.silk_box.isChecked():
+            item = QGraphicsPathItem(self.cached_path("silk", board, side, height), root)
+            item.setPen(QPen(Qt.NoPen))
+            item.setBrush(QBrush(col["silk"]))
+            item.setZValue(3)
 
     @staticmethod
     def _pen(color: QColor, width: float) -> QPen:
