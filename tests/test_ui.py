@@ -80,10 +80,11 @@ def test_spares_and_order_columns(app, store):
 
 
 def test_checklist_empty_then_filled(app, store):
+    store.set_quantity("batch", 0)
     tab = ChecklistTab(load_dataset(GOLDEN), store)
     assert "has no readers yet" in tab.empty.text() and tab.stack.currentIndex() == 1
     tab.readers_box.setValue(10)
-    assert store.quantity("1") == 10 and store.dirty
+    assert store.quantity("batch") == 10 and store.dirty
     assert tab.stack.currentIndex() == 0
     items = {r["item"].split("  ")[0]: r for r in tab.rows}
     assert items["SC0915"]["order"] == 11  # 10 readers + 1 spare
@@ -94,6 +95,6 @@ def test_checklist_empty_then_filled(app, store):
 
 
 def test_save_writes_json(app, store):
-    store.set_quantity("2", 3)
+    store.set_quantity("batch", 3)
     store.save()
-    assert ConfigStore(store.path).quantity("2") == 3 and not store.dirty
+    assert ConfigStore(store.path).quantity("batch") == 3 and not store.dirty

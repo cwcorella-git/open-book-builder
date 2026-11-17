@@ -1,5 +1,5 @@
 {
-  "_comment": "Planning data edited in the app. defaultSpares are starting proposals (spare parts for the whole batch, per part number); edit them freely. Each configuration shares the one PCB design; its feature set, parts and quantity are not defined yet.",
+  "_comment": "Planning data edited in the app. defaultSpares are starting proposals (spare parts for the whole batch, per part number); edit them freely. There are no product configurations: the first batch is one pilot, then nine, with identical hardware and firmware. Buyers choose which collections are preloaded on the card.",
   "defaultSpares": {
     "SC0915": 1,
     "GDEY042T81": 1,
@@ -19,30 +19,14 @@
     "RC0805JR-071KL": 4,
     "OSO-BOOK-C2-01": 1
   },
-  "configurations": [
+  "batches": [
     {
-      "id": "1",
-      "name": "Configuration 1",
-      "quantity": 0,
+      "id": "batch",
+      "name": "First batch",
+      "quantity": 10,
       "includeOptional": false,
       "spares": {},
-      "notes": ""
-    },
-    {
-      "id": "2",
-      "name": "Configuration 2",
-      "quantity": 0,
-      "includeOptional": false,
-      "spares": {},
-      "notes": ""
-    },
-    {
-      "id": "3",
-      "name": "Configuration 3",
-      "quantity": 0,
-      "includeOptional": false,
-      "spares": {},
-      "notes": ""
+      "notes": "One pilot reader (stock libros with PRs #10 and #11), then nine. Identical hardware, no J1-J3 expansion fitted. Box: two AAA cells, a prepared microSD card, a quick-start card."
     }
   ]
 }

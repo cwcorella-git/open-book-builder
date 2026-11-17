@@ -61,7 +61,7 @@ class MainWindow(QMainWindow):
         export.setShortcut("Ctrl+E")
         self.save_action = QAction("&Save", self)
         self.save_action.setShortcut(QKeySequence.Save)
-        self.save_action.setToolTip("Save spare parts, quantities and configurations to data/configs.json.")
+        self.save_action.setToolTip("Save spare parts and the batch plan to data/configs.json.")
         self.save_action.triggered.connect(self.save)
         file_menu.addAction(self.save_action)
         file_menu.addSeparator()

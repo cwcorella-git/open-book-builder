@@ -1,4 +1,4 @@
-"""Planning data kept in data/configs.json: configurations, spare parts and quantities."""
+"""Planning data kept in data/configs.json: the batch plan, spare parts and quantities."""
 from __future__ import annotations
 
 import json
@@ -24,11 +24,11 @@ class ConfigStore(QObject):
     def dirty(self) -> bool:
         return self._dirty
 
-    def configurations(self) -> list[dict]:
-        return self.data["configurations"]
+    def batches(self) -> list[dict]:
+        return self.data["batches"]
 
     def config(self, config_id: str | None) -> dict | None:
-        return next((c for c in self.configurations() if c["id"] == config_id), None)
+        return next((c for c in self.batches() if c["id"] == config_id), None)
 
     def spare(self, config_id: str | None, mpn: str) -> int:
         cfg = self.config(config_id)

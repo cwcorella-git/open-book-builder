@@ -34,8 +34,8 @@ uv run pytest                                  # tests
   quantities, dated prices with their basis (Listed, Estimate) and a Digi-Key
   BOM Manager CSV export. The C2 driver is one module line; its internal parts
   are hidden unless you ask, and never exported.
-- **Checklist**: everything to buy or arrange for one of three configurations
-  (they share one PCB; features and quantities are not defined yet): parts with
+- **Checklist**: everything to buy or arrange for the first batch (one pilot, then
+  nine, identical hardware; buyers choose the collections on their card): parts with
   order quantities, boards and assembly, cards and batteries, fees, and one-time
   tools kept apart. Open items stay marked Open until there is a price or quote.
 - **Assembly**: 13 build steps (12 active, the case step is deferred). Steps
@@ -64,7 +64,7 @@ src/open_book_builder/
   build/                  parsers: bom, kicad_pcb (C1), eagle (C2), net_category, footprint_heights
 data/                     source files: BOM CSVs, component_functions.json, assembly.json,
                           OSO-BOOK-C1.kicad_pcb, OSO-BOOK-C2-02.brd, case/ (STL, SCAD)
-                          planning data: offers.json (dated prices), configs.json (configurations,
+                          planning data: offers.json (dated prices), configs.json (the batch plan,
                           spares), checklist.json (non-BOM items), revisions.json (pinned upstream files)
 tests/                    pytest; fixtures/board-dataset.golden.json is the expected dataset
 scripts/                  build-price-verification.mjs (Node, writes a price check page to ~/Desktop)

@@ -1,4 +1,4 @@
-"""Checklist tab: everything to buy or do for one configuration, with batch totals."""
+"""Checklist tab: everything to buy or do for a batch, with batch totals."""
 from __future__ import annotations
 
 from PySide6.QtCore import Qt
@@ -33,18 +33,18 @@ class ChecklistTab(QWidget):
         self._filling = False
 
         self.config_box = QComboBox()
-        for cfg in store.configurations():
+        for cfg in store.batches():
             self.config_box.addItem(cfg["name"], cfg["id"])
-        self.config_box.setToolTip("The three configurations share one PCB design. Their features are not defined yet.")
+        self.config_box.setToolTip("Which batch plan to show.")
         self.readers_box = QSpinBox()
         self.readers_box.setRange(0, 999)
-        self.readers_box.setToolTip("How many readers of this configuration to build. Saved with File > Save.")
+        self.readers_box.setToolTip("How many readers to build in this batch, the pilot included. Saved with File > Save.")
         self.optional_box = QCheckBox("Include optional parts")
-        self.optional_box.setToolTip("Adds the expansion connectors and their resistors for this configuration.")
+        self.optional_box.setToolTip("Adds the expansion connectors and their resistors. The first batch leaves them off.")
 
         controls = QHBoxLayout()
         controls.setContentsMargins(0, 0, 0, 0)
-        for text, widget in (("Configuration:", self.config_box), ("Readers:", self.readers_box)):
+        for text, widget in (("Batch:", self.config_box), ("Readers:", self.readers_box)):
             controls.addWidget(QLabel(text))
             controls.addWidget(widget)
         controls.addWidget(self.optional_box)
@@ -58,7 +58,7 @@ class ChecklistTab(QWidget):
         self.table.setWordWrap(False)
         self.table.setTextElideMode(Qt.ElideRight)
         for column, tip in {
-            "Spare": "Spare units for this configuration. Double-click to edit. Parts start from the BOM spares.",
+            "Spare": "Spare units for this batch. Double-click to edit. Parts start from the BOM spares.",
             "Order": "Quantity to buy or arrange: the amount for all readers plus spares.",
             "Unit": "Price for one, before shipping, tax and tariffs. n/a means no price yet.",
         }.items():
@@ -180,7 +180,7 @@ class ChecklistTab(QWidget):
                 flags = item.flags() & ~Qt.ItemIsEditable
                 if c == SPARE_COLUMN and row["editable"]:
                     flags |= Qt.ItemIsEditable
-                    item.setToolTip("Spare units for this configuration. Double-click to edit.")
+                    item.setToolTip("Spare units for this batch. Double-click to edit.")
                 if c == COLUMNS.index("Status"):
                     item.setToolTip(STATUS_TIPS[row["status"]])
                 item.setFlags(flags)

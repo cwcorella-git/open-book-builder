@@ -173,6 +173,18 @@ This register separates the choices for the first ten boards from work that stil
 
 On the current workspace host, neither `pio` nor `platformio` was found on `PATH` during this review. This is a tool-availability observation, not a firmware build result. **User inventory:** a Pico-compatible Micro-USB data cable and a microSD reader are already available; no purchase allowance is needed for those two tools.
 
+## Rulings, 2026-11-17
+
+These supersede the 2026-11-15 rulings about "versions or configurations 1, 2 and 3" above (kept as history). They come from an interview and are rulings, not tested facts.
+
+- **No configurations.** There is one hardware build and one firmware line. Buyers choose which collections are preloaded on their card and can download more from the official site. Formatting guides for authors are to come.
+- **Hardware is identical across the first ten.** Existing C1 and C2 revisions, original Pico SC0915, **no J1-J3 expansion fitted** on any unit.
+- **Pilot first.** The pilot is the simplest build and runs stock libros with PRs #10 and #11, to prove the board, the C2 and the display. The other nine run the full feature firmware once it exists. Flashing is done by the owner on Linux, so a unit can be reflashed.
+- **Box contents:** two AAA cells, a prepared microSD card (fonts and the buyer's chosen collections, tested in the reader), and a quick-start card.
+- **Firmware features for the nine:** filter by tag, filter by type, sort by title or author, favorites and recent first, plus resume and percent read from earlier rulings. More ideas welcome. **Spec only:** the spec is `docs/reader-features-spec.md`; someone else writes the code.
+- **Quantities:** ten is the planning quantity, one pilot then nine. The earlier "3 / 3 / 3 across configurations" split no longer applies.
+- **Still open:** the display and C2 values (see `docs/gdey-c2-values-check.md`), the quotes, the formatting guide for authors, and the site for collections.
+
 ## Proposed hardware baseline and fabrication
 
 - C1 main PCB revision to be pinned. C1-05 bare board is a fabrication candidate, two layers and 1.0 mm thick with an appropriate upstream-supported finish such as lead-free HASL or ENIG.
