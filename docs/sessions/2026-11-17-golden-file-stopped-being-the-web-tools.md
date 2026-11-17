@@ -22,10 +22,15 @@ Started as "review what Codex did", became: retire the web/Tauri tool for a PySi
 | 17 | Parity: 3D board view | **proposed** — orbit view of both boards with component bodies (`footprintBbox.height3d` is already in the data; the old tool used three.js and hero meshes for the Pico, C2, holder, microSD and panel). Needs Qt3D or an OpenGL widget. The largest item |
 | 18 | Board accuracy: draw copper from the manufacturing Gerbers | **proposed** — see section 7 |
 | 19 | SC0915 Digi-Key number | **blocked** — on the operator, see Open |
-| 20 | Hardware values check, configs 1-3 feature interview, quote drafts | **in progress** — plan approved; values check done (row 21), interview and drafts next |
+| 20 | Hardware values check, configs 1-3 feature interview, quote drafts | **done** — rows 21 and 24 to 26 |
 | 21 | GDEY042T81 / C2 values check | **done** — `docs/gdey-c2-values-check.md`. Topology matches Good Display's reference; no GDR pulldown or footprint for one, 10 µH 0805 inductor against 47 µH 500 mA, 0.47 Ω against 2.2 Ω. Desk research only; nobody has shown the published values working with this panel |
 | 22 | Case view lag | **done** — `5149b53`. Profiled: the whole frame was a Python loop over triangles on one core (177 of 193 ms, GPU unused, 23 other cores idle). Vectorized: about 40 ms per drag frame for Sprint 5. Measured offscreen; not felt on the real desktop |
 | 23 | C2 board accuracy | **done** — see section 8 |
+| 24 | Interview: what configurations 1-3 are | **done** — the operator dropped configurations (section 9). Rulings in the review's `Rulings, 2026-11-17`; `data/configs.json` is now one `First batch` plan; `5a77ea1` |
+| 25 | Reader features spec | **done** — `docs/reader-features-spec.md`, spec only, 15 features, 7 requested and 8 mine; `5a77ea1` |
+| 26 | Quote request drafts | **done** — `docs/quote-requests.md` (C1 PCB, C1 assembly routes A/B/C, C2-03 module, comparison table). Nothing sent; the commit that adds it follows this row |
+| 27 | Author's formatting guide for the site | **proposed** — not written. Rules are in `docs/markdown-profile.md`, which also needs the `type:` tag, `_STATE` and stale-page-map additions if the features go ahead |
+| 28 | Site for collections (preloaded choice, downloads) | **proposed** — the operator's plan; no design yet |
 | 11 | SC0915 Digi-Key part number into `data/bom-c1-main.csv` | **blocked** — on the operator pasting it (Digi-Key returns 403 to the shell) |
 
 ## 1. Codex's review held up, and the cheap checks were enough
@@ -77,6 +82,12 @@ The operator said the C2 driver "isn't accurate enough yet". Checked against the
 
 All 59 now land within 0.02 mm (`tests/test_gerber_accuracy.py`). The silkscreen of mirrored C2 parts used the same wrong rotation and now uses the corrected transform, but silkscreen was not compared with the Gerbers. Golden file regenerated on purpose.
 
+## 9. "Don't make any configurations"
+
+The plan assumed three product configurations sharing one PCB, and the interview was about what made them differ. Round 1 answers (all four of hardware, firmware, books and box could differ) and round 2 answers (identical hardware, full firmware on all three, same box) left nothing to tell them apart except books, and the operator then dropped the idea: one build, buyers choose preloaded collections, more downloads from the official site, guides for formatting text. The 2026-11-15 "versions 1, 2, 3" rulings are superseded by a dated block in the review, not edited. The app's three placeholder configurations became one `First batch` plan (10 readers, no expansion), the Checklist's combo box still exists but has one entry.
+
+Two things the interview surfaced that were not obvious from the review: the pilot must run stock firmware while the nine run the new feature set, so the new firmware is a project in its own right (`docs/reader-features-spec.md`); and with no J1-J3 fitted anywhere, hardware population no longer varies at all.
+
 ## Open
 
 Never verified:
@@ -89,7 +100,7 @@ Never verified:
 - The depth-buffered Case view was checked by eye on offscreen renders only; it has not been dragged by hand.
 - **SC0915 Digi-Key number:** open https://www.digikey.com/en/products/detail/raspberry-pi/SC0915/13684020 and copy the **Digi-Key Part Number** from the product details table at the top of the page. It should look like `2648-SC0915CT-ND`. Pick the Cut Tape variant (Tape & Reel and Digi-Reel have different numbers), which is the $4.59 listing in the review. Then put it in the `Digikey` column of the U1 row in `data/bom-c1-main.csv`, or tell the next session.
 
-The operator's calls: when to take Pages down (done after the first version of this doc: Pages is off); the SC0915 Digi-Key number; configurations 1-3 features and quantities; the decision register items still open in the review.
+The operator's calls: the SC0915 Digi-Key number; whether and when to send the quote requests; who writes the firmware features; which parity port comes first; the decision register items still open in the review.
 
 ## Resume here
 

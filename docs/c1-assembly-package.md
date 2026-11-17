@@ -33,6 +33,6 @@ Open solder jumpers JP1 and JP2 are on the board file with no part, so they are 
 - Y is flipped to the usual y-up convention. Confirm the origin the factory expects.
 - **Two-sided assembly:** SMD parts are on the bottom and the through-hole buttons are on the top.
 
-## Quote request, as a draft
+## Quote requests
 
-Ask each maker for the same scope at quantity one and quantity ten, then price the follow-on nine and any repeated setup. Name the C1-05 package, the placement file and the BOM above. For each of the three routes in the hardware review (full C1 and C2 assembly, partial C1 plus a C2 module, bare C1 plus a C2 module), ask which of the "large or mechanical" and through-hole parts they place, who sources each part, the setup charge, the panelization, shipping to the United States, tax and lead time. Price the multimeter and any missing bench tools separately. The checklist tab keeps these as open items until a quote exists.
+The request texts, the three assembly routes and a comparison table are in [quote-requests.md](quote-requests.md). The Checklist tab keeps the matching items open until a quote exists.

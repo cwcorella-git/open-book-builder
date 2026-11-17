@@ -11,7 +11,7 @@
       "status": "open",
       "observed": null,
       "source": "PCB maker, quote needed",
-      "note": "OSO-BOOK-C1-05-rounded.zip: two layers, 1.0 mm, lead-free HASL or ENIG. Quote a pilot of one then nine, and ten at once."
+      "note": "OSO-BOOK-C1-05-rounded.zip: two layers, 1.0 mm, lead-free HASL or ENIG. Quote a pilot of one then nine, and ten at once. Request text: docs/quote-requests.md."
     },
     {
       "id": "c1-assembly",
@@ -23,7 +23,7 @@
       "status": "open",
       "observed": null,
       "source": "PCB maker, quote needed",
-      "note": "You want the least hand soldering. The C1-05 zip has no placement file or assembly BOM yet, so a factory quote needs those prepared. Ask which parts the factory places: Pico, battery holder and through-hole buttons may stay hand work."
+      "note": "You want the least hand soldering. The C1-05 zip has no placement file or assembly BOM yet, so a factory quote needs those prepared. Ask which parts the factory places: Pico, battery holder and through-hole buttons may stay hand work. Request text: docs/quote-requests.md."
     },
     {
       "id": "sd-card",
@@ -59,7 +59,7 @@
       "status": "open",
       "observed": null,
       "source": "Open",
-      "note": "Repeated for each order if you split the batch."
+      "note": "Repeated for each order if you split the batch. Request text: docs/quote-requests.md."
     },
     {
       "id": "shipping",
