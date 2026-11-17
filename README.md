@@ -63,7 +63,8 @@ src/open_book_builder/
   geometry.py             arc helper for the board view
   build/                  parsers: bom, kicad_pcb (C1), eagle (C2), net_category, footprint_heights
 data/                     source files: BOM CSVs, component_functions.json, assembly.json,
-                          OSO-BOOK-C1.kicad_pcb, OSO-BOOK-C2-02.brd, case/ (STL, SCAD)
+                          OSO-BOOK-C1.kicad_pcb, OSO-BOOK-C2-03.brd, case/ (STL, SCAD),
+                          fabrication/ (the C1-05 and C2-03 order zips: Gerbers and drills)
                           planning data: offers.json (dated prices), configs.json (the batch plan,
                           spares), checklist.json (non-BOM items), revisions.json (pinned upstream files)
 tests/                    pytest; fixtures/board-dataset.golden.json is the expected dataset
@@ -95,15 +96,14 @@ The expected values:
 - 13 assembly steps
 - C1: 27 components, 4 holes, 40 edge segments, 296 traces, 76 vias
 - C2: 18 components (17 from the board file plus a synthesized Display),
-  3 holes, 4 edge segments, 153 traces, 21 nets
+  3 holes, 4 edge segments, 152 traces, 21 nets
 
 ## Upstream source files
 
 Read-only inputs, not modified by this project:
 
 - `The-Open-Book/OSO-BOOK-C1/`: `1-click-bom.csv`, `.kicad_pcb`, `.kicad_sch`
-- `The-Open-Book/Fabrication Files/Castellated E-Paper Driver/OSO-BOOK-C2-02 (PCBWay)/`:
-  `.brd`, `.sch`, BOM CSV
+- `The-Open-Book/OSO-BOOK-C2/OSO-BOOK-C2-03.brd`, and the fabrication zips under `Fabrication Files/`
 
 ## License
 

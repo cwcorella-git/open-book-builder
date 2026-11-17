@@ -24,7 +24,7 @@ def build_dataset(source: Path | None = None) -> dict:
     return {
         "boards": {
             "c1-main": kicad_pcb.load_c1_board(source / "OSO-BOOK-C1.kicad_pcb", bom),
-            "c2-driver": eagle.load_c2_board(source / "OSO-BOOK-C2-02.brd", bom),
+            "c2-driver": eagle.load_c2_board(source / "OSO-BOOK-C2-03.brd", bom),
         },
         "bom": [{k: v for k, v in line.items() if v is not None} for line in bom],
         "assembly": json.loads((source / "assembly.json").read_text(encoding="utf-8")),

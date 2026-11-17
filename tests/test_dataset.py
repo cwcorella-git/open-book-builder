@@ -20,7 +20,7 @@ def test_sanity_numbers():
     assert (len(c1["components"]), len(c1["outline"]["holes"]), len(c1["outline"]["edgeSegments"]),
             len(c1["traces"]), len(c1["vias"])) == (27, 4, 40, 296, 76)
     assert (len(c2["components"]), len(c2["outline"]["holes"]), len(c2["outline"]["edgeSegments"]),
-            len(c2["traces"]), len(c2["nets"])) == (18, 3, 4, 153, 21)
+            len(c2["traces"]), len(c2["nets"])) == (18, 3, 4, 152, 21)
 
 
 def test_default_load_builds_from_source_files():

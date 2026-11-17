@@ -25,8 +25,8 @@
   },
   "c2": {
     "chosenRoute": "OSO-BOOK-C2-03 (JLCPCB)",
-    "viewerSource": "data/OSO-BOOK-C2-02.brd",
-    "viewerSourceSha256": "02e77391c0d89649dc420d8ac796432ab91bf4b9a417d711247fb13828c18c45",
+    "viewerSource": "data/OSO-BOOK-C2-03.brd",
+    "viewerSourceSha256": "07d39d77aa9dcf5f785c3ca39f6a68d3204bcc16d86e61668450a5c7ca84cd14",
     "c2_03BrdSha256": "07d39d77aa9dcf5f785c3ca39f6a68d3204bcc16d86e61668450a5c7ca84cd14",
     "comparison": {
       "elements": "Same 20 elements, libraries and packages except R1 (0603 in C2-02, 0402 in C2-03).",
@@ -42,6 +42,13 @@
       "differsAndBlocks": "no GDR pulldown and no footprint for one; 47 µH 500 mA inductor against a 10 µH 0805 footprint",
       "differsUnknownEffect": "sense resistor 2.2 Ω against 0.47 Ω; MOSFET part; 1 µF against 4.7 µF input capacitor",
       "evidence": "no public report shows the published C2 values driving the GDEY042T81; the creator's remark that the needed footprints exist is not visible in the published files"
-    }
+    },
+    "viewerSourceNote": "Changed from C2-02 to C2-03 on 2026-11-17 so the viewer follows the chosen order route. C2-02 (sha 02e77391...) remains in reference/."
+  },
+  "fabrication": {
+    "folder": "data/fabrication",
+    "c1": "OSO-BOOK-C1-05-rounded.zip",
+    "c2": "OSO-BOOK-C2-03.zip",
+    "note": "The Board tab draws copper, pads and silkscreen from these Gerbers and drill files when Layers from is Fabrication files."
   }
 }

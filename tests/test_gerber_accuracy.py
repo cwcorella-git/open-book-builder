@@ -13,9 +13,9 @@ import pytest
 
 from open_book_builder.build.dataset_build import build_dataset
 
-ZIP = (Path(__file__).parents[1] / "reference" / "the-open-book" / "upstream" / "Fabrication Files"
-       / "Open Book Main Board" / "OSO-BOOK-C1-05-rounded.zip")
-pytestmark = pytest.mark.skipif(not ZIP.is_file(), reason="C1-05 fabrication zip not in reference/")
+FAB = Path(__file__).parents[1] / "data" / "fabrication"
+ZIP = FAB / "OSO-BOOK-C1-05-rounded.zip"
+pytestmark = pytest.mark.skipif(not ZIP.is_file(), reason="C1-05 fabrication zip not in data/fabrication")
 
 TOLERANCE = 0.02  # mm
 
@@ -72,15 +72,14 @@ def test_pico_pads_sit_0_9_mm_further_out_in_the_gerbers():
             assert near((x, y), bottom, dy=0.9), pad["number"]
 
 
-C2_ZIP = (Path(__file__).parents[1] / "reference" / "the-open-book" / "upstream" / "Fabrication Files"
-          / "Castellated E-Paper Driver" / "OSO-BOOK-C2-02 (PCBWay)" / "OSO-BOOK-C2-02_2022-07-19.zip")
+C2_ZIP = FAB / "OSO-BOOK-C2-03.zip"
 
 
-@pytest.mark.skipif(not C2_ZIP.is_file(), reason="C2-02 fabrication zip not in reference/")
-def test_c2_pads_match_the_c2_02_gerber_copper():
+@pytest.mark.skipif(not C2_ZIP.is_file(), reason="C2-03 fabrication zip not in data/fabrication")
+def test_c2_pads_match_the_c2_03_gerber_copper():
     """The viewer draws y down, EAGLE and the Gerbers are y up, so Gerber y is board height minus view y."""
     with zipfile.ZipFile(C2_ZIP) as z:
-        text = z.read("GerberFiles/copper_bottom.gbr").decode()
+        text = z.read("OSO-BOOK-C2-03/GerberFiles/copper_bottom.gbr").decode()
     scale = 10 ** int(re.search(r"%FSLAX\d(\d)Y", text).group(1))
     flashed = [(int(m.group(1)) / scale, int(m.group(2)) / scale)
                for line in text.splitlines() if (m := re.match(r"X(-?\d+)Y(-?\d+)D03\*", line))]

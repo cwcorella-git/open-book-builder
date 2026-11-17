@@ -31,8 +31,8 @@ SMD pads sit 0.9 mm further out in the C1-05 Gerbers than in that source. The Bo
 </ul>
 <h4>C2 driver module, assembled</h4>
 <ul>
-<li>Route: the <b>C2-03</b> package for JLCPCB (BOM, placement file and Gerbers from one folder). The Board tab's design data is
-the C2-02 file; C2-02 and C2-03 list the same parts and nets and differ only in position and R1's package.</li>
+<li>Route: the <b>C2-03</b> package for JLCPCB (BOM, placement file and Gerbers from one folder). The Board tab reads the C2-03 files. C2-02 and C2-03 list the same
+parts and nets and differ only in position and R1's package.</li>
 <li>Same board settings as C1: 1.0 mm, lead-free HASL, castellated holes on. Ask the maker to quote assembly, setup,
 shipping and tax separately. No quote has been obtained.</li>
 </ul>

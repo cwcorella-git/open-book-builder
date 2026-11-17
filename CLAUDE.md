@@ -32,7 +32,7 @@ the `web-tool-final` Release). It should hold:
 - 24 BOM rows · `perUnitUsd ≈ 32.53` · `missingLineItems == ["OSO-BOOK-C2-01"]` · `unavailableLineItems == ["GDEY042T81"]`
 - 13 assembly steps (12 active, 1 deferred)
 - C1: 27 components, 4 holes, 40 edge segments, 296 traces, 76 vias
-- C2: 18 components, 3 holes, 4 edge segments, 153 traces, 21 nets
+- C2: 18 components, 3 holes, 4 edge segments, 152 traces, 21 nets
 
 If a number drifts, find out why before updating the golden file. Update the
 golden file only for an intended data change, in the same commit.
@@ -69,7 +69,7 @@ golden file only for an intended data change, in the same commit.
    footprint's, so a quarter-turn relative to the footprint swaps its width and height.
    The C2 comes from EAGLE, which is y up: `build/eagle.py` flips every y to height minus y,
    and for mirrored (bottom) elements it flips pad x and stores the rotation reversed. That is
-   the only rule that matches all 59 SMD pads against the C2-02 Gerbers (also tested).
+   the only rule that matches all 59 SMD pads against the C2 Gerbers (also tested).
    The Bottom view mirrors the whole board.
 7. **The app expects a repository checkout.** `data/` is found by walking up
    from the package; a plain `pip install` without the repo has no data.

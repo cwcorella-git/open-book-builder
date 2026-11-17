@@ -102,7 +102,7 @@ def eagle_point(p, origin, rot_deg: float, mirror: bool):
     """Package-local point to board coordinates in EAGLE's own frame (y up).
 
     A mirrored element (rot starting with M, placed on the bottom) is mirrored in x and then turned the
-    other way: checked against the pad flashes in the C2-02 order Gerbers, where this matches all 59 SMD
+    other way: checked against the pad flashes in the C2-02 and C2-03 order Gerbers, where this matches all 59 SMD
     pads and the simpler 'mirror then rotate the same way' matches only 30 to 57 of them."""
     x, y = p
     th = math.radians(rot_deg)
@@ -243,6 +243,9 @@ def load_c2_board(brd_path: Path, bom: list[dict]) -> dict:
 
     walk(root)
 
+    # The virtual display is placed relative to the board's own corner, so it keeps its place if the layout moves.
+    corner_x = min([w[0] for w in outline_wires] + [w[2] for w in outline_wires], default=0.0)
+    corner_y = min([w[1] for w in outline_wires] + [w[3] for w in outline_wires], default=0.0)
     width = max([0.0] + [v for w in outline_wires for v in (w[0], w[2])])
     height = max([0.0] + [v for w in outline_wires for v in (w[1], w[3])])
     # EAGLE's y axis points up; the app draws y down (as KiCad does). Every y becomes height - y so the
@@ -282,7 +285,7 @@ def load_c2_board(brd_path: Path, bom: list[dict]) -> dict:
 
     display = next((l for l in bom if "Display" in l["refs"]), None)
     if display:
-        comp = {"ref": "Display", "bomRef": "Display", "x": 65.0, "y": flip(11.94), "rotation": 0.0, "side": "top",
+        comp = {"ref": "Display", "bomRef": "Display", "x": f32(corner_x + 65.0), "y": flip(corner_y + 11.94), "rotation": 0.0, "side": "top",
                 "footprint": "VIRTUAL_GDEY042T81",
                 "footprintBbox": {"width": 95.0, "height": 110.0, "height3d": 1.2}, "pads": [], "board": "c2-driver"}
         if display.get("heroMeshId"):

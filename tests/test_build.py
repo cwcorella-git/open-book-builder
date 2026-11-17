@@ -54,7 +54,7 @@ def test_c1_board_matches_golden():
 def test_c2_board_matches_golden():
     from open_book_builder.build import eagle
     bom = bom_mod.load_all(SRC)
-    board = eagle.load_c2_board(SRC / "OSO-BOOK-C2-02.brd", bom)
+    board = eagle.load_c2_board(SRC / "OSO-BOOK-C2-03.brd", bom)
     close(board, GOLDEN["boards"]["c2-driver"])
 
 
