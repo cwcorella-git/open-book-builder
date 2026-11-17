@@ -9,8 +9,8 @@ import os from 'node:os';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REPO = path.resolve(HERE, '..');
-const BOM_CSV = path.join(REPO, 'src-tauri/data/bom-c1-main.csv');
-const FUNCTIONS_JSON = path.join(REPO, 'src-tauri/data/component_functions.json');
+const BOM_CSV = path.join(REPO, 'data/bom-c1-main.csv');
+const FUNCTIONS_JSON = path.join(REPO, 'data/component_functions.json');
 const OUTPUT = path.join(os.homedir(), 'Desktop', 'c1-price-verification.html');
 
 const EXCLUDE = new Set([

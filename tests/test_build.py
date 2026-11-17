@@ -8,8 +8,8 @@ import pytest
 from open_book_builder.build import bom as bom_mod
 from open_book_builder.build import kicad_pcb
 
-ROOT = Path(__file__).parents[2]
-SRC = ROOT / "src-tauri" / "data"
+ROOT = Path(__file__).parents[1]
+SRC = ROOT / "data"
 GOLDEN = json.loads((Path(__file__).parent / "fixtures" / "board-dataset.golden.json").read_text())
 
 

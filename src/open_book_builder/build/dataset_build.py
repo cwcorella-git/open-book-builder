@@ -12,7 +12,7 @@ from . import eagle, kicad_pcb
 def find_source_dir() -> Path:
     """The folder with bom-c1-main.csv, assembly.json and the board files."""
     for parent in Path(__file__).resolve().parents:
-        for candidate in (parent / "data", parent / "src-tauri" / "data"):
+        for candidate in (parent / "data",):
             if (candidate / "bom-c1-main.csv").is_file():
                 return candidate
     raise FileNotFoundError("source data folder not found")
@@ -33,9 +33,9 @@ def build_dataset(source: Path | None = None) -> dict:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """`python -m open_book_builder.build.dataset_build [output.json]`"""
+    """`python -m open_book_builder.build.dataset_build [output.json]` writes the dataset as JSON."""
     args = sys.argv[1:] if argv is None else argv
-    out = Path(args[0]) if args else find_source_dir().parent / "data" / "board-dataset.json"
+    out = Path(args[0]) if args else Path("board-dataset.json")
     out.write_text(json.dumps(build_dataset(), indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
     print(f"Wrote {out}")
     return 0

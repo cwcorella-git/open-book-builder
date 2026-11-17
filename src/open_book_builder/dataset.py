@@ -54,19 +54,21 @@ class Dataset:
 
 
 def find_data_dir() -> Path:
-    """Search upward from this file for the data/ folder that holds board-dataset.json."""
+    """Search upward from this file for the data/ folder (it holds bom-c1-main.csv)."""
     for parent in Path(__file__).resolve().parents:
-        if (parent / "data" / "board-dataset.json").is_file():
+        if (parent / "data" / "bom-c1-main.csv").is_file():
             return parent / "data"
-    raise FileNotFoundError("data/board-dataset.json not found")
-
-
-def find_dataset_path() -> Path:
-    return find_data_dir() / "board-dataset.json"
+    raise FileNotFoundError("The data folder was not found. Run the app from a checkout of the repository.")
 
 
 def load_dataset(path: Path | None = None) -> Dataset:
-    raw = json.loads((path or find_dataset_path()).read_text(encoding="utf-8"))
+    """Build the dataset from the files in data/, or read a baked JSON file when `path` is given."""
+    if path is None:
+        from .build.dataset_build import build_dataset
+
+        raw = build_dataset(find_data_dir())
+    else:
+        raw = json.loads(path.read_text(encoding="utf-8"))
     bom = [
         BomLine(
             refs=b["refs"],

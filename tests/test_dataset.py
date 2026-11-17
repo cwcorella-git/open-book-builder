@@ -22,10 +22,12 @@ def test_sanity_numbers():
             len(c2["traces"]), len(c2["nets"])) == (18, 3, 4, 153, 21)
 
 
-def test_shipped_dataset_matches_golden():
-    assert json.loads(GOLDEN.read_text()) == json.loads(
-        (Path(__file__).parents[2] / "data" / "board-dataset.json").read_text()
-    )
+def test_default_load_builds_from_source_files():
+    built = load_dataset()
+    golden = load_dataset(GOLDEN)
+    assert built.per_unit_usd == golden.per_unit_usd == 43.27
+    assert [b.mpn for b in built.bom] == [b.mpn for b in golden.bom]
+    assert [a.id for a in built.assembly] == [a.id for a in golden.assembly]
 
 
 def test_digikey_csv_matches_web_tool_behaviour():
