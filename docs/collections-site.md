@@ -1,6 +1,6 @@
 # Collections site (design draft)
 
-Prepared 2026-11-17. This is a design only: no site or card tool exists; the converter does. It says what the site would do, what it depends on, and what only you can decide. Facts about the reader come from `docs/markdown-profile.md` and `docs/reader-features-spec.md`, which were read from the firmware source and not seen on a device.
+Prepared 2026-11-17. This is a design only: no site exists; the converter and a card tool do. It says what the site would do, what it depends on, and what only you can decide. Facts about the reader come from `docs/markdown-profile.md` and `docs/reader-features-spec.md`, which were read from the firmware source and not seen on a device.
 
 ## What it is for
 
@@ -44,7 +44,7 @@ A converter (`src/open_book_builder/convert/`, specified in the Markdown profile
 
 ## A card preparation tool for Linux
 
-A small script for the owner: given a mounted, already formatted card, it copies `babel.bin` and the chosen collection packages to the top folder. Safety rules it must follow:
+`scripts/prepare_card.py` (standard library only) is a small script for the owner: given a mounted, already formatted card, it copies `babel.bin` and the chosen works or zip packages to the top folder. It prints a plan by default and copies only with `--write`. It has never touched a real card. The rules it follows (formatting is left out of the tool: format FAT32 with your disk tool first):
 
 - It never formats anything by default. Formatting is a separate, explicit option that names the device and asks for confirmation.
 - It refuses a device that is not removable or that holds files it does not recognize.

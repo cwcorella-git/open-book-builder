@@ -80,7 +80,8 @@ data/                     source files: BOM CSVs, component_functions.json, asse
                           planning data: offers.json (dated prices), configs.json (the batch plan,
                           spares), checklist.json (non-BOM items), revisions.json (pinned upstream files)
 tests/                    pytest; fixtures/board-dataset.golden.json is the expected dataset
-scripts/                  build-price-verification.mjs (Node, writes a price check page to ~/Desktop)
+scripts/                  build-price-verification.mjs (Node, writes a price check page to ~/Desktop),
+                          prepare_card.py (copies works and babel.bin to a mounted card; dry run by default)
 reference/                upstream Open Book sources and notes
 docs/                     hardware review, session record, handoff
 ```

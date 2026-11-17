@@ -107,7 +107,7 @@ The keeper climbed the stairs <SI>every<SO> evening. It was the <SI><SI>only<SO>
 
 ## Trying a file on a reader
 
-1. Copy `babel.bin` (the font file) to the top of the card, then your `.txt` file next to it.
+1. Copy `babel.bin` (the font file) to the top of the card, then your `.txt` file next to it. The script `scripts/prepare_card.py` does this on Linux and checks the card first; run it without `--write` to see what it would do.
 2. Put the card in the reader and turn it on. The first time, the reader loads the fonts.
 3. Open the work. The first time, the reader works out where pages break, and it may take a moment. Nobody has measured how long a long book takes yet.
 4. Check the chapter pages, the italic and bold, and the end of the text.
