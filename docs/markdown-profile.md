@@ -15,7 +15,7 @@ Firmware facts below were read from `joeycastillo/libros` at base `3be5d84` with
 | Front matter | If the file starts with `---` and a newline, lines of the form `KEY: value` follow until another `---` line. Keys are exactly four characters: `TITL`, `AUTH`, `GNRE`, `DESC`, `LANG`. Other keys are skipped. The parser reads until it finds `:` and a newline with no bounds checks, so malformed front matter can hang it. |
 | No front matter | The title is the first line, cut at 32 characters. |
 | Chapters | A line starting with the Record Separator (0x1E) is a chapter title page, drawn at double size. |
-| Emphasis | Shift In (0x0F) steps none, italic, bold, bold and italic. Shift Out (0x0E) steps back one. Other control characters below 0x20 are skipped. |
+| Emphasis | Shift In (0x0F) steps plain, italic, bold, bold and italic. Shift Out (0x0E) steps bold and italic to bold, and bold or italic to plain. Other control characters below 0x20 are skipped. |
 | Line ends | Both `\n` and `\r` end a paragraph, so CRLF files get a blank gap. |
 | Pagination | `<name>.pag` is built on first open, using a fixed 288 x 384 pixel page, 18 px per line and 8 px per paragraph. It is never rebuilt: the check is only that the file exists. |
 | Progress | `<name minus txt>obp` holds one 32-bit page number. It is written only when the Lock button is pressed or when you return home, by truncating the file and then writing 4 bytes. |
