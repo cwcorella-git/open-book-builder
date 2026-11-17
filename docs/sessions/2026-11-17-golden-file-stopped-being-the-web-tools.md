@@ -12,31 +12,31 @@ Started as "review what Codex did", became: retire the web/Tauri tool for a PySi
 | 6 | Phase A: data corrections, offers/configs/checklist, Checklist tab, Untested/Deferred steps | **done** — `5958788`, `4274817`, `981c8a6` |
 | 7 | Phase C: C1 placement file + assembly BOM + notes | **done** — `40661e8` |
 | 8 | Phase D: Markdown profile spec | **done** — `71a966b`, fix `a201687` |
-| 9 | Phase B: PlatformIO build of libros with PRs #10 and #11 | **done** — clean compile, record in `docs/firmware-build-2026-11.md` (not hardware validation) |
+| 9 | Phase B: PlatformIO build of libros with PRs #10 and #11 | **done** — clean compile, record in `docs/firmware-build-2026-11.md` (not hardware validation), `e7feeb1` |
 | 10 | Take the GitHub Pages site down | **done** — operator said to; `gh api -X DELETE .../pages`, site now 404 |
-| 12 | Run the old web tool locally until parity | **done** — `scripts/legacy-web.sh` serves the Release build at `localhost:4173/open-book-builder/`; served pages and assets checked with curl, never opened in a browser |
+| 12 | Run the old web tool locally until parity | **done** — `scripts/legacy-web.sh` serves the Release build at `localhost:4173/open-book-builder/`; served pages and assets checked with curl, never opened in a browser, `a0fdd4f` |
 | 13 | Case view clipping | **done** — `f57709a`. Triangle sorting drew thin wall triangles out of order; now a numpy depth buffer (low resolution while dragging, sharp when still). Checked by eye offscreen only |
 | 14 | Loose ends from the build and the C1 check | **done** — `f57709a`. sleep.c, size summary and the 16 Pico pads are explained in section 6 |
-| 15 | Parity: About tab | **proposed** — ordering guide (Gerber files, PCB specs, display sourcing), project status and credits, rewritten from the old `AboutView.tsx` (tag `web-tool-final`) with the review's corrections: C1-05 zip has no placement file, C2-03 route, GDEY unvalidated, no "$30–80" |
-| 16 | Parity: Assembly step highlights its parts on the Board tab | **proposed** — selecting a step switches the Board tab to the right board and side and highlights `componentRefs`. Replaces the old 3D mini viewport |
-| 17 | Parity: 3D board view | **proposed** — orbit view of both boards with component bodies (`footprintBbox.height3d` is already in the data; the old tool used three.js and hero meshes for the Pico, C2, holder, microSD and panel). Needs Qt3D or an OpenGL widget. The largest item |
-| 18 | Board accuracy: draw copper from the manufacturing Gerbers | **proposed** — see section 7 |
+| 15 | Parity: About tab | **done** — built later as row 31, `49822e4` |
+| 16 | Parity: Assembly step highlights its parts on the Board tab | **done** — built later as row 30, `17124be` |
+| 17 | Parity: 3D board view | **done** — built later as row 33, `c285e3c` (CPU depth buffer, boxes for parts, no OpenGL) |
+| 18 | Board accuracy: draw copper from the manufacturing Gerbers | **done** — built later as row 32, `269be41` and `2aea2d6` |
 | 19 | SC0915 Digi-Key number | **blocked** — on the operator, see Open |
 | 20 | Hardware values check, configs 1-3 feature interview, quote drafts | **done** — rows 21 and 24 to 26 |
-| 21 | GDEY042T81 / C2 values check | **done** — `docs/gdey-c2-values-check.md`. Topology matches Good Display's reference; no GDR pulldown or footprint for one, 10 µH 0805 inductor against 47 µH 500 mA, 0.47 Ω against 2.2 Ω. Desk research only; nobody has shown the published values working with this panel |
+| 21 | GDEY042T81 / C2 values check | **done** — `docs/gdey-c2-values-check.md`. Topology matches Good Display's reference; no GDR pulldown or footprint for one, 10 µH 0805 inductor against 47 µH 500 mA, 0.47 Ω against 2.2 Ω. Desk research only; nobody has shown the published values working with this panel — `8e16c50` |
 | 22 | Case view lag | **done** — `5149b53`. Profiled: the whole frame was a Python loop over triangles on one core (177 of 193 ms, GPU unused, 23 other cores idle). Vectorized: about 40 ms per drag frame for Sprint 5. Measured offscreen; not felt on the real desktop |
-| 23 | C2 board accuracy | **done** — see section 8 |
+| 23 | C2 board accuracy | **done** — see section 8 — `e898a0f` |
 | 24 | Interview: what configurations 1-3 are | **done** — the operator dropped configurations (section 9). Rulings in the review's `Rulings, 2026-11-17`; `data/configs.json` is now one `First batch` plan; `5a77ea1` |
-| 25 | Reader features spec | **done** — `docs/reader-features-spec.md`, spec only, 15 features, 7 requested and 8 mine; `5a77ea1` |
-| 26 | Quote request drafts | **done** — `docs/quote-requests.md` (C1 PCB, C1 assembly routes A/B/C, C2-03 module, comparison table). Nothing sent; the commit that adds it follows this row |
-| 27 | Author's formatting guide for the site | **done** — `docs/author-guide.md`; checked against the firmware source, not tried on a reader, not tried by anyone but me |
-| 28 | Site for collections (preloaded choice, downloads) | **done as a design draft** — `docs/collections-site.md`, six questions for the operator; no site exists |
+| 25 | Reader features spec | **done** — `docs/reader-features-spec.md`, spec only, 15 features, 7 requested and 8 mine; `5a77ea1` — `5a77ea1` |
+| 26 | Quote request drafts | **done** — `docs/quote-requests.md` (C1 PCB, C1 assembly routes A/B/C, C2-03 module, comparison table). Nothing sent; the commit that adds it follows this row — `d347442` |
+| 27 | Author's formatting guide for the site | **done** — `docs/author-guide.md`; checked against the firmware source, not tried on a reader, not tried by anyone but me — `02d92a5` |
+| 28 | Site for collections (preloaded choice, downloads) | **done as a design draft** — `docs/collections-site.md`, six questions for the operator; no site exists — `5b00b77` |
 | 29 | Plan: assembly highlights, About tab, Gerber Board view, 3D view, three documents | **done** — all five phases; rows 30 to 36 |
 | 30 | Assembly step highlights its parts on the Board tab | **done** — `17124be` |
 | 31 | About tab with the corrected ordering guide | **done** — `49822e4` |
-| 32 | Gerber-based Board view, C2 on the C2-03 route, order zips in `data/fabrication/` | **done** — see section 10 |
-| 33 | 3D board view (CPU depth buffer, no OpenGL) | **done** — see section 11 |
-| 34 | Markdown profile update | **done** — `docs/markdown-profile.md` now splits stock firmware (pilot) from feature firmware (the nine), adds the `type:` tag, `_STATE` and the stale page-map rule |
+| 32 | Gerber-based Board view, C2 on the C2-03 route, order zips in `data/fabrication/` | **done** — see section 10 — `269be41`, `2aea2d6` |
+| 33 | 3D board view (CPU depth buffer, no OpenGL) | **done** — see section 11 — `c285e3c` |
+| 34 | Markdown profile update | **done** — `docs/markdown-profile.md` now splits stock firmware (pilot) from feature firmware (the nine), adds the `type:` tag, `_STATE` and the stale page-map rule — `65b28bd` |
 | 35 | Author's guide | **done** — row 27 |
 | 36 | Collections site design | **done** — row 28 |
 | 37 | Converter for the Markdown profile (source to reader file, with the rejection report) | **proposed** — specified, not written; the author guide and the site both depend on it |
@@ -115,19 +115,25 @@ Not done: real part shapes (the old tool's hero meshes), copper or silkscreen on
 
 One unexplained stall: a single command that ran the test suite and a screenshot script together timed out at 120 s. The suite alone (three runs), the screenshot script alone (five runs) and the pieces separately all finished normally, so it was not reproduced. Worth knowing if the app ever hangs on exit: the background layer reader is a daemon thread.
 
+## 12. The documents were checked against the source, not the device
+
+The profile update, the author's guide and the collections design all state what the reader does from reading libros at `3be5d84` plus PRs #10 and #11. Three claims in them rest on a single reading of the code and are the first things a pilot could overturn: that `.pag` is never rebuilt, that progress is written only on Lock or return home, and that bold is two Shift In codes (the shift state machine in `BabelTypesetter.cpp`). The author's guide's worked example was derived by hand from those rules; no converter exists to check it. The guide was passed through the humanizer checklist; it had no dashes or stock phrases, and the one factual slip it caught was mine (a sentence saying updated works restart from the beginning, which no source supports).
+
+Task-table housekeeping: rows 15 to 18 were written as proposals mid-session and were built later as rows 30 to 33; they now say so.
+
 ## Open
 
 Never verified:
 - **The app has never been opened on the real Selkies desktop.** Every screenshot is offscreen Qt. `~/Desktop/open-book-builder.desktop` (Exec `run.sh`) exists and `run.sh` stayed up for 4 s offscreen. If godot-stream manages desktop launchers it may need moving there.
-- No firmware was built or flashed; the two PRs merge cleanly, nothing more. A clean build will not be hardware validation.
+- The firmware compiles with both PRs (`docs/firmware-build-2026-11.md`); nothing was flashed or run on a board, and a clean compile is not hardware validation. The sleep path has never run.
 - C2 inductor, current-sense and pulldown values for the GDEY042T81 are unresolved. No ten-panel source exists. No quote, order or pilot.
 - C1 copper traces and silkscreen were not compared (pads were, see section 6).
 - Prices are Codex's dated 2026-11-15 figures, not refreshed. The spare defaults in `data/configs.json` are my starting proposals.
-- The About tab, 3D board view with hero meshes, and the Assembly mini viewport were not ported (they are in the tag): rows 15 to 17.
+- Ported since: the About tab, Show on Board and a 3D board view. Not ported: the old tool's hero meshes (real Pico, C2, holder, microSD and panel shapes), which are in the tag; the 3D view uses boxes (row 39). **None of the Board tab work (Gerber layers, 3D, picking, highlights) has been seen on the real desktop.** The Gerber view's first-draw and repaint times (about 100 ms at fit zoom) were measured offscreen only.
 - The depth-buffered Case view was checked by eye on offscreen renders only; it has not been dragged by hand.
 - **SC0915 Digi-Key number:** open https://www.digikey.com/en/products/detail/raspberry-pi/SC0915/13684020 and copy the **Digi-Key Part Number** from the product details table at the top of the page. It should look like `2648-SC0915CT-ND`. Pick the Cut Tape variant (Tape & Reel and Digi-Reel have different numbers), which is the $4.59 listing in the review. Then put it in the `Digikey` column of the U1 row in `data/bom-c1-main.csv`, or tell the next session.
 
-The operator's calls: the SC0915 Digi-Key number; whether and when to send the quote requests; who writes the firmware features; which parity port comes first; the decision register items still open in the review.
+The operator's calls: the SC0915 Digi-Key number; whether and when to send the quote requests; who writes the firmware features; the six questions in `docs/collections-site.md`; the decision register items still open in the review.
 
 ## Resume here
 
