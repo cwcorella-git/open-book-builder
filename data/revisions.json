@@ -33,6 +33,15 @@
       "nets": "Identical signals and contact references.",
       "layout": "Every element and the outline are shifted by (0.254, 5.08) mm; the board size is the same, 17.272 x 23.876 mm.",
       "notChecked": "Copper traces, polygons and any pulldown footprint."
+    },
+    "valuesCheck": {
+      "date": "2026-11-17",
+      "document": "docs/gdey-c2-values-check.md",
+      "specification": "Good Display GDEY042T81 specification revision 1.0 (2023-04-03), reference circuit on page 31, Seeed-hosted copy",
+      "matches": "topology (boost plus negative charge pump), GDR/RESE sense arrangement, panel connector mapping, MBR0530 diodes, most capacitor values",
+      "differsAndBlocks": "no GDR pulldown and no footprint for one; 47 µH 500 mA inductor against a 10 µH 0805 footprint",
+      "differsUnknownEffect": "sense resistor 2.2 Ω against 0.47 Ω; MOSFET part; 1 µF against 4.7 µF input capacitor",
+      "evidence": "no public report shows the published C2 values driving the GDEY042T81; the creator's remark that the needed footprints exist is not visible in the published files"
     }
   }
 }

@@ -15173,7 +15173,7 @@
    "tools": [
     "tweezers"
    ],
-   "notes": "The panel is the GDEY042T81. Pair it only with firmware that supports its SSD1683 controller (libros PR #11). The C2 inductor, current-sense resistor and pulldown values for this panel are unconfirmed, so treat the first unit as a pilot.",
+   "notes": "The panel is the GDEY042T81. Pair it only with firmware that supports its SSD1683 controller (libros PR #11). The published C2-03 values differ from Good Display's reference circuit (no GDR pulldown, 10 µH inductor, 0.47 Ω sense resistor) and nobody has shown them working with this panel, so treat the first unit as a pilot and measure the panel rails with a multimeter. See docs/gdey-c2-values-check.md.",
    "untested": true
   },
   {

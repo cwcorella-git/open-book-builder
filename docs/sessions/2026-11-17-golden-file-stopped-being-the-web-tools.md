@@ -22,7 +22,8 @@ Started as "review what Codex did", became: retire the web/Tauri tool for a PySi
 | 17 | Parity: 3D board view | **proposed** — orbit view of both boards with component bodies (`footprintBbox.height3d` is already in the data; the old tool used three.js and hero meshes for the Pico, C2, holder, microSD and panel). Needs Qt3D or an OpenGL widget. The largest item |
 | 18 | Board accuracy: draw copper from the manufacturing Gerbers | **proposed** — see section 7 |
 | 19 | SC0915 Digi-Key number | **blocked** — on the operator, see Open |
-| 20 | Hardware values check, configs 1-3 feature interview, quote drafts | **proposed** — the operator chose "do all, enter plan mode"; the plan comes next |
+| 20 | Hardware values check, configs 1-3 feature interview, quote drafts | **in progress** — plan approved; values check done (row 21), interview and drafts next |
+| 21 | GDEY042T81 / C2 values check | **done** — `docs/gdey-c2-values-check.md`. Topology matches Good Display's reference; no GDR pulldown or footprint for one, 10 µH 0805 inductor against 47 µH 500 mA, 0.47 Ω against 2.2 Ω. Desk research only; nobody has shown the published values working with this panel |
 | 11 | SC0915 Digi-Key part number into `data/bom-c1-main.csv` | **blocked** — on the operator pasting it (Digi-Key returns 403 to the shell) |
 
 ## 1. Codex's review held up, and the cheap checks were enough
