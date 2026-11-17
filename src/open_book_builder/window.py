@@ -9,25 +9,30 @@ from .assembly_tab import AssemblyTab
 from .board_tab import BoardTab
 from .bom_tab import BomTab
 from .case_tab import CaseTab
+from .checklist_tab import ChecklistTab
+from .config_store import ConfigStore
 from .dataset import Dataset
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, dataset: Dataset, settings: QSettings):
+    def __init__(self, dataset: Dataset, settings: QSettings, store: ConfigStore | None = None):
         super().__init__()
         self.settings = settings
-        self.setWindowTitle("Open Book Builder")
+        self.store = store or ConfigStore()
+        self.setWindowTitle("Open Book Builder[*]")
         self.resize(1040, 700)
         self.setMinimumSize(760, 520)
         geometry = settings.value("window/geometry")
         if geometry:
             self.restoreGeometry(geometry)
 
-        self.bom = BomTab(dataset)
+        self.bom = BomTab(dataset, self.store)
+        self.checklist = ChecklistTab(dataset, self.store)
         self.assembly = AssemblyTab(dataset, settings)
         self.tabs = QTabWidget()
         self.tabs.setDocumentMode(True)
         self.tabs.addTab(self.bom, "BOM")
+        self.tabs.addTab(self.checklist, "Checklist")
         self.tabs.addTab(self.assembly, "Assembly")
         self.board = BoardTab(dataset)
         self.tabs.addTab(self.board, "Board")
@@ -47,12 +52,18 @@ class MainWindow(QMainWindow):
         self.bom.update_footer()
         self.assembly.update_summary()
 
+        self.store.dirty_changed.connect(self.setWindowModified)
         self.build_menus()
 
     def build_menus(self) -> None:
         file_menu = self.menuBar().addMenu("&File")
         export = file_menu.addAction("&Export Digi-Key CSV...", self.bom.export_csv)
         export.setShortcut("Ctrl+E")
+        self.save_action = QAction("&Save", self)
+        self.save_action.setShortcut(QKeySequence.Save)
+        self.save_action.setToolTip("Save spare parts, quantities and configurations to data/configs.json.")
+        self.save_action.triggered.connect(self.save)
+        file_menu.addAction(self.save_action)
         file_menu.addSeparator()
         quit_action = QAction("&Quit", self)
         quit_action.setShortcut(QKeySequence.Quit)
@@ -60,7 +71,7 @@ class MainWindow(QMainWindow):
         file_menu.addAction(quit_action)
 
         view_menu = self.menuBar().addMenu("&View")
-        for index, name in enumerate(("&BOM", "&Assembly", "Boar&d", "&Case")):
+        for index, name in enumerate(("&BOM", "C&hecklist", "&Assembly", "Boar&d", "&Case")):
             action = view_menu.addAction(name, lambda i=index: self.tabs.setCurrentIndex(i))
             action.setShortcut(f"Ctrl+{index + 1}")
 
@@ -74,6 +85,22 @@ class MainWindow(QMainWindow):
             "Hardware designs are by Joey Castillo (The Open Book, Oddly Specific Objects).",
         )
 
+    def save(self) -> bool:
+        try:
+            self.store.save()
+        except OSError as error:
+            QMessageBox.critical(self, "Save", f"Could not save:\n\n{error}")
+            return False
+        self.statusBar().showMessage("Saved.", 5000)
+        return True
+
     def closeEvent(self, event) -> None:
+        if self.store.dirty:
+            answer = QMessageBox.question(
+                self, "Open Book Builder", "Save your changes to spare parts and quantities?",
+                QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel, QMessageBox.Save)
+            if answer == QMessageBox.Cancel or (answer == QMessageBox.Save and not self.save()):
+                event.ignore()
+                return
         self.settings.setValue("window/geometry", self.saveGeometry())
         super().closeEvent(event)

@@ -1,0 +1,173 @@
+{
+  "_comment": "Checklist items that are not BOM lines. status is open, estimate, quote, listed or owned. Prices stay empty until there is a quote or a dated listing. basis is per reader, per batch or one time.",
+  "items": [
+    {
+      "id": "c1-pcb",
+      "group": "Boards",
+      "item": "C1 main board, bare PCB",
+      "basis": "per reader",
+      "quantity": 1,
+      "unitPriceUsd": null,
+      "status": "open",
+      "observed": null,
+      "source": "PCB maker, quote needed",
+      "note": "OSO-BOOK-C1-05-rounded.zip: two layers, 1.0 mm, lead-free HASL or ENIG. Quote a pilot of one then nine, and ten at once."
+    },
+    {
+      "id": "c1-assembly",
+      "group": "Boards",
+      "item": "C1 assembly service (optional)",
+      "basis": "per batch",
+      "quantity": 1,
+      "unitPriceUsd": null,
+      "status": "open",
+      "observed": null,
+      "source": "PCB maker, quote needed",
+      "note": "You want the least hand soldering. The C1-05 zip has no placement file or assembly BOM yet, so a factory quote needs those prepared. Ask which parts the factory places: Pico, battery holder and through-hole buttons may stay hand work."
+    },
+    {
+      "id": "sd-card",
+      "group": "Cards and batteries",
+      "item": "microSD card",
+      "basis": "per reader",
+      "quantity": 1,
+      "unitPriceUsd": null,
+      "status": "open",
+      "observed": null,
+      "source": "Open",
+      "note": "Pick one known card and filesystem and test it on the pilot."
+    },
+    {
+      "id": "aaa",
+      "group": "Cards and batteries",
+      "item": "AAA cell",
+      "basis": "per reader",
+      "quantity": 2,
+      "unitPriceUsd": null,
+      "status": "open",
+      "observed": null,
+      "source": "Open",
+      "note": ""
+    },
+    {
+      "id": "setup",
+      "group": "Fees",
+      "item": "Setup and engineering fees",
+      "basis": "per batch",
+      "quantity": 1,
+      "unitPriceUsd": null,
+      "status": "open",
+      "observed": null,
+      "source": "Open",
+      "note": "Repeated for each order if you split the batch."
+    },
+    {
+      "id": "shipping",
+      "group": "Fees",
+      "item": "Shipping to the United States",
+      "basis": "per batch",
+      "quantity": 1,
+      "unitPriceUsd": null,
+      "status": "open",
+      "observed": null,
+      "source": "Open",
+      "note": "Boards, modules and parts ship separately."
+    },
+    {
+      "id": "tax",
+      "group": "Fees",
+      "item": "Sales tax and tariffs",
+      "basis": "per batch",
+      "quantity": 1,
+      "unitPriceUsd": null,
+      "status": "open",
+      "observed": null,
+      "source": "Open",
+      "note": "Listed prices exclude both."
+    },
+    {
+      "id": "multimeter",
+      "group": "Tools",
+      "item": "Multimeter with continuity and DC voltage",
+      "basis": "one time",
+      "quantity": 1,
+      "unitPriceUsd": null,
+      "status": "open",
+      "observed": null,
+      "source": "Open",
+      "note": "Needed for the pilot's short and supply checks. You have none."
+    },
+    {
+      "id": "iron",
+      "group": "Tools",
+      "item": "Soldering iron",
+      "basis": "one time",
+      "quantity": 1,
+      "unitPriceUsd": null,
+      "status": "owned",
+      "observed": null,
+      "source": "You have one",
+      "note": "A basic iron. Temperature control and tip sizes are not recorded."
+    },
+    {
+      "id": "hand-tools",
+      "group": "Tools",
+      "item": "Hand tools",
+      "basis": "one time",
+      "quantity": 1,
+      "unitPriceUsd": null,
+      "status": "owned",
+      "observed": null,
+      "source": "You have them",
+      "note": ""
+    },
+    {
+      "id": "usb-cable",
+      "group": "Tools",
+      "item": "Micro-USB data cable",
+      "basis": "one time",
+      "quantity": 1,
+      "unitPriceUsd": null,
+      "status": "owned",
+      "observed": null,
+      "source": "You have one",
+      "note": ""
+    },
+    {
+      "id": "sd-reader",
+      "group": "Tools",
+      "item": "microSD card reader",
+      "basis": "one time",
+      "quantity": 1,
+      "unitPriceUsd": null,
+      "status": "owned",
+      "observed": null,
+      "source": "You have one",
+      "note": ""
+    },
+    {
+      "id": "consumables",
+      "group": "Tools",
+      "item": "Solder, flux and wick",
+      "basis": "one time",
+      "quantity": 1,
+      "unitPriceUsd": null,
+      "status": "open",
+      "observed": null,
+      "source": "Open",
+      "note": "Not recorded whether you have these."
+    },
+    {
+      "id": "bench",
+      "group": "Tools",
+      "item": "Tweezers, PCB holder, magnification and light",
+      "basis": "one time",
+      "quantity": 1,
+      "unitPriceUsd": null,
+      "status": "open",
+      "observed": null,
+      "source": "Open",
+      "note": "Not recorded whether you have these."
+    }
+  ]
+}

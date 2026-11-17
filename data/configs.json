@@ -1,0 +1,48 @@
+{
+  "_comment": "Planning data edited in the app. defaultSpares are starting proposals (spare parts for the whole batch, per part number); edit them freely. Each configuration shares the one PCB design; its feature set, parts and quantity are not defined yet.",
+  "defaultSpares": {
+    "SC0915": 1,
+    "GDEY042T81": 1,
+    "1022": 1,
+    "1022C": 1,
+    "GD25Q16CTIGR": 1,
+    "MEM2075-00-140-01-A": 1,
+    "DMG3415U-7": 2,
+    "434351045816": 2,
+    "JS102011SAQN": 1,
+    "TL1107AF180WQ": 5,
+    "CL31B106KQHNFNE": 4,
+    "CL21B105KAFNNNE": 3,
+    "RMCF1206JT10K0": 4,
+    "S3B-PH-SM4-TB(LF)(SN)": 2,
+    "BM04B-SRSS-TB(LF)(SN)": 1,
+    "RC0805JR-071KL": 4,
+    "OSO-BOOK-C2-01": 1
+  },
+  "configurations": [
+    {
+      "id": "1",
+      "name": "Configuration 1",
+      "quantity": 0,
+      "includeOptional": false,
+      "spares": {},
+      "notes": ""
+    },
+    {
+      "id": "2",
+      "name": "Configuration 2",
+      "quantity": 0,
+      "includeOptional": false,
+      "spares": {},
+      "notes": ""
+    },
+    {
+      "id": "3",
+      "name": "Configuration 3",
+      "quantity": 0,
+      "includeOptional": false,
+      "spares": {},
+      "notes": ""
+    }
+  ]
+}

@@ -128,3 +128,18 @@ def load_dataset(path: Path | None = None) -> Dataset:
         boards=raw["boards"],
         unavailable_line_items=cost.get("unavailableLineItems", []),
     )
+
+
+def load_checklist(data_dir: Path | None = None) -> list[dict]:
+    """Checklist items that are not BOM lines (boards, cards, fees, tools)."""
+    path = (data_dir or find_data_dir()) / "checklist.json"
+    return json.loads(path.read_text(encoding="utf-8"))["items"]
+
+
+def source_name(line: BomLine) -> str:
+    """Where a part is bought, from its first dated offer, else from the supplier part numbers."""
+    if line.offers:
+        return line.offers[0]["supplier"]
+    if line.digikey_pn:
+        return "Digi-Key"
+    return "Open"

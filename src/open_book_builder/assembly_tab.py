@@ -79,6 +79,8 @@ class AssemblyTab(QWidget):
         self.list.setCurrentRow(first)
 
     def state_text(self, step: AssemblyStep) -> str:
+        if step.deferred:
+            return "Deferred"
         return "Done" if step.id in self.completed else "Not done"
 
     def rebuild_list(self) -> None:
@@ -87,16 +89,20 @@ class AssemblyTab(QWidget):
         self.list.clear()
         for number, step in enumerate(self.steps, 1):
             item = QListWidgetItem(f"{number}. {step.title}  [{self.state_text(step)}]")
-            item.setToolTip("Done. Select the step to see its details." if step.id in self.completed
-                            else "Not done yet. Select the step to see its details.")
+            if step.deferred:
+                item.setToolTip("Deferred. This step is out of scope for the first batch.")
+            else:
+                item.setToolTip("Done. Select the step to see its details." if step.id in self.completed
+                                else "Not done yet. Select the step to see its details.")
             self.list.addItem(item)
         self.list.blockSignals(False)
         self.list.setCurrentRow(row if row >= 0 else 0)
         self.update_summary()
 
     def update_summary(self) -> None:
-        remaining = sum(s.estimated_minutes or 0 for s in self.steps if s.id not in self.completed)
-        text = f"{len(self.completed & {s.id for s in self.steps})} of {len(self.steps)} done"
+        active = [s for s in self.steps if not s.deferred]
+        remaining = sum(s.estimated_minutes or 0 for s in active if s.id not in self.completed)
+        text = f"{len(self.completed & {s.id for s in active})} of {len(active)} done"
         self.summary.setText(f"{text}. About {remaining} min left.")
         self.progress_changed.emit(f"Assembly: {text}")
 
@@ -105,8 +111,13 @@ class AssemblyTab(QWidget):
             return
         step = self.steps[row]
         self.toggle_button.setText("Mark as Not Done" if step.id in self.completed else "Mark as Done")
+        self.toggle_button.setEnabled(not step.deferred)
+        self.toggle_button.setToolTip("This step is deferred, so it cannot be marked." if step.deferred
+                                      else "Record this step as finished. Progress is saved on this computer.")
         facts = [
-            ("State", self.state_text(step)), ("Phase", PHASE_LABELS.get(step.phase, step.phase)),
+            ("State", self.state_text(step)),
+            ("Testing", "Untested. Nobody has built a unit with these instructions yet." if step.untested else None),
+            ("Phase", PHASE_LABELS.get(step.phase, step.phase)),
             ("Board", BOARD_LABELS.get(step.board, step.board)),
             ("Time", f"about {step.estimated_minutes} min" if step.estimated_minutes else None),
             ("Parts", ", ".join(step.component_refs) or None), ("Tools", ", ".join(step.tools) or None),
@@ -121,6 +132,8 @@ class AssemblyTab(QWidget):
     def toggle_current(self) -> None:
         row = self.list.currentRow()
         if row < 0:
+            return
+        if self.steps[row].deferred:
             return
         step_id = self.steps[row].id
         self.completed ^= {step_id}

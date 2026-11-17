@@ -2,7 +2,7 @@
 
 ## Project Structure
 
-The app is Python with PySide6 in `src/open_book_builder/`: one module per tab (`bom_tab.py`, `assembly_tab.py`, `board_tab.py`, `case_tab.py`), `window.py` for the main window, and `build/` for the parsers that turn the source data into the dataset. Source data (BOM CSVs, `component_functions.json`, `assembly.json`, the KiCad and EAGLE boards, case STL files) is in `data/`. The dataset is built from it at every start. Tests are in `tests/`; `tests/fixtures/board-dataset.golden.json` is the old web tool's output. The earlier React/Tauri tool is kept at git tag `web-tool-final`.
+The app is Python with PySide6 in `src/open_book_builder/`: one module per tab (`bom_tab.py`, `assembly_tab.py`, `board_tab.py`, `case_tab.py`), `window.py` for the main window, and `build/` for the parsers that turn the source data into the dataset. Source data (BOM CSVs, `component_functions.json`, `assembly.json`, the KiCad and EAGLE boards, case STL files) is in `data/`, with planning data beside it (`offers.json`, `configs.json`, `checklist.json`, `revisions.json`). The dataset is built from it at every start. Tests are in `tests/`; `tests/fixtures/board-dataset.golden.json` is the expected dataset. The earlier React/Tauri tool is kept at git tag `web-tool-final`.
 
 ## Build and Development
 

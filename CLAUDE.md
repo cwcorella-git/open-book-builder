@@ -24,11 +24,12 @@ anything destructive, sentence-case messages ending with a period, no emojis.
 ## Sanity check numbers
 
 `tests/test_build.py` compares the freshly built dataset with
-`tests/fixtures/board-dataset.golden.json` (the web tool's output). It should
-hold:
+`tests/fixtures/board-dataset.golden.json`. The golden file was regenerated on
+purpose on 2026-11-17 after the review corrections (the web tool's original is in
+the `web-tool-final` Release). It should hold:
 
-- 23 BOM rows · `perUnitUsd ≈ 43.27` · `missingLineItems == ["OSO-BOOK-C2-01"]`
-- 13 assembly steps
+- 24 BOM rows · `perUnitUsd ≈ 32.53` · `missingLineItems == ["OSO-BOOK-C2-01"]` · `unavailableLineItems == ["GDEY042T81"]`
+- 13 assembly steps (12 active, 1 deferred)
 - C1: 27 components, 4 holes, 40 edge segments, 296 traces, 76 vias
 - C2: 18 components, 3 holes, 4 edge segments, 153 traces, 21 nets
 
@@ -51,8 +52,11 @@ golden file only for an intended data change, in the same commit.
    CSV description as `function`.
 4. **Cost summary deliberately excludes all C2 lines.** The driver module is
    priced as one pre-assembled PCBA (`OSO-BOOK-C2-01`), not part by part. Don't
-   sum C2 internals. (The Digi-Key export still includes C2 internals that have
-   a Digi-Key number; that is a known issue, see the hardware review.)
+   sum C2 internals. The C2 CSV lines carry `routeDetail`, which keeps them out of
+   the Digi-Key export, the order quantities and the Checklist.
+   The first offer in `data/offers.json` sets a part's unit price; a part with no
+   offer keeps its undated scalar price and is labelled Estimate. The 32.53 total
+   uses a promotional display price with no stock (see `unavailableLineItems`).
 5. **C2 has a synthesized `Display` component.** `build/eagle.py` makes a
    virtual GDEW042T2 at a fixed position; it isn't in the `.brd`. Removing the
    `Display` line from the C1 BOM silently drops it from the C2 board.
@@ -61,10 +65,15 @@ golden file only for an intended data change, in the same commit.
    against trace endpoints). The Bottom view mirrors the whole board.
 7. **The app expects a repository checkout.** `data/` is found by walking up
    from the package; a plain `pip install` without the repo has no data.
-8. **Known data errors are documented, not fixed.** See
-   `docs/hardware-build-review-2026-11-15.md` (SC0918 is Pico W, missing 1022C
-   retainer, wrong Q1/Q2 and R3/R4 descriptions, C1-05 vs C1-06, C2 cost
-   wording). Fix them in a separate pass after the decision register is ruled on.
+8. **Review findings.** `docs/hardware-build-review-2026-11-15.md` lists them.
+   Fixed 2026-11-17: Pico is SC0915, the 1022C retainer row, circuit
+   descriptions, firmware and font steps (marked Untested), C2 internals out of
+   the export, display now GDEY042T81 (unvalidated), cost wording. Still open: the
+   SC0915 Digi-Key number, C2 inductor/current-sense/pulldown values for the new
+   display, a firmware build, the C1 copper comparison, quotes and the pilot.
+9. **Planning data is edited in the app and saved to `data/configs.json`**
+   (File > Save). `offers.json`, `checklist.json` and `revisions.json` are edited
+   by hand. Keep dated offers dated and mark estimates as estimates.
 
 ## Data verification workflow
 
