@@ -42,8 +42,15 @@ Started as "review what Codex did", became: retire the web/Tauri tool for a PySi
 | 37 | Converter for the Markdown profile (source to reader file, with the rejection report) | **done** — `63e59ed` |
 | 38 | Card preparation tool for Linux | **done** — `0473c80` (dry run by default, never formats, never run on a real card) |
 | 39 | Real part shapes in the 3D view; copper on the 3D slab | **done** — `78c863e` (silkscreen left out, row 40) |
-| 40 | Silkscreen on the 3D slab | **proposed** — measured only for copper; silkscreen is far heavier |
-| 41 | The 3D bottom view renders much darker than the top (pre-existing in `meshview.py` shading) | **proposed** — found while checking row 39 |
+| 40 | Silkscreen on the 3D slab | **done** — `74b5105` (viewed side only, off by default; 95 ms a drag frame on the C1) |
+| 41 | The 3D bottom view renders much darker than the top | **done** — `94011f8` (the light's depth part now follows the camera side) |
+| 42 | Record the six collections-site answers | **done** — `56a36eb` |
+| 43 | Plain-text reading copy from the converter | **done** — `f7a3dc4` |
+| 44 | Localhost mockup of the collections site | **done** — `dea9ee3` |
+| 45 | Rebuild `babel.bin` from Unifont | **done** — `9c7c58a` (matches the original except version drift; never loaded by the firmware) |
+| 46 | Feed the site's `index.json` manifest to the card tool's `--select` | **proposed** — the manifest exists, nothing reads it yet |
+| 47 | Silkscreen for both sides in 3D, or a faster path | **proposed** — both sides is about 41,000 triangles, too slow for dragging |
+| 48 | License decision for a rebuilt `babel.bin` | **blocked** — on the operator; Unifont is GPL v2 or later with a font embedding exception, and what that means for cards sold on Etsy is a legal question |
 | 11 | SC0915 Digi-Key part number into `data/bom-c1-main.csv` | **blocked** — on the operator pasting it (Digi-Key returns 403 to the shell) |
 
 ## 1. Codex's review held up, and the cheap checks were enough
@@ -131,6 +138,14 @@ The card tool refuses a path that is not a mount point, and a disk not marked re
 
 For the 3D view, the plan said "draw copper if the count allows". It did: about 10,700 copper triangles at 0.02 mm made the C1 drag take 70 to 160 ms offscreen, so I raised the 3D tolerance to 0.05 mm (about 8,700 triangles in all, 55 to 63 ms a drag frame). The old tool's battery cells overlapped each other (two 10.5 mm cells in a 19 mm holder); the port squeezes them to fit and says so. The Pico's USB (4 mm) and the holder's cells exceed the data's `height3d` (1.5 and 12 mm), so the stacking test now checks each part against its own body. Row 39 also turned "Show copper" on by default, because the same box now drives the 3D copper.
 
+## 14. The original babel.bin was a good oracle, and the answers came from the data, not my guesses
+
+The plan expected the spike to be the risky row. The firmware source fixed the header, the 6-byte table entries and the extras table, and the original file (fetched read-only into the scratchpad, never kept) confirmed every offset. The glyph bytes turned out to be Unifont's hex bytes unchanged. The rest was inference, and each rule was fitted against the original before it went in: the line-break flag is set for exactly the classes B2, BA, HY, ID, SP and SY (my first guess included ZW and was wrong), all Cc and Cf characters count as control (as do U+E000 and U+F8FF), unassigned and private-use code points are left out, and combining marks in right-to-left blocks count as strong right to left. Case mappings had to come from UnicodeData.txt, not Python's `str.upper()`, which returns full mappings the original does not use. After that, over 55,445 shared code points the only differences are glyph shapes from an older Unifont (12,487), 23 widths, one reclassified character and a few added pairs.
+
+Three things I would not have guessed: the original Python I compared under (system 3.12) knows Unicode 15.0 and uv's 3.14 knows 16.0, so the builder refuses data files of another version; the original has a type 64 table the firmware ignores, which the rebuild omits; and the guide's claim that the site would rebuild the file was cheaper than the licensing question it opened (row 48).
+
+The 3D view: the shading bug was a light direction that added from above and subtracted from below (grey 149 against 58). Silkscreen is about 72,000 triangles for the C1 at 0.05 mm, so it draws the viewed side only at 0.2 mm and stays off until asked.
+
 ## Open
 
 Never verified:
@@ -140,6 +155,7 @@ Never verified:
 - C1 copper traces and silkscreen were not compared (pads were, see section 6).
 - Prices are Codex's dated 2026-11-15 figures, not refreshed. The spare defaults in `data/configs.json` are my starting proposals.
 - Ported since: the About tab, Show on Board, a 3D board view with simple part bodies and copper (rows 37 to 39). Not ported: the old tool's labels and rounded shapes. **None of the Board tab work (Gerber layers, 3D shapes and copper, picking, highlights) has been seen on the real desktop.** The Gerber view's first-draw and repaint times (about 100 ms at fit zoom) and the 3D drag times (55 to 63 ms on the C1) were measured offscreen only.
+- **Nothing from rows 37 to 45 has run on a device.** The converter's output, a rebuilt `babel.bin` and the card tool have never touched the firmware or a real card; the localhost site has been fetched with curl and built under test but not looked at in a browser. The 3D silkscreen drag time (95 ms) was measured offscreen.
 - **The converter's output has never been loaded by the firmware, and the card tool has never touched a real card.** Both are checked against fixtures and the source reading in the profile.
 - The depth-buffered Case view was checked by eye on offscreen renders only; it has not been dragged by hand.
 - **SC0915 Digi-Key number:** open https://www.digikey.com/en/products/detail/raspberry-pi/SC0915/13684020 and copy the **Digi-Key Part Number** from the product details table at the top of the page. It should look like `2648-SC0915CT-ND`. Pick the Cut Tape variant (Tape & Reel and Digi-Reel have different numbers), which is the $4.59 listing in the review. Then put it in the `Digikey` column of the U1 row in `data/bom-c1-main.csv`, or tell the next session.
@@ -152,7 +168,8 @@ Everything in the 2026-11-17 plans is written and pushed except the proposed row
 
 - **Look at the app first.** It has never been opened on the real Selkies desktop. Open `~/Desktop/open-book-builder.desktop` and try: Assembly > Show on Board, Board with Layers from set both ways, the 2D and 3D views (drag, scroll, click a part), the Case tab (it was laggy before the depth-buffer rewrite), the About tab. Every screenshot so far is offscreen Qt.
 - **The operator's calls:** the SC0915 Digi-Key number (link and what to look for are under Open); whether and when to send the quote requests in `docs/quote-requests.md`; who writes the feature firmware (`docs/reader-features-spec.md`, spec only); the six questions in `docs/collections-site.md`; the decision-register items still open in the review.
-- **Next rows if asked:** 40 (silkscreen in 3D), 41 (dark bottom view). Rows 37 to 39 are done.
+- **Next rows if asked:** 46 (manifest into the card tool), 47 (3D silkscreen both sides). Rows 37 to 45 are done.
+- **Try the site and the font build:** `uv run python scripts/build_site.py` then `python3 -m http.server -d site/_out --bind 127.0.0.1 8000` and open http://127.0.0.1:8000. For `babel.bin` you need Unifont's hex file and the matching Unicode data files (see `docs/collections-site.md`); `/usr/bin/python3` is Unicode 15.0.
 - **Try the new tools:** `uv run python -m open_book_builder.convert tests/fixtures/works -o /tmp/out`, and `python3 scripts/prepare_card.py <mounted card> --works /tmp/out --babel <babel.bin>` (a dry run unless `--write`).
 
 Plain lines: nothing unlanded; `main` is pushed. Pages is off; `./scripts/legacy-web.sh` serves the old tool.
