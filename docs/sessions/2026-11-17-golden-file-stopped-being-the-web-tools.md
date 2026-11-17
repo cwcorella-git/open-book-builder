@@ -29,13 +29,19 @@ Started as "review what Codex did", became: retire the web/Tauri tool for a PySi
 | 24 | Interview: what configurations 1-3 are | **done** — the operator dropped configurations (section 9). Rulings in the review's `Rulings, 2026-11-17`; `data/configs.json` is now one `First batch` plan; `5a77ea1` |
 | 25 | Reader features spec | **done** — `docs/reader-features-spec.md`, spec only, 15 features, 7 requested and 8 mine; `5a77ea1` |
 | 26 | Quote request drafts | **done** — `docs/quote-requests.md` (C1 PCB, C1 assembly routes A/B/C, C2-03 module, comparison table). Nothing sent; the commit that adds it follows this row |
-| 27 | Author's formatting guide for the site | **proposed** — not written. Rules are in `docs/markdown-profile.md`, which also needs the `type:` tag, `_STATE` and stale-page-map additions if the features go ahead |
-| 28 | Site for collections (preloaded choice, downloads) | **proposed** — the operator's plan; no design yet |
-| 29 | Plan: assembly highlights, About tab, Gerber Board view, 3D view, three documents | **in progress** — phases 1 to 4 done, phase 5 (three documents) next |
+| 27 | Author's formatting guide for the site | **done** — `docs/author-guide.md`; checked against the firmware source, not tried on a reader, not tried by anyone but me |
+| 28 | Site for collections (preloaded choice, downloads) | **done as a design draft** — `docs/collections-site.md`, six questions for the operator; no site exists |
+| 29 | Plan: assembly highlights, About tab, Gerber Board view, 3D view, three documents | **done** — all five phases; rows 30 to 36 |
 | 30 | Assembly step highlights its parts on the Board tab | **done** — `17124be` |
 | 31 | About tab with the corrected ordering guide | **done** — `49822e4` |
 | 32 | Gerber-based Board view, C2 on the C2-03 route, order zips in `data/fabrication/` | **done** — see section 10 |
 | 33 | 3D board view (CPU depth buffer, no OpenGL) | **done** — see section 11 |
+| 34 | Markdown profile update | **done** — `docs/markdown-profile.md` now splits stock firmware (pilot) from feature firmware (the nine), adds the `type:` tag, `_STATE` and the stale page-map rule |
+| 35 | Author's guide | **done** — row 27 |
+| 36 | Collections site design | **done** — row 28 |
+| 37 | Converter for the Markdown profile (source to reader file, with the rejection report) | **proposed** — specified, not written; the author guide and the site both depend on it |
+| 38 | Card preparation tool for Linux | **proposed** — designed in `docs/collections-site.md`, not written |
+| 39 | Real part shapes in the 3D view; copper and silkscreen on the 3D slab | **proposed** — the old tool's hero meshes are in the tag |
 | 11 | SC0915 Digi-Key part number into `data/bom-c1-main.csv` | **blocked** — on the operator pasting it (Digi-Key returns 403 to the shell) |
 
 ## 1. Codex's review held up, and the cheap checks were enough
@@ -125,11 +131,12 @@ The operator's calls: the SC0915 Digi-Key number; whether and when to send the q
 
 ## Resume here
 
-Phase B finished after the first version of this doc was written (the background build reported success; see `docs/firmware-build-2026-11.md` for hashes, versions and the warnings worth a look). Nothing is running in the background now.
+Everything in the 2026-11-17 plans is written and pushed except the proposed rows above. Nothing is running in the background.
 
-- Every plan phase (A0, A, B, C, D) is written. What remains is the operator's: the Pages takedown (done after the first version of this doc: Pages is off), the SC0915 Digi-Key number, configurations 1-3, the open decision-register items, the quotes and a pilot.
-- Loose end worth reading first: the `sleep.c` implicit-declaration warnings after PR #10, and the PlatformIO size summary (4.6 KB reported against a 312 KB `.bin`).
+- **Look at the app first.** It has never been opened on the real Selkies desktop. Open `~/Desktop/open-book-builder.desktop` and try: Assembly > Show on Board, Board with Layers from set both ways, the 2D and 3D views (drag, scroll, click a part), the Case tab (it was laggy before the depth-buffer rewrite), the About tab. Every screenshot so far is offscreen Qt.
+- **The operator's calls:** the SC0915 Digi-Key number (link and what to look for are under Open); whether and when to send the quote requests in `docs/quote-requests.md`; who writes the feature firmware (`docs/reader-features-spec.md`, spec only); the six questions in `docs/collections-site.md`; the decision-register items still open in the review.
+- **Next rows if asked:** 37 (converter), 38 (card tool), 39 (3D part shapes).
 
-Plain lines: nothing unlanded; Pages is off.
+Plain lines: nothing unlanded; `main` is pushed. Pages is off; `./scripts/legacy-web.sh` serves the old tool.
 
-CLOSABLE: all planned phases are written and committed; what is left needs the operator or a physical pilot.
+CLOSABLE: every phase of both plans is written, committed and pushed; what is left needs the operator, a real display, or a pilot reader.
