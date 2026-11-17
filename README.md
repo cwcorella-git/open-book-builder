@@ -19,6 +19,13 @@ and open <http://localhost:4173/open-book-builder/>.
 
 Before using the app to order parts, read the [2026-11-15 hardware and build review](docs/hardware-build-review-2026-11-15.md). It records confirmed BOM and assembly-instruction errors, requirements for ten US builds, pricing limits, and outstanding validation. The BOM, circuit notes, assembly steps and cost view now reflect those findings (2026-11-17); the review lists what is still open. The [session record](docs/session-2026-11-15.md) summarizes decisions; use the [continuation handoff](docs/handoff-2026-11-15.md) when resuming work.
 
+## Documents
+
+- `docs/hardware-build-review-2026-11-15.md`: the review, with the rulings (the latest block is 2026-11-17).
+- `docs/gdey-c2-values-check.md`, `docs/firmware-build-2026-11.md`, `docs/c1-assembly-package.md`, `docs/quote-requests.md`: the display check, the firmware build record, the factory package, quote drafts.
+- `docs/markdown-profile.md`, `docs/reader-features-spec.md`, `docs/author-guide.md`, `docs/collections-site.md`: content format, reader features, the author's guide and the site design.
+- `docs/sessions/`: what was done and what is still open.
+
 ## Run it
 
 ```bash
