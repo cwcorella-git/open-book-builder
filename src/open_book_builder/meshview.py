@@ -186,7 +186,8 @@ class MeshWidget(QWidget):
             length = np.linalg.norm(normals, axis=1)
             length[length == 0] = 1.0
             normals /= length[:, None]
-            light = np.array([-0.4, -0.6, 0.7])
+            # The light's depth part follows the side the camera is on, so a flat face is as bright from below as from above.
+            light = np.array([-0.4, 0.6 if self.pitch < 0 else -0.6, 0.7])
             light /= np.linalg.norm(light)
             shade = (0.25 + 0.75 * np.abs(normals @ light)).astype(np.float32)
             ids = rasterize_ids(sx, sy, tri[:, :, 1].astype(np.float32), w, h)

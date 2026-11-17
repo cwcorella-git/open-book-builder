@@ -162,3 +162,20 @@ def test_triangle_budget_with_copper(dataset):
         copper = {side: fabrication.copper(key, side, height) for side in ("top", "bottom")}
         tris, _, _ = board_mesh(board, *COLORS, copper, (200, 120, 40))
         assert len(tris) < limit, (key, len(tris))
+
+
+def test_flat_face_is_as_bright_from_below_as_from_above(app, dataset):
+    tab = BoardTab(dataset)
+    tab.view_box.setCurrentIndex(1)
+    tab.board_box.setCurrentIndex(0)
+    tab.traces_box.setChecked(False)  # leave the slab bare so one colour is measured
+    means = []
+    for side in range(2):
+        tab.side_box.setCurrentIndex(side)
+        image = tab.view3d._render(0.5)
+        ids = tab.view3d._ids
+        slab = tab.view3d.groups[np.maximum(ids, 0)] == SLAB
+        slab &= ids >= 0
+        pixels = np.array([[image.pixelColor(x, y).red() for x in range(image.width())] for y in range(image.height())])
+        means.append(pixels[slab].mean())
+    assert abs(means[0] - means[1]) / max(means) < 0.1, means
