@@ -54,7 +54,7 @@ A selection file (a list of collection ids) lets the same tool prepare many card
 
 ## How a buyer's choice travels
 
-Readers are sold on Etsy for now. The buyer names the collections there (an order note or a message), and you copy the ids by hand into a selection file that the card tool reads (`--select`). There is no ordering flow on the site, and none is planned. The design only needs the choice to end up as a list of collection ids.
+Readers are sold on Etsy for now. The buyer names the collections there (an order note or a message), and you copy the ids by hand into a selection file that the card tool reads (`--select`). There is no ordering flow on the site, and none is planned. For an order: write the collection ids into a file (one per line), then run `python3 scripts/prepare_card.py <card folder> --site site/_out --select order.txt --babel babel.bin` and add `--write` once the plan looks right. The tool checks every package and work against the site's `index.json` and refuses a stale or damaged one. The design only needs the choice to end up as a list of collection ids.
 
 ## Hosting
 

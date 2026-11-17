@@ -227,10 +227,12 @@ def build(out: Path, site: Path = SITE, docs: Path = DOCS) -> dict:
     for c in collections:
         cid = c["id"]
         files = {f"{w}.txt": works[w]["data"] for w in c["works"]}
+        # Named README with no extension, so the reader never lists it as a book and "copy every .txt file" is true.
         readme = (f"{c['title']}\n\nCopy every .txt file in this folder to the top folder of the reader's microSD card, "
-                  f"next to babel.bin. Do not put them in a folder.\n\nIf you already have an older copy of a work on "
-                  f"the card, delete its .pag file (same name) first on a stock reader.\n").encode()
-        zipped = make_zip(out / "downloads" / f"{cid}.zip", {**files, "README.txt": readme})
+                  f"next to babel.bin. Do not put them in a folder. This file (README) is not a book: leave it behind.\n\n"
+                  f"If you already have an older copy of a work on the card, delete its .pag file (same name) first on a "
+                  f"stock reader.\n").encode()
+        zipped = make_zip(out / "downloads" / f"{cid}.zip", {**files, "README": readme})
         total = sum(len(d) for d in files.values())
         manifest["collections"][cid] = {"file": f"downloads/{cid}.zip", "sha256": sha(zipped), "works": c["works"]}
         body = f"<h1>{html.escape(c['title'])}</h1>\n<p>{html.escape(c['description'])}</p>\n"

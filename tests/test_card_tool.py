@@ -121,7 +121,7 @@ def test_load_works_from_folder_zip_and_selection(tmp_path):
         z.writestr("nested/three.txt", b"3")
         z.writestr("README.txt", b"r")
     works, problems = card_tool.load_works(tmp_path, None)
-    assert set(works) == {"one.txt", "two.txt", "README.txt"} and not problems
+    assert set(works) == {"one.txt", "two.txt"} and not problems  # README.txt is an instruction file, not a book
     works, problems = card_tool.load_works(tmp_path, {"two", "ghost"})
     assert set(works) == {"two.txt"} and "ghost" in problems[0]
 
@@ -134,3 +134,101 @@ def test_reading_copies_are_never_copied_to_a_card(tmp_path):
         z.writestr("two.reading.txt", b"plain")
     works, _ = card_tool.load_works(tmp_path, None)
     assert set(works) == {"one.txt", "two.txt"}
+
+
+# -- the site manifest ------------------------------------------------------------------------------------------
+
+ROOT = Path(__file__).parent.parent
+bspec = importlib.util.spec_from_file_location("build_site", ROOT / "scripts" / "build_site.py")
+build_site = importlib.util.module_from_spec(bspec)
+sys.modules["build_site"] = build_site
+bspec.loader.exec_module(build_site)
+
+
+@pytest.fixture()
+def site(tmp_path):
+    out = tmp_path / "site"
+    build_site.build(out)
+    return out
+
+
+def test_readme_txt_is_never_a_book_even_loose_in_a_folder(tmp_path):
+    (tmp_path / "README.txt").write_bytes(b"read me")
+    (tmp_path / "a.txt").write_bytes(b"a")
+    works, _ = card_tool.load_works(tmp_path, None)
+    assert set(works) == {"a.txt"}
+
+
+def test_a_site_collection_yields_exactly_its_works(site):
+    files, problems = card_tool.resolve_site(site, ["starter-stories"])
+    assert not problems and set(files) == {"lighthouse.txt", "the-long-afternoon.txt"}
+    assert files["lighthouse.txt"] == (site / "downloads" / "lighthouse.txt").read_bytes()
+    assert not any("README" in name for name in files)
+
+
+def test_two_collections_merge(site):
+    files, problems = card_tool.resolve_site(site, ["starter-stories", "short-essays"])
+    assert not problems and len(files) == 3
+
+
+def test_a_work_in_two_collections_is_copied_once(tmp_path):
+    import json, shutil
+
+    root = tmp_path / "src"
+    shutil.copytree(ROOT / "site", root, ignore=shutil.ignore_patterns("_out"))
+    (root / "collections" / "again.json").write_text(
+        json.dumps({"id": "again", "title": "Again", "description": "d", "works": ["lighthouse"]}))
+    out = tmp_path / "out"
+    build_site.build(out, site=root)
+    files, problems = card_tool.resolve_site(out, ["starter-stories", "again"])
+    assert not problems and set(files) == {"lighthouse.txt", "the-long-afternoon.txt"}
+
+
+def test_a_tampered_package_is_refused(site):
+    zip_path = site / "downloads" / "starter-stories.zip"
+    zip_path.write_bytes(zip_path.read_bytes() + b"x")
+    files, problems = card_tool.resolve_site(site, ["starter-stories"])
+    assert not files and "stale or damaged" in problems[0]
+
+
+def test_a_tampered_work_inside_a_valid_hash_is_refused(site):
+    import hashlib, json
+
+    # swap a work for different bytes and fix the zip hash, so only the per-work hash can catch it
+    zip_path = site / "downloads" / "short-essays.zip"
+    with zipfile.ZipFile(zip_path, "w") as z:
+        z.writestr("a-note-on-slow-reading.txt", b"changed")
+    manifest = json.loads((site / "index.json").read_text())
+    manifest["collections"]["short-essays"]["sha256"] = hashlib.sha256(zip_path.read_bytes()).hexdigest()
+    (site / "index.json").write_text(json.dumps(manifest))
+    files, problems = card_tool.resolve_site(site, ["short-essays"])
+    assert not files and "a-note-on-slow-reading.txt" in problems[0]
+
+
+def test_unknown_collection_names_the_available_ones(site):
+    files, problems = card_tool.resolve_site(site, ["nope"])
+    assert "short-essays" in problems[0] and "starter-stories" in problems[0] and not files
+
+
+def test_a_site_without_a_manifest_is_refused(tmp_path):
+    files, problems = card_tool.resolve_site(tmp_path, ["x"])
+    assert not files and "index.json" in problems[0]
+
+
+def test_argument_rules(tmp_path):
+    card = str(tmp_path)
+    for bad in ([card], [card, "--works", card, "--site", card, "--collection", "x"], [card, "--site", card],
+                [card, "--works", card, "--collection", "x"]):
+        with pytest.raises(SystemExit):
+            card_tool.parse_args(bad)
+    assert card_tool.parse_args([card, "--site", card, "--collection", "a", "--collection", "b"]).collection == ["a", "b"]
+
+
+def test_gather_reads_collection_ids_from_a_selection_file_and_adds_babel(site, tmp_path):
+    ids = tmp_path / "ids.txt"
+    ids.write_text("# order 1042\nstarter-stories\n\nshort-essays\n")
+    babel = tmp_path / "babel.bin"
+    babel.write_bytes(b"\x00\x01")
+    args = card_tool.parse_args([str(tmp_path), "--site", str(site), "--select", str(ids), "--babel", str(babel)])
+    files, problems = card_tool.gather(args)
+    assert not problems and set(files) == {"lighthouse.txt", "the-long-afternoon.txt", "a-note-on-slow-reading.txt", "babel.bin"}

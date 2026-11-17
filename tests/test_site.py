@@ -52,7 +52,7 @@ def test_every_local_link_resolves(built):
 def test_collection_zip_holds_the_converters_bytes_and_a_readme(built):
     out, manifest = built
     with zipfile.ZipFile(out / manifest["collections"]["starter-stories"]["file"]) as z:
-        assert sorted(z.namelist()) == ["README.txt", "lighthouse.txt", "the-long-afternoon.txt"]
+        assert sorted(z.namelist()) == ["README", "lighthouse.txt", "the-long-afternoon.txt"]
         expected = convert((ROOT / "site" / "works" / "lighthouse.md").read_bytes()).data
         assert z.read("lighthouse.txt") == expected
         assert not any(n.endswith(".reading.txt") for n in z.namelist())

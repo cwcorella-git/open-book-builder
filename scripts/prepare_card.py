@@ -7,11 +7,14 @@ format it as FAT32 with your disk tool first. Standard library only.
   prepare_card.py /media/you/CARD --works out/ --babel babel.bin           (dry run)
   prepare_card.py /media/you/CARD --works out/ --babel babel.bin --write
   prepare_card.py /media/you/CARD --works packages/ --select ids.txt --write
+  prepare_card.py /media/you/CARD --site site/_out --collection starter-stories --babel babel.bin --write
 """
 from __future__ import annotations
 
 import argparse
 import hashlib
+import io
+import json
 import os
 import re
 import shutil
@@ -26,6 +29,7 @@ MARGIN = 4 * 1024 * 1024  # free space kept beyond the copy
 KNOWN = {"babel.bin", "_LIBRARY", "_LIBBACK", "_LIBTEMP", "_STATE", "_STATE.tmp"}
 KNOWN_SUFFIX = (".txt", ".pag", ".obp")
 IGNORED = {"System Volume Information"}
+NOT_BOOKS = {"README.txt"}  # an instruction file, not a work: never copied to a card
 
 
 @dataclass
@@ -115,19 +119,64 @@ def load_works(source: Path, select: set[str] | None) -> tuple[dict[str, bytes],
 
     paths = [source] if source.is_file() else sorted(source.iterdir())
     for path in paths:
-        if path.name.endswith(".reading.txt"):
-            continue  # the plain reading copy from the converter is not a reader file
+        if path.name.endswith(".reading.txt") or path.name in NOT_BOOKS:
+            continue  # the plain reading copy from the converter and README files are not reader files
         if path.suffix == ".txt":
             add(path.name, path.read_bytes())
         elif path.suffix == ".zip":
             with zipfile.ZipFile(path) as z:
                 for member in z.namelist():
-                    if member.endswith(".txt") and not member.endswith(".reading.txt") and "/" not in member and not member.startswith("."):
+                    if (member.endswith(".txt") and not member.endswith(".reading.txt") and member not in NOT_BOOKS
+                            and "/" not in member and not member.startswith(".")):
                         add(member, z.read(member))
     if select is not None:
         missing = sorted(select - {n[:-4] for n in works})
         problems += [f"The selection asks for '{m}' but no such work was found." for m in missing]
     return works, problems
+
+
+def resolve_site(site: Path, collection_ids: list[str]) -> tuple[dict[str, bytes], list[str]]:
+    """{file name: bytes} for the chosen collections of a site built by scripts/build_site.py, checked against its
+    index.json. Returns (files, problems). Nothing is returned for a collection whose files do not match."""
+    try:
+        manifest = json.loads((site / "index.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}, [f"{site} has no readable index.json. Build the site first (scripts/build_site.py)."]
+    files: dict[str, bytes] = {}
+    problems: list[str] = []
+    known = manifest.get("collections", {})
+    for cid in collection_ids:
+        entry = known.get(cid)
+        if entry is None:
+            problems.append(f"There is no collection '{cid}'. The site has: {', '.join(sorted(known)) or 'none'}.")
+            continue
+        try:
+            zipped = (site / entry["file"]).read_bytes()
+        except OSError:
+            problems.append(f"The package for '{cid}' ({entry['file']}) is missing. Rebuild the site.")
+            continue
+        if hashlib.sha256(zipped).hexdigest() != entry["sha256"]:
+            problems.append(f"The package for '{cid}' does not match index.json: stale or damaged. Rebuild the site.")
+            continue
+        with zipfile.ZipFile(io.BytesIO(zipped)) as z:
+            for work_id in entry["works"]:
+                name = f"{work_id}.txt"
+                try:
+                    data = z.read(name)
+                except KeyError:
+                    problems.append(f"'{cid}' lists {work_id} but its package does not hold {name}. Rebuild the site.")
+                    continue
+                if hashlib.sha256(data).hexdigest() != manifest["works"][work_id]["sha256"]:
+                    problems.append(f"{name} in '{cid}' does not match index.json: stale or damaged. Rebuild the site.")
+                    continue
+                if name in files and files[name] != data:
+                    problems.append(f"Two different files are named {name}.")
+                files[name] = data
+    return files, problems
+
+
+def read_ids(path: Path) -> list[str]:
+    return [l.strip() for l in path.read_text().splitlines() if l.strip() and not l.lstrip().startswith("#")]
 
 
 def prepare(card: Path, files: dict[str, bytes], write: bool, free_bytes: int | None = None) -> Result:
@@ -177,24 +226,36 @@ def prepare(card: Path, files: dict[str, bytes], write: bool, free_bytes: int | 
     return result
 
 
-def main(argv: list[str] | None = None) -> int:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("card", type=Path, help="The folder the card is mounted on.")
-    parser.add_argument("--works", type=Path, required=True, help="A folder of .txt files and zip packages, or one file.")
+    parser.add_argument("--works", type=Path, help="A folder of .txt files and zip packages, or one file.")
+    parser.add_argument("--site", type=Path, help="A site folder built by scripts/build_site.py (it holds index.json). "
+                                                  "Use with --collection or --select.")
+    parser.add_argument("--collection", action="append", default=[], metavar="ID",
+                        help="With --site: a collection to copy. Repeat for more.")
     parser.add_argument("--babel", type=Path, help="The font file, copied as babel.bin.")
-    parser.add_argument("--select", type=Path, help="A text file listing work ids to copy, one per line.")
+    parser.add_argument("--select", type=Path, help="A text file, one id per line. With --works these are work ids; "
+                                                    "with --site they are collection ids.")
     parser.add_argument("--write", action="store_true", help="Copy for real. Without it, only print the plan.")
     parser.add_argument("--allow-fixed", action="store_true", help="Accept a disk that is not marked removable.")
     args = parser.parse_args(argv)
+    if bool(args.works) == bool(args.site):
+        parser.error("give exactly one of --works or --site.")
+    if args.site and not (args.collection or args.select):
+        parser.error("with --site, name the collections to copy with --collection or --select.")
+    if args.works and args.collection:
+        parser.error("--collection goes with --site.")
+    return args
 
-    problems = check_card(args.card, Path("/proc/self/mountinfo").read_text(), allow_fixed=args.allow_fixed)
-    if problems:
-        print("\n".join(problems), file=sys.stderr)
-        return 2
-    select = None
-    if args.select:
-        select = {l.strip() for l in args.select.read_text().splitlines() if l.strip() and not l.startswith("#")}
-    files, problems = load_works(args.works, select)
+
+def gather(args: argparse.Namespace) -> tuple[dict[str, bytes], list[str]]:
+    """The files to put on the card, and any problems with them."""
+    if args.site:
+        ids = list(args.collection) + (read_ids(args.select) if args.select else [])
+        files, problems = resolve_site(args.site, ids)
+    else:
+        files, problems = load_works(args.works, set(read_ids(args.select)) if args.select else None)
     if args.babel:
         if not args.babel.is_file():
             problems.append(f"{args.babel} is not a file.")
@@ -202,6 +263,16 @@ def main(argv: list[str] | None = None) -> int:
             files["babel.bin"] = args.babel.read_bytes()
     if not files and not problems:
         problems.append("There is nothing to copy.")
+    return files, problems
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = parse_args(argv)
+    problems = check_card(args.card, Path("/proc/self/mountinfo").read_text(), allow_fixed=args.allow_fixed)
+    if problems:
+        print("\n".join(problems), file=sys.stderr)
+        return 2
+    files, problems = gather(args)
     if problems:
         print("\n".join(problems), file=sys.stderr)
         return 2
