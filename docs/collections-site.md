@@ -1,6 +1,6 @@
 # Collections site (design draft)
 
-Prepared 2026-11-17. This is a design only: no site, converter or card tool exists. It says what the site would do, what it depends on, and what only you can decide. Facts about the reader come from `docs/markdown-profile.md` and `docs/reader-features-spec.md`, which were read from the firmware source and not seen on a device.
+Prepared 2026-11-17. This is a design only: no site or card tool exists; the converter does. It says what the site would do, what it depends on, and what only you can decide. Facts about the reader come from `docs/markdown-profile.md` and `docs/reader-features-spec.md`, which were read from the firmware source and not seen on a device.
 
 ## What it is for
 
@@ -36,7 +36,7 @@ The site shows each collection's work count and total size, taken from the gener
 
 ## What the build produces
 
-A converter (specified in the Markdown profile, not written) turns each work into the reader's file and prints a report of anything it rejected. From that the site builds:
+A converter (`src/open_book_builder/convert/`, specified in the Markdown profile) turns each work into the reader's file and prints a report of anything it rejected. From that the site builds:
 
 - **A single work:** `<id>.txt`.
 - **A collection package:** a zip with every work's `.txt`, a short `README.txt` ("copy these files to the top folder of the card"), and an update note.
@@ -64,7 +64,7 @@ Add a service only if outsiders must upload works through the site. That service
 
 ## What it depends on
 
-- The converter and validator (not written).
+- The converter and validator (written; the firmware has never loaded its output).
 - The feature firmware for the page-map fix, favorites, tags and filters (not written). The site works without it, but the update note then matters.
 - `babel.bin`, the font file the reader loads on first boot. It currently comes from the original project's page. Whether and how we may redistribute it is not checked.
 - The author guide (written, untested by an author who is not you).

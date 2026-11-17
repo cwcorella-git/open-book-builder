@@ -1,6 +1,6 @@
 # Markdown profile for Open Book content (draft)
 
-Prepared 2026-11-17. This is a specification only: no converter or site code exists. It follows your rulings: versioned custom Markdown is the collection source; a deterministic Pico-ready text file is generated from it for the first pilot; text comes first; categories and tags are set before download; favorites and reading progress live on each microSD card.
+Prepared 2026-11-17. The converter exists (`src/open_book_builder/convert/`, run with `uv run python -m open_book_builder.convert <file or folder> -o <folder>`); no site code does. It follows your rulings: versioned custom Markdown is the collection source; a deterministic Pico-ready text file is generated from it for the first pilot; text comes first; categories and tags are set before download; favorites and reading progress live on each microSD card.
 
 Firmware facts below were read from `joeycastillo/libros` at base `3be5d84` with PR #10 and PR #11 merged (local branch `obb-pilot`, `5196839`, in `/data/checkouts/libros`). They are source reading, not behavior seen on a device.
 
@@ -72,7 +72,7 @@ rights: public domain    # optional, free text
 | Links | The link text only. The URL is dropped. Whether to keep a list of URLs at the end is open. |
 | Block quotes | Plain paragraphs. |
 
-Anything else is **rejected or flagged, never dropped silently**: images, tables, raw HTML, footnotes, math, code blocks, and any run of 127 bytes without a space or newline. The converter prints a report naming each item and its line. A scanned or image-only source cannot be converted; it needs OCR and a human edit first.
+Anything else is **rejected or flagged, never dropped silently**: images, tables, raw HTML, footnotes, math, code blocks, and any run of 127 bytes without a space or newline. The converter prints a report naming each item and its line, and writes nothing for a work that has an error. It also rejects a bad header (missing field, bad id, a tag containing `;` or `:`, a tag starting `type:`), a file that is not UTF-8, and a work with no text. Windows line ends are normalized and noted. Links keep their text only (no URL list), and `##` and below become one bold line. A scanned or image-only source cannot be converted; it needs OCR and a human edit first.
 
 ### Generated device file
 
