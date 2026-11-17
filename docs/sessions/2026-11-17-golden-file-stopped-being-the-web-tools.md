@@ -13,7 +13,8 @@ Started as "review what Codex did", became: retire the web/Tauri tool for a PySi
 | 7 | Phase C: C1 placement file + assembly BOM + notes | **done** — `40661e8` |
 | 8 | Phase D: Markdown profile spec | **done** — `71a966b`, fix `a201687` |
 | 9 | Phase B: PlatformIO build of libros with PRs #10 and #11 | **done** — clean compile, record in `docs/firmware-build-2026-11.md` (not hardware validation) |
-| 10 | Take the GitHub Pages site down | **blocked** — on the operator saying the app is good |
+| 10 | Take the GitHub Pages site down | **done** — operator said to; `gh api -X DELETE .../pages`, site now 404 |
+| 12 | Run the old web tool locally until parity | **done** — `scripts/legacy-web.sh` serves the Release build at `localhost:4173/open-book-builder/`; served pages and assets checked with curl, never opened in a browser |
 | 11 | SC0915 Digi-Key part number into `data/bom-c1-main.csv` | **blocked** — on the operator pasting it (Digi-Key returns 403 to the shell) |
 
 ## 1. Codex's review held up, and the cheap checks were enough
@@ -49,15 +50,15 @@ Never verified:
 - Prices are Codex's dated 2026-11-15 figures, not refreshed. The spare defaults in `data/configs.json` are my starting proposals.
 - The About tab, 3D board view with hero meshes, and the Assembly mini viewport were not ported (they are in the tag).
 
-The operator's calls: when to take Pages down (`gh api -X DELETE repos/cwcorella-git/open-book-builder/pages`, not run); the SC0915 Digi-Key number; configurations 1-3 features and quantities; the decision register items still open in the review.
+The operator's calls: when to take Pages down (done after the first version of this doc: Pages is off); the SC0915 Digi-Key number; configurations 1-3 features and quantities; the decision register items still open in the review.
 
 ## Resume here
 
 Phase B finished after the first version of this doc was written (the background build reported success; see `docs/firmware-build-2026-11.md` for hashes, versions and the warnings worth a look). Nothing is running in the background now.
 
-- Every plan phase (A0, A, B, C, D) is written. What remains is the operator's: the Pages takedown (`gh api -X DELETE repos/cwcorella-git/open-book-builder/pages`, not run), the SC0915 Digi-Key number, configurations 1-3, the open decision-register items, the quotes and a pilot.
+- Every plan phase (A0, A, B, C, D) is written. What remains is the operator's: the Pages takedown (done after the first version of this doc: Pages is off), the SC0915 Digi-Key number, configurations 1-3, the open decision-register items, the quotes and a pilot.
 - Loose end worth reading first: the `sleep.c` implicit-declaration warnings after PR #10, and the PlatformIO size summary (4.6 KB reported against a 312 KB `.bin`).
 
-Plain lines: nothing unlanded; Pages still serves the old site.
+Plain lines: nothing unlanded; Pages is off.
 
 CLOSABLE: all planned phases are written and committed; what is left needs the operator or a physical pilot.

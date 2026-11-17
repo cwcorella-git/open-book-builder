@@ -9,9 +9,11 @@ The app is written in Python with PySide6 and uses the platform's native
 Qt look. It follows the voicebake desktop style guide: system theme, no
 stylesheets, states shown as words, a tooltip on every non-obvious control.
 
-The earlier React/Tauri tool and its GitHub Pages site are retired. They are
-kept at the git tag `web-tool-final`, and the Release of the same name holds
-the built site and the dataset it produced.
+The earlier React/Tauri tool is retired and its GitHub Pages site was taken
+down on 2026-11-17. It is kept at the git tag `web-tool-final`, and the Release
+of the same name holds the built site and the dataset it produced. To look at
+the old tool until the desktop app has parity, run `./scripts/legacy-web.sh`
+and open <http://localhost:4173/open-book-builder/>.
 
 ## Hardware review and continuation
 

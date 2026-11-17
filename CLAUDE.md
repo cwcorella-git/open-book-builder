@@ -2,7 +2,8 @@
 
 Start here. Layout, tabs and data model are in [README.md](./README.md) — don't
 duplicate them in this file. The app is Python + PySide6 (rewritten from
-React/Tauri on 2026-11; the old tool lives at git tag `web-tool-final`).
+React/Tauri on 2026-11; the old tool lives at git tag `web-tool-final`; its Pages
+site is down, `./scripts/legacy-web.sh` serves the old build locally).
 
 ## Canonical commands
 
