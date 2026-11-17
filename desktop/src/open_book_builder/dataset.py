@@ -53,13 +53,16 @@ class Dataset:
     boards: dict
 
 
-def find_dataset_path() -> Path:
-    """Search upward from this file for data/board-dataset.json."""
+def find_data_dir() -> Path:
+    """Search upward from this file for the data/ folder that holds board-dataset.json."""
     for parent in Path(__file__).resolve().parents:
-        candidate = parent / "data" / "board-dataset.json"
-        if candidate.is_file():
-            return candidate
+        if (parent / "data" / "board-dataset.json").is_file():
+            return parent / "data"
     raise FileNotFoundError("data/board-dataset.json not found")
+
+
+def find_dataset_path() -> Path:
+    return find_data_dir() / "board-dataset.json"
 
 
 def load_dataset(path: Path | None = None) -> Dataset:

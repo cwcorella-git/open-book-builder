@@ -8,8 +8,8 @@ from PySide6.QtWidgets import QLabel, QMainWindow, QMessageBox, QTabWidget
 from .assembly_tab import AssemblyTab
 from .board_tab import BoardTab
 from .bom_tab import BomTab
+from .case_tab import CaseTab
 from .dataset import Dataset
-from .placeholder_tab import EmptyTab
 
 
 class MainWindow(QMainWindow):
@@ -31,7 +31,7 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(self.assembly, "Assembly")
         self.board = BoardTab(dataset)
         self.tabs.addTab(self.board, "Board")
-        self.tabs.addTab(EmptyTab("The case view is not built yet."), "Case")
+        self.tabs.addTab(CaseTab(), "Case")
         self.setCentralWidget(self.tabs)
 
         self.cost_label = QLabel()
