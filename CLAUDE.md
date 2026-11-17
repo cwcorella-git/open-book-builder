@@ -105,7 +105,11 @@ golden file only for an intended data change, in the same commit.
    goes through the converter, so a rejected work, a work without `rights`, or a collection naming an
    unknown work fails the build. The seed works are invented samples with no third-party text. It is
    not published and has no ordering flow (readers are sold on Etsy).
-12. **Planning data is edited in the app and saved to `data/configs.json`**
+12. **`scripts/build_babel.py` rebuilds `babel.bin` from Unifont** and needs Unicode data files of the
+   same version as the Python's `unicodedata` (system Python 3.12 is 15.0, uv's 3.14 is 16.0); it refuses a
+   mismatch. Its inputs and the original file are not in the repo. See `docs/collections-site.md`; the file
+   has never been loaded by the firmware, and its licensing is an open question.
+13. **Planning data is edited in the app and saved to `data/configs.json`**
    (File > Save). `offers.json`, `checklist.json` and `revisions.json` are edited
    by hand. Keep dated offers dated and mark estimates as estimates.
 

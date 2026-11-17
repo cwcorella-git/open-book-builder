@@ -81,7 +81,8 @@ data/                     source files: BOM CSVs, component_functions.json, asse
 tests/                    pytest; fixtures/board-dataset.golden.json is the expected dataset
 scripts/                  build-price-verification.mjs (Node, writes a price check page to ~/Desktop),
                           prepare_card.py (copies works and babel.bin to a mounted card; dry run by default),
-                          build_site.py (builds the localhost collections-site mockup into site/_out/)
+                          build_site.py (builds the localhost collections-site mockup into site/_out/),
+                          build_babel.py, compare_babel.py (rebuild the reader font file from Unifont, and check it)
 reference/                upstream Open Book sources and notes
 docs/                     hardware review, session record, handoff
 ```

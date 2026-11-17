@@ -66,7 +66,7 @@ You curate every work, so no upload service is needed. Add one only if that chan
 
 - The converter and validator (written; the firmware has never loaded its output).
 - The feature firmware for the page-map fix, favorites, tags and filters (not written). The site works without it, but the update note then matters.
-- `babel.bin`, the font file the reader loads on first boot (GNU Unifont data packed by the original Open Book project). You chose to rebuild it from Unifont rather than redistribute theirs; that is a spike (row 45) with a go/no-go, and until it passes the card tool takes the original file as a local copy. The license of a rebuilt file is Unifont's own, to be read from the release when the spike finishes.
+- `babel.bin`, the font file the reader loads on first boot (GNU Unifont data packed by the original Open Book project). You chose to rebuild it from Unifont rather than redistribute theirs. `scripts/build_babel.py` does that (see "Rebuilding babel.bin" below). The card tool takes the result with `--babel`.
 - The author guide (written, untested by an author who is not you).
 - Measurements from the pilot: card size, number of works that list well, how long a long work takes to open the first time.
 
@@ -84,6 +84,16 @@ Each work carries its `rights` text, and the site shows it. The old assembly not
 6. **Plain copy:** yes. Each work also gets a text-only reading copy with no header, from the same source.
 
 Still open: the tag vocabulary, and the rights check for every source collection.
+
+## Rebuilding babel.bin
+
+`scripts/build_babel.py --hex unifont_all-<version>.hex --ucd <folder> -o babel.bin` writes a 2 MiB file in the layout `BabelDevice.cpp` reads (the byte layout is in the script's docstring). The inputs are Unifont's `.hex` file from ftp.gnu.org/gnu/unifont and three Unicode data files (`LineBreak.txt`, `BidiMirroring.txt`, `UnicodeData.txt`) of the same Unicode version as the Python running it; the script refuses a mismatch. The glyph bytes are Unifont's hex bytes unchanged.
+
+How it was checked: the original `babel.bin` was used as a reference and never kept. With Unifont 15.1.05 and Unicode 15.0, over the 55,445 code points both files list, the character class, bidi class, whitespace, control, line-break, strong-direction and mirroring flags and every case mapping that both have match exactly. The differences left are version drift: 12,487 glyph shapes (the original was drawn from an older Unifont), 23 glyph widths, one reclassified character (U+1734), 189 code points the original does not list (and 2 that only it lists), and eight more case and mirroring pairs from newer Unicode data. `scripts/compare_babel.py mine.bin original.bin` prints this. Several rules were inferred from the original, not from the source (which code points are left out: unassigned and private use except U+E000 and U+F8FF; which line-break classes allow a break; which characters are control or whitespace; strong direction for combining marks in right-to-left blocks), and are marked as inferred in the script. The original also holds a type 64 table that the firmware ignores, and the rebuilt file omits it.
+
+Not done: the file has never been loaded by the firmware or a reader. The reader mirror in the script (`BabelReader`) follows `BabelDevice` step by step, but it is Python, not the firmware. A pilot reader is the real test.
+
+**License, not decided:** Unifont's README (15.1.05) says the compiled fonts are GNU GPL version 2 or later with the GNU font embedding exception for documents that use the font. Whether a `babel.bin` counts as such a document or as a derived font file, and what that means for selling or giving away cards that hold it, is a legal question this design does not answer. Shipping the script and the Unifont `.hex` file next to the card would make the source available either way.
 
 ## Not in this design
 
