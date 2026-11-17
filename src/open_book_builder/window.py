@@ -35,7 +35,7 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.tabs)
 
         self.cost_label = QLabel()
-        self.cost_label.setToolTip("Parts cost for one reader. It leaves out the C2 driver module.")
+        self.cost_label.setToolTip("Parts cost for one reader: the C1 board parts and the display.")
         self.progress_label = QLabel()
         self.progress_label.setToolTip("Assembly steps you have marked as done.")
         for label in (self.cost_label, self.progress_label):

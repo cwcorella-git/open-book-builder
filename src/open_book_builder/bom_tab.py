@@ -95,8 +95,8 @@ class BomTab(QWidget):
         self.stack = stack
 
         self.footer = QLabel()
-        self.note = QLabel("The C2 driver module has no price here. Ask the board house for a quote.")
-        self.note.setToolTip("The subtotal covers the C1 board parts and the display only.")
+        self.note = QLabel("Prices cover the C1 board parts and the display. Get a quote for the C2 driver module.")
+        self.note.setToolTip("The subtotal is the C1 board parts and the display. The C2 driver module is quoted by the board house.")
         footer = QHBoxLayout()
         footer.setContentsMargins(0, 0, 0, 0)
         footer.addWidget(self.footer)

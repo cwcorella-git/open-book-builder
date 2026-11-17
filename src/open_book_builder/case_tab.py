@@ -39,8 +39,8 @@ DESIGNS = [
     Design(
         "Sprint 5 (two parts)",
         "Two-part case from Joey Castillo's Hackaday Prize 2023 submission, the fifth version of his parametric "
-        "case. It was made for the B1 board. Whether it fits the C1 board has not been checked. The parts are "
-        "drawn pulled apart so you can see both. Assembly uses four M2.5 x 6 mm screws. The OpenSCAD file has an "
+        "case. It was made for the B1 board, and its 88.6 x 118.6 mm size matches the C1 board outline. Fit "
+        "around the C1 parts is untested. The parts are drawn pulled apart so you can see both. Assembly uses four M2.5 x 6 mm screws. The OpenSCAD file has an "
         "<code>abridged</code> setting for the AAA battery holder height.",
         [("sprint-5-frontplate.stl", (-25, 0, 0)), ("sprint-5-backplate.stl", (25, 0, 0))],
         ["sprint-5-frontplate.stl", "sprint-5-backplate.stl", "sprint-5.scad"],
