@@ -89,7 +89,7 @@ The keeper climbed the stairs *every* evening. It was the **only** thing she was
 - Rain by midnight
 ```
 
-You run `uv run python -m open_book_builder.convert lighthouse.md -o out`, and the converter writes a file for the reader with the same name (the example below is its actual output, and a test checks it). In the notation below, `<RS>` is the chapter marker, `<SI>` switches on italic or bold, and `<SO>` switches one step back. You never type these.
+You run `uv run python -m open_book_builder.convert lighthouse.md -o out` (add `--reading-copy` for a plain text copy to read on another device, never to put on the card), and the converter writes a file for the reader with the same name (the example below is its actual output, and a test checks it). In the notation below, `<RS>` is the chapter marker, `<SI>` switches on italic or bold, and `<SO>` switches one step back. You never type these.
 
 ```
 ---

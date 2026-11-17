@@ -148,3 +148,43 @@ def test_unknown_field_is_a_note_not_an_error():
 
 def test_invalid_utf8_is_rejected():
     assert convert(b"---\n\xff\xfe").data is None
+
+
+def test_reading_copy_of_the_guide_example():
+    from open_book_builder.convert import reading_copy
+
+    copy = reading_copy(convert((FIXTURES / "lighthouse.md").read_bytes()))
+    assert copy.decode() == (
+        "The Lighthouse Keeper\nA. Writer\n\n"
+        "The Lamp\n\n"
+        "The keeper climbed the stairs every evening. It was the only thing she was sure of.\n\n"
+        "The Storm\n\n"
+        "- Wind from the north\n- Rain by midnight\n"
+    )
+
+
+def test_reading_copy_has_the_same_words_and_no_control_codes():
+    from open_book_builder.convert import reading_copy
+
+    result = run("# One\n\nA ***loud*** and *soft* **word**.\n\n## Part\n\nmore text\n")
+    copy = reading_copy(result).decode()
+    assert all(ord(c) >= 0x20 or c == "\n" for c in copy)
+    device_words = result.data.decode().split("---\n", 2)[2]
+    for code in "\x1e\x0e\x0f":
+        device_words = device_words.replace(code, "")
+    assert copy.split()[1:] == device_words.split()  # same words after the title (no author in this header)
+
+
+def test_reading_copy_is_none_when_rejected_and_repeatable():
+    from open_book_builder.convert import reading_copy
+
+    assert reading_copy(run("![x](y.png)\n")) is None
+    source = (FIXTURES / "lighthouse.md").read_bytes()
+    assert reading_copy(convert(source)) == reading_copy(convert(source))
+
+
+def test_cli_writes_the_reading_copy_beside_the_reader_file(tmp_path):
+    from open_book_builder.convert.__main__ import main
+
+    assert main([str(FIXTURES / "lighthouse.md"), "-o", str(tmp_path), "--reading-copy"]) == 0
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["lighthouse.reading.txt", "lighthouse.txt"]

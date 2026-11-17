@@ -115,12 +115,14 @@ def load_works(source: Path, select: set[str] | None) -> tuple[dict[str, bytes],
 
     paths = [source] if source.is_file() else sorted(source.iterdir())
     for path in paths:
+        if path.name.endswith(".reading.txt"):
+            continue  # the plain reading copy from the converter is not a reader file
         if path.suffix == ".txt":
             add(path.name, path.read_bytes())
         elif path.suffix == ".zip":
             with zipfile.ZipFile(path) as z:
                 for member in z.namelist():
-                    if member.endswith(".txt") and "/" not in member and not member.startswith("."):
+                    if member.endswith(".txt") and not member.endswith(".reading.txt") and "/" not in member and not member.startswith("."):
                         add(member, z.read(member))
     if select is not None:
         missing = sorted(select - {n[:-4] for n in works})

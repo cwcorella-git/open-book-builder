@@ -124,3 +124,13 @@ def test_load_works_from_folder_zip_and_selection(tmp_path):
     assert set(works) == {"one.txt", "two.txt", "README.txt"} and not problems
     works, problems = card_tool.load_works(tmp_path, {"two", "ghost"})
     assert set(works) == {"two.txt"} and "ghost" in problems[0]
+
+
+def test_reading_copies_are_never_copied_to_a_card(tmp_path):
+    (tmp_path / "one.txt").write_bytes(b"1")
+    (tmp_path / "one.reading.txt").write_bytes(b"plain")
+    with zipfile.ZipFile(tmp_path / "pack.zip", "w") as z:
+        z.writestr("two.txt", b"2")
+        z.writestr("two.reading.txt", b"plain")
+    works, _ = card_tool.load_works(tmp_path, None)
+    assert set(works) == {"one.txt", "two.txt"}

@@ -61,3 +61,29 @@ def convert(source: bytes | str) -> Converted:
         return Converted(header, None, report)
     data = ("\n".join(front + body) + "\n").encode("utf-8")
     return Converted(header, data, report)
+
+
+def reading_copy(result: Converted) -> bytes | None:
+    """A plain text copy for reading elsewhere: title, author, then the text with no header and no control codes.
+
+    It is made from the reader file, so the two always hold the same words. Paragraphs are separated by a blank
+    line; list items stay together."""
+    if result.data is None or result.header is None:
+        return None
+    lines = result.data.decode("utf-8").split("\n")
+    body = lines[lines.index("---", 1) + 1 :]
+    if body and body[-1] == "":
+        body.pop()
+    out = [_clean(result.header.title)]
+    if result.header.author:
+        out.append(_clean(result.header.author))
+    out.append("")
+    previous_item = False
+    for line in body:
+        text = line.replace("\x1e", "").replace("\x0e", "").replace("\x0f", "")
+        item = text.startswith("- ")
+        if out[-1] != "" and not (item and previous_item):
+            out.append("")
+        out.append(text)
+        previous_item = item
+    return ("\n".join(out) + "\n").encode("utf-8")

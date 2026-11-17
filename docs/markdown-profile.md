@@ -72,7 +72,7 @@ rights: public domain    # optional, free text
 | Links | The link text only. The URL is dropped. Whether to keep a list of URLs at the end is open. |
 | Block quotes | Plain paragraphs. |
 
-Anything else is **rejected or flagged, never dropped silently**: images, tables, raw HTML, footnotes, math, code blocks, and any run of 127 bytes without a space or newline. The converter prints a report naming each item and its line, and writes nothing for a work that has an error. It also rejects a bad header (missing field, bad id, a tag containing `;` or `:`, a tag starting `type:`), a file that is not UTF-8, and a work with no text. Windows line ends are normalized and noted. Links keep their text only (no URL list), and `##` and below become one bold line. A scanned or image-only source cannot be converted; it needs OCR and a human edit first.
+Anything else is **rejected or flagged, never dropped silently**: images, tables, raw HTML, footnotes, math, code blocks, and any run of 127 bytes without a space or newline. The converter prints a report naming each item and its line, and writes nothing for a work that has an error. It also rejects a bad header (missing field, bad id, a tag containing `;` or `:`, a tag starting `type:`), a file that is not UTF-8, and a work with no text. Windows line ends are normalized and noted. `--reading-copy` also writes `<id>.reading.txt`: the title, author and text with no header and no control codes, made from the reader file so the two hold the same words; the card tool skips these files. Links keep their text only (no URL list), and `##` and below become one bold line. A scanned or image-only source cannot be converted; it needs OCR and a human edit first.
 
 ### Generated device file
 
