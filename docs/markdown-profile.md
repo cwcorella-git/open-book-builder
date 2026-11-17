@@ -4,6 +4,23 @@ Prepared 2026-11-17. This is a specification only: no converter or site code exi
 
 Firmware facts below were read from `joeycastillo/libros` at base `3be5d84` with PR #10 and PR #11 merged (local branch `obb-pilot`, `5196839`, in `/data/checkouts/libros`). They are source reading, not behavior seen on a device.
 
+**Changed on 2026-11-17:** there are no product configurations any more (buyers choose collections), so the profile serves one device line. The profile now says what works on **stock firmware** (the pilot) and what needs the **feature firmware** (the other nine, specified in `docs/reader-features-spec.md`, not yet written). Added: the `type:` tag convention, the `_STATE` card file, and the stale page-map rule. The author-facing version of these rules is `docs/author-guide.md`.
+
+## Which firmware does what
+
+| Rule or behavior | Stock libros (the pilot) | Feature firmware (the nine) |
+| --- | --- | --- |
+| Files in the card root, `.txt`, name under 127 bytes | yes | yes |
+| Front matter `TITL`, `AUTH`, `GNRE`, `DESC`, `LANG` | yes | yes |
+| Chapters (`0x1E`), italic and bold codes | yes | yes |
+| Resume | at Lock or return home only | saved after a delay, every few turns and on sleep |
+| Changed text with the same file name | stale page map, wrong pages | page map rebuilt automatically |
+| Percent read, favorites, recent first, status | no | yes |
+| Tag, type and status filters, sort by title or author | no | yes |
+| `_STATE` card file | not used | read and written |
+
+A file written to the rules below works on both. Only the extras on the right need the new firmware, and a stock reader simply ignores them.
+
 ## What the firmware does today
 
 | Topic | Behavior in the source |
@@ -64,25 +81,31 @@ Anything else is **rejected or flagged, never dropped silently**: images, tables
 - LF line ends only. Unicode normalized to NFC.
 - No size cap is set. Measure a short article, a novel and a long document on the pilot first.
 
-### Tags and categories
+### Tags, types and categories
 
-Tags are set in the source header and exported in `GNRE`. Until the firmware can filter on them, a filter cannot work on the device. For the first ten, the plain option is to group works into collections on the site and put one collection per card. The reader-side filter and sort are future firmware work.
+Tags are set in the source header and exported in `GNRE`, joined with semicolons (`fiction;sea`). The **type** (book, article or document) travels in the same field as a tag with a fixed prefix: `type:article`. One mechanism then serves the tag filter and the type filter and needs no change to the library file layout. The prefix `type:` is reserved; a work has exactly one.
+
+On stock firmware nothing filters on `GNRE`, so tags and types are stored but unused. On the feature firmware the list screen reads them once at scan time and offers a filter. A buyer's card is always the unit of grouping: the site's collections decide which works go on a card.
 
 ### Updates, removal and renaming
 
-- Identity is the file name, so keep `<id>.txt` stable across versions. A new version must also delete the book's `.pag` file, or the old page map is used on the new text. Whether to keep the old `.obp` is open: a saved page number may point at the wrong place after an edit.
-- The download should include an update note that lists the `.pag` and `.obp` files to delete for each changed book.
-- Renaming a file loses its progress. Removing a book leaves its `.pag` and `.obp` behind on the card. Deleting them is a manual step for now.
+- Identity is the file name, so keep `<id>.txt` stable across versions.
+- **Stock firmware:** a new version must also delete the book's `.pag` file, or the old page map is used on the new text. Whether to keep the old `.obp` is open: a saved page number may point at the wrong place after an edit. The download includes an update note listing the `.pag` and `.obp` files to delete for each changed book.
+- **Feature firmware:** the page-map header stores the file size and a checksum of the first and last 4 KB, and the map is rebuilt when they differ, so no manual deletion is needed. The saved page is kept only if it is still inside the new page count; otherwise it resets to the start. That rule is a proposal.
+- Renaming a file loses its progress and favorites. Removing a book leaves its `.pag` and `.obp` behind (and its row in `_STATE`); deleting them is manual for now.
 
 ### Per-card state
 
-Progress stays in the firmware's `.obp` files. Favorites need new storage that survives the `_LIBRARY` rebuild: one small state file keyed by the same 8-byte name hash is the simplest. This is a proposal, not a settled design, and it needs firmware code.
+Stock firmware keeps progress in `.obp` files only. The feature firmware adds `_STATE`: a small file in the card root with one record per book, keyed by the same 8-byte name hash the firmware already uses. A record holds the favorite flag, the finished flag, an open counter for "recent first", the saved page, one bookmark page and the cached page count. It is written to a temporary file and renamed over `_STATE`, the way `_LIBRARY` is swapped today, so a power cut leaves the old file whole. The layout is in `docs/reader-features-spec.md`. Both are proposals and need firmware code.
 
 ### Percent read in the book list
 
 Computable on the device from the `.obp` page number and the `.pag` page count. Layout depends on the font data and the page metrics above, so a converter cannot reliably precompute page counts. Leave it to the device, and rebuild `.pag` when the text or layout changes.
 
-## Gaps the current firmware leaves
+## Gaps the current (stock) firmware leaves
+
+The feature firmware in `docs/reader-features-spec.md` is meant to close items 1 to 3. None of it is written.
+
 
 1. The `.pag` file is never invalidated.
 2. Progress is saved only on Lock or return home, so a battery pull while reading loses position since the last save. A power cut during the 4-byte write leaves an empty file, which reads back as page 0.
@@ -95,5 +118,6 @@ Computable on the device from the `.obp` page number and the `.pag` page count. 
 - The tag vocabulary, multiple-tag rules and display labels, and how untagged personal files are treated.
 - Whether links keep their URLs in an end list.
 - What happens to `.obp` when a book's version changes.
-- Whether the first-batch firmware carries any of the gap fixes, or the first ten run stock libros with PRs #10 and #11.
+- Whether the saved page survives a text update when it is still inside the new page count, or always resets (the feature firmware section proposes keeping it).
+- Whether `type:` is the right carrier for the type, or a fifth front matter key is worth a library file version bump.
 - File and page limits, once sample works have been measured on a pilot reader.
