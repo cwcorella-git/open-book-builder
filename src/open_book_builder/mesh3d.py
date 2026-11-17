@@ -81,17 +81,18 @@ def _box(corners, z0: float, z1: float):
 
 COPPER_LIFT = 0.02  # mm, copper sits this far outside each face of the slab
 COPPER_TOLERANCE = 0.05  # mm, polygon simplification for the 3D view only
+SILK_TOLERANCE = 0.2  # mm; the silkscreen text is about 200,000 points, so it is simplified harder than copper
 
 
 def _mix(a, b, t=0.5):
     return tuple(int(round(x + (y - x) * t)) for x, y in zip(a, b))
 
 
-def copper_triangles(geometry, z: float):
-    """Flat triangles for a shapely (Multi)Polygon of copper at height z, in the view's coordinates."""
+def copper_triangles(geometry, z: float, tolerance: float = COPPER_TOLERANCE):
+    """Flat triangles for a shapely (Multi)Polygon of copper (or silkscreen) at height z, in the view's coordinates."""
     if geometry is None or geometry.is_empty:
         return []
-    return _flat_multi(shapely.simplify(geometry, COPPER_TOLERANCE), z)
+    return _flat_multi(shapely.simplify(geometry, tolerance), z)
 
 
 def _flat_multi(geometry, z: float):
@@ -102,12 +103,13 @@ def _flat_multi(geometry, z: float):
     return tris
 
 
-def board_mesh(board: dict, slab_color, part_color, panel_color, copper=None, copper_color=None):
+def board_mesh(board: dict, slab_color, part_color, panel_color, copper=None, copper_color=None, silk=None, silk_color=None):
     """(triangles (n, 3, 3), colors (n, 3) uint8, groups (n,)) for one board, in millimetres, z up.
 
     The slab sits between z = 0 and the board thickness. Parts on the top stand on it, parts on the bottom hang
     below it. A part with a known body (parts3d) is several boxes sharing its group; any other is one box from its
-    pads. `copper` maps "top" and "bottom" to shapely copper geometry drawn as a thin layer on that face."""
+    pads. `copper` maps "top" and "bottom" to shapely copper geometry drawn as a thin layer on that face, and `silk`
+    does the same for silkscreen, a little further out than the copper."""
     tris, colors, groups = [], [], []
 
     def add(new, color, group):
@@ -128,6 +130,9 @@ def board_mesh(board: dict, slab_color, part_color, panel_color, copper=None, co
     for side, z in (("top", THICKNESS + COPPER_LIFT), ("bottom", -COPPER_LIFT)):
         if copper and copper.get(side) is not None:
             add(copper_triangles(copper[side], z), copper_color or _mix(slab_color, part_color, 0.7), SLAB)
+    for side, z in (("top", THICKNESS + 2 * COPPER_LIFT), ("bottom", -2 * COPPER_LIFT)):
+        if silk and silk.get(side) is not None:
+            add(copper_triangles(silk[side], z, SILK_TOLERANCE), silk_color or part_color, SLAB)
     for index, comp in enumerate(board["components"]):
         rect = component_rect(comp)
         height = comp["footprintBbox"]["height3d"]

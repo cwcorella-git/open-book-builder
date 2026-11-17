@@ -96,7 +96,9 @@ golden file only for an intended data change, in the same commit.
    labels; the battery cells are boxes squeezed to fit). Such a part can be taller than its
    `height3d` (the Pico's USB). Copper from the Gerbers is drawn 0.02 mm proud of each face,
    simplified to 0.05 mm, and picks as the slab; it is about 7,000 triangles on the C1, so keep
-   an eye on drag time before adding silkscreen. The virtual C2 Display is 95 x 110 mm and
+   an eye on drag time. Silkscreen (viewed side only, simplified to 0.2 mm, about 18,000 triangles on the C1)
+   is off by default in 3D; the Show silkscreen box remembers its state separately for 2D and 3D. The light
+   in `meshview.py` flips its depth part with the pitch sign so top and bottom views are equally bright. The virtual C2 Display is 95 x 110 mm and
    dwarfs the C2 board, which is true to scale.
 11. **Planning data is edited in the app and saved to `data/configs.json`**
    (File > Save). `offers.json`, `checklist.json` and `revisions.json` are edited

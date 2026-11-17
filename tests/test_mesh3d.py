@@ -179,3 +179,40 @@ def test_flat_face_is_as_bright_from_below_as_from_above(app, dataset):
         pixels = np.array([[image.pixelColor(x, y).red() for x in range(image.width())] for y in range(image.height())])
         means.append(pixels[slab].mean())
     assert abs(means[0] - means[1]) / max(means) < 0.1, means
+
+
+def test_silkscreen_is_a_thin_layer_on_the_slab_and_off_by_default_in_3d(app, dataset):
+    from open_book_builder import fabrication
+    from open_book_builder.mesh3d import COPPER_LIFT
+
+    board = dataset.boards["c2-driver"]
+    silk = {"bottom": fabrication.silkscreen("c2-driver", "bottom", board["outline"]["heightMm"])}
+    plain, _, _ = board_mesh(board, *COLORS)
+    with_silk, colors, groups = board_mesh(board, *COLORS, silk=silk, silk_color=(10, 20, 30))
+    added = with_silk[(colors == (10, 20, 30)).all(axis=1)]
+    assert len(added) > 100 and len(with_silk) - len(plain) == len(added)
+    assert set(np.round(np.unique(added[:, :, 2]), 3)) == {round(-2 * COPPER_LIFT, 3)}
+    assert (groups[(colors == (10, 20, 30)).all(axis=1)] == SLAB).all()
+
+
+def test_each_view_remembers_its_own_silkscreen_choice(app, dataset):
+    tab = BoardTab(dataset)
+    assert tab.silk_box.isChecked()  # 2D: on
+    tab.view_box.setCurrentIndex(1)
+    assert not tab.silk_box.isChecked() and tab.silk_box.isEnabled()  # 3D: off at first, and usable
+    tab.silk_box.setChecked(True)
+    tab.view_box.setCurrentIndex(0)
+    assert tab.silk_box.isChecked()
+    tab.silk_box.setChecked(False)
+    tab.view_box.setCurrentIndex(1)
+    assert tab.silk_box.isChecked()  # 3D kept its own on
+    tab.view_box.setCurrentIndex(0)
+    assert not tab.silk_box.isChecked()
+
+
+def test_c1_silkscreen_view_stays_within_the_triangle_budget(app, dataset):
+    tab = BoardTab(dataset)
+    tab.wait_for_fabrication()
+    tab.view_box.setCurrentIndex(1)
+    tab.silk_box.setChecked(True)
+    assert len(tab.view3d.tris) < 32000, len(tab.view3d.tris)

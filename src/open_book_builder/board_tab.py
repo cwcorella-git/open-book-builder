@@ -93,7 +93,10 @@ class BoardTab(QWidget):
                                    "once they are read.")
         self.silk_box = QCheckBox("Show silkscreen")
         self.silk_box.setChecked(True)
-        self.silk_box.setToolTip("Printed outlines and markings on the viewed side.")
+        self.silk_box.setToolTip("Printed outlines and markings on the viewed side. In 3D this is off at first because it "
+                                 "makes turning the board slower, and it shows the side you are looking at, simplified.")
+        self._silk_state = {"2d": True, "3d": False}  # each view remembers its own choice
+        self._view_key = "2d"
         self.labels_box = QCheckBox("Show labels")
         self.labels_box.setChecked(True)
         self.labels_box.setToolTip("Reference names such as U1 or R3.")
@@ -131,6 +134,7 @@ class BoardTab(QWidget):
         layout.addLayout(controls)
         layout.addWidget(splitter, 1)
 
+        self.view_box.currentIndexChanged.connect(self._swap_silk_state)
         for signal in (self.board_box.currentIndexChanged, self.side_box.currentIndexChanged,
                        self.source_box.currentIndexChanged, self.view_box.currentIndexChanged,
                        self.traces_box.toggled, self.silk_box.toggled, self.labels_box.toggled):
@@ -145,6 +149,13 @@ class BoardTab(QWidget):
         self.fit_button.clicked.connect(self.fit)
         self.scene.selectionChanged.connect(self.on_selection)
         self.redraw()
+
+    def _swap_silk_state(self) -> None:
+        self._silk_state[self._view_key] = self.silk_box.isChecked()
+        self._view_key = self.view_box.currentData()
+        self.silk_box.blockSignals(True)
+        self.silk_box.setChecked(self._silk_state[self._view_key])
+        self.silk_box.blockSignals(False)
 
     def _check_fabrication(self) -> None:
         if not self._warm.is_alive():
@@ -180,7 +191,7 @@ class BoardTab(QWidget):
         width, height = outline["widthMm"], outline["heightMm"]
         board_id = self.board_box.currentData()
         in_3d = self.view_box.currentData() == "3d"
-        for control in (self.source_box, self.silk_box, self.labels_box):
+        for control in (self.source_box, self.labels_box):
             control.setEnabled(not in_3d)
         self.stack.setCurrentIndex(1 if in_3d else 0)
         if in_3d:
@@ -396,7 +407,12 @@ class BoardTab(QWidget):
             height = board["outline"]["heightMm"]
             copper = {side: fabrication.copper(board_id, side, height) for side in ("top", "bottom")}
         copper_color = rgb(blend(base, pal.color(QPalette.Highlight), 0.55))
-        tris, colors, groups = board_mesh(board, slab, part, panel, copper, copper_color)
+        silk = None
+        if self.silk_box.isChecked() and self._fab_ready and fabrication.available(board_id):
+            side = self.side_box.currentData()  # only the side being looked at: both sides are too many triangles
+            silk = {side: fabrication.silkscreen(board_id, side, board["outline"]["heightMm"])}
+        silk_color = rgb(blend(base, text, 0.7))
+        tris, colors, groups = board_mesh(board, slab, part, panel, copper, copper_color, silk, silk_color)
         self.components = board["components"]
         self.view3d.home = (0.0, 58.0) if self.side_box.currentData() == "top" else (0.0, -58.0)  # look from that side
         self.view3d.set_mesh(tris, colors, groups)
